@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LWJ.Data.Binding.UnityEdito
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{BE234F19-748A-4248-8469-94FF0904AA2F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LWJ.Data.Binding.Test", "LWJ.Data.Binding.Test\LWJ.Data.Binding.Test.csproj", "{DCA3F8D2-F49D-4C5A-9745-C377B95B8EF3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LWJ.Data.Binding.Test", "..\test\LWJ.Data.Binding.Test\LWJ.Data.Binding.Test.csproj", "{DCA3F8D2-F49D-4C5A-9745-C377B95B8EF3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
