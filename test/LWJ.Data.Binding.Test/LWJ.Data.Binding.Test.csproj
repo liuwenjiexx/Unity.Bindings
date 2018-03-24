@@ -51,9 +51,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\TestData.cs" />
+    <Compile Include="Data\TestDataNoNotify.cs" />
+    <Compile Include="Data\TestStructData.cs" />
+    <Compile Include="TestBinding\TestMultiBinding.cs" />
+    <Compile Include="TestConverters\TestMultiValueConverter.cs" />
     <Compile Include="TestPathAccess.cs" />
-    <Compile Include="TestBinding.cs" />
+    <Compile Include="TestBinding\TestBinding.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestConverters\TestValueConverter.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\LWJ.Data.Binding\LWJ.Data.Binding.csproj">
@@ -64,6 +69,7 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

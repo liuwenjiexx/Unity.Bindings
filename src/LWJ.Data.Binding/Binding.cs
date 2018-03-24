@@ -12,7 +12,7 @@ namespace LWJ.Data
         private object source;
         private string path;
         private BindingMode mode;
-        private PathAccess sourceBinder;
+        private PropertyPath sourceBinder;
         private IValueConverter converter;
         private object converterParameter;
         private bool enabledSourceUpdated = true;
@@ -35,6 +35,7 @@ namespace LWJ.Data
             this.source = source;
             mode = BindingMode.OneWay;
         }
+
 
         public Binding(object source, string path, object target, string targetPath)
             : this(source, path, target, targetPath, BindingMode.OneWay)
@@ -191,8 +192,8 @@ namespace LWJ.Data
         {
             base.Bind();
 
-            if (string.IsNullOrEmpty(path))
-                throw new Exception("Path Empty");
+            //if (string.IsNullOrEmpty(path))
+            //    throw new Exception("Path Empty");
 
 
             //if (mode == BindingMode.OneTime || mode == BindingMode.OneWay || mode == BindingMode.TwoWay)
@@ -207,7 +208,7 @@ namespace LWJ.Data
 
             //targetBinder.AllowListenerChanged = isBindToSource;
 
-            sourceBinder = PathAccess.Create(path);
+            sourceBinder = PropertyPath.Create(path);
 
             //sourceBinder.AllowListenerChanged = isBindToTarget;
             sourceBinder.Target = source;

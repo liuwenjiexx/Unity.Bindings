@@ -16,10 +16,13 @@ namespace LWJ.Data.Test
         private long longProperty;
         private float floatProperty;
         private double doubleProperty;
+        private bool boolProperty;
         private TestData next;
-        
+        private TestStructData structData;
 
-        public TestData() {
+        public TestData()
+        {
+
         }
 
         public TestData(string name)
@@ -106,6 +109,23 @@ namespace LWJ.Data.Test
                 }
             }
         }
+
+        public bool BoolProperty
+        {
+            get
+            {
+                return boolProperty;
+            }
+            set
+            {
+                if (boolProperty != value)
+                {
+                    boolProperty = value;
+                    PropertyChanged.Invoke(this, nameof(BoolProperty));
+                }
+            }
+        }
+
         public TestData Next
         {
             get
@@ -121,7 +141,21 @@ namespace LWJ.Data.Test
                 }
             }
         }
-
+        public TestStructData StructData
+        {
+            get
+            {
+                return structData;
+            }
+            set
+            {
+                if (!structData.Equals(value))
+                {
+                    structData = value;
+                    PropertyChanged.Invoke(this, nameof(StructData));
+                }
+            }
+        }
 
         public event PropertyChangedEventHandler PropertyChanged;
 

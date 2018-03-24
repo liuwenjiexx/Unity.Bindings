@@ -9,44 +9,48 @@ namespace LWJ.Data.Test
 
 
         [TestMethod]
-        public void Bind()
+        public void Bind_SourcePath_Null()
         {
+            string value = "hello";
 
             TestData target = new TestData();
-
-            string text = "hello";
-
-            Binding binding = new Binding(text, ".", target, "StringProperty", BindingMode.OneWay);
+            Binding binding = new Binding(value, null, target, "StringProperty", BindingMode.OneWay);
 
             Assert.IsNull(target.StringProperty);
             binding.Bind();
 
-            Assert.AreEqual(text, target.StringProperty);
+            Assert.AreEqual(value, target.StringProperty);
         }
 
         [TestMethod]
         public void Unbind()
         {
-
+            TestData data1 = new TestData();
             TestData target = new TestData();
 
-            string value = "hello";
-
-            Binding binding = new Binding(value, ".", target, "StringProperty", BindingMode.OneWay);
-
-            Assert.IsNull(target.StringProperty);
+            Binding binding = new Binding(data1, "StringProperty", target, "StringProperty", BindingMode.OneWay);
 
             binding.Bind();
 
-            Assert.AreEqual(value, target.StringProperty);
+            data1.StringProperty = "abc";
+            Assert.AreEqual("abc", target.StringProperty);
 
             binding.Unbind();
 
-            value = "world";
-            binding.Source = value;
+            data1.StringProperty = "123";
+            Assert.AreEqual("abc", target.StringProperty);
 
-            Assert.AreEqual("hello", target.StringProperty);
+            binding.Bind();
+
+            Assert.AreEqual("123", target.StringProperty);
+
+            binding.Unbind();
+            binding.Source = null;
+            Assert.AreEqual("123", target.StringProperty);
+
+
         }
+
 
 
 
@@ -161,7 +165,82 @@ namespace LWJ.Data.Test
             TestPropertyType(1.1f, "FloatProperty");
             TestPropertyType(1.1d, "DoubleProperty");
         }
-  
+
+        [TestMethod]
+        public void Binding_ValueType()
+        {
+            TestStructData data1 = new TestStructData("struct1");
+
+            PropertyPath path = PropertyPath.Create("IntProperty");
+            bool changed = false;
+            path.ChangedCallback = () =>
+            {
+                changed = true;
+            };
+            changed = false;
+            path.Target = data1;
+            Assert.IsTrue(changed);
+
+            changed = false;
+            path.Target = null;
+            path.Target = data1;
+            Assert.IsTrue(changed);
+
+            changed = false;
+            data1.IntProperty = 1;
+            Assert.IsFalse(changed);
+
+            object value;
+            Assert.IsTrue(path.TryGetValue(out value));
+            Assert.AreEqual(0, value);
+
+            data1.IntProperty = 0;
+            Assert.IsTrue(path.TrySetValue(2));
+            changed = false;
+            path.ChangedCallback = () =>
+            {
+                changed = true;
+            };
+            Assert.AreEqual(0, data1.IntProperty);
+            Assert.IsTrue(path.TryGetValue(out value));
+            Assert.AreEqual(2, value);
+        }
+
+
+        [TestMethod]
+        public void ValueType_GetValue()
+        {
+
+        }
+
+
+        [TestMethod]
+        public void Test1()
+        {
+            int i = 0;
+
+            TestStructData data1 = new TestStructData();
+
+            data1.PropertyChanged += (o, e) =>
+            {
+                i++;
+            };
+            TestStructData data2 = data1;
+
+
+            i = 0;
+            data1.IntProperty = 1;
+            Assert.AreEqual(1, data1.IntProperty);
+            Assert.AreEqual(0, data2.IntProperty);
+            Assert.AreEqual(1, i);
+
+            i = 0;
+            data2.IntProperty = 2;
+            Assert.AreEqual(1, data1.IntProperty);
+            Assert.AreEqual(2, data2.IntProperty);
+            Assert.AreEqual(1, i);
+        }
+
 
     }
 

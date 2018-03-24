@@ -9,31 +9,35 @@ using System.ComponentModel;
 namespace LWJ.Data
 {
 
-    public class PathAccess : IDisposable
+    public class PropertyPath : IDisposable
     {
         private object target;
         private Type targetType;
         private string memberName;
-        //private bool allowListenerChanged;
         public Action ChangedCallback;
-        private bool isListenerChanged;
+
         private AccessMemberType accessMemberType;
         private IMemberAccess access;
         private Type memberType;
-        private PathAccess next;
-        private PathAccess first;
-        private PathAccess last;
+        private PropertyPath next;
+        private PropertyPath first;
+        private PropertyPath last;
         private bool isIndexer;
         private int index;
-        private bool isValueType;
+        private Flags flags;
+        private enum Flags
+        {
+            None = 0,
+            AllowListenerMember = 1,
+            ListenerMember = 2,
+        }
 
-
-        public PathAccess(string memberName)
+        public PropertyPath(string memberName)
             : this(memberName, false)
         {
         }
 
-        public PathAccess(string memberName, bool isIndexer)
+        public PropertyPath(string memberName, bool isIndexer)
         {
             //if (memberName == null)
             //    throw new ArgumentNullException("memberName");
@@ -105,7 +109,7 @@ namespace LWJ.Data
 
 
 
-        public string MemberName { get => memberName; }
+        //public string MemberName { get => memberName; }
         /*       public bool AllowListenerChanged
                {
                    get
@@ -133,10 +137,10 @@ namespace LWJ.Data
                        }
                    }
                }*/
-        public Type MemberType { get => memberType; }
-        public int Index { get => index; }
+        //public Type MemberType { get => memberType; }
+        //public int Index { get => index; }
 
-        public bool IsIndexer { get => isIndexer; }
+        //public bool IsIndexer { get => isIndexer; }
 
         public bool CanSetValue()
         {
@@ -149,7 +153,7 @@ namespace LWJ.Data
 
 
 
-        private bool SetTarget(object value)
+        private bool SetTarget(object value, Flags prevFlags = Flags.None)
         {
             if (target == value)
             {
@@ -160,28 +164,33 @@ namespace LWJ.Data
 
             if (target != null)
             {
-                Type oldTargetType = target.GetType();
+                Type oldTargetType = targetType;
+                targetType = target.GetType();
 
-                if (oldTargetType != targetType)
+                if (targetType != oldTargetType)
                 {
                     accessMemberType = AccessMemberType.None;
                     memberType = null;
                     access = null;
-
-                    if (oldTargetType.IsValueType && !oldTargetType.IsPrimitive)
-                        isValueType = true;
-                    else
-                        isValueType = false;
+                    flags = Flags.None;
+                    if (!targetType.IsValueType)
+                    {
+                        if (first == this || (prevFlags & Flags.ListenerMember) == Flags.ListenerMember)
+                        {
+                            flags |= Flags.AllowListenerMember;
+                        }
+                    }
 
                     if (memberName == null)
                     {
                         accessMemberType = AccessMemberType.None;
                         memberType = targetType;
                         access = new SelfAccess();
+                        flags &= ~Flags.AllowListenerMember;
                     }
                     else if (!isIndexer)
                     {
-                        var property = oldTargetType.GetProperty(memberName);
+                        var property = targetType.GetProperty(memberName);
 
                         if (property != null)
                         {
@@ -191,7 +200,7 @@ namespace LWJ.Data
                         }
                         else
                         {
-                            var field = oldTargetType.GetField(memberName);
+                            var field = targetType.GetField(memberName);
                             if (field != null)
                             {
                                 access = new FieldAccess(field);
@@ -206,28 +215,28 @@ namespace LWJ.Data
                     }
                     else
                     {
-                        if (oldTargetType.IsArray)
+                        if (targetType.IsArray)
                         {
                             accessMemberType = AccessMemberType.Collection;
-                            memberType = oldTargetType.GetElementType();
+                            memberType = targetType.GetElementType();
                             access = new ArrayAccess() { index = index };
                         }
-                        else if (typeof(IList).IsAssignableFrom(oldTargetType))
+                        else if (typeof(IList).IsAssignableFrom(targetType))
                         {
                             accessMemberType = AccessMemberType.Collection;
-                            if (oldTargetType.IsGenericType)
-                                memberType = oldTargetType.GetGenericArguments()[0];
+                            if (targetType.IsGenericType)
+                                memberType = targetType.GetGenericArguments()[0];
                             else
                                 memberType = typeof(object);
                             access = new ListAccess() { index = index };
                         }
-                        else if (typeof(IEnumerable).IsAssignableFrom(oldTargetType))
+                        else if (typeof(IEnumerable).IsAssignableFrom(targetType))
                         {
                             accessMemberType = AccessMemberType.Collection;
                             memberType = typeof(object);
                             access = new IEnumerableAccess() { index = index };
                         }
-                        else if (typeof(IEnumerator).IsAssignableFrom(oldTargetType))
+                        else if (typeof(IEnumerator).IsAssignableFrom(targetType))
                         {
                             accessMemberType = AccessMemberType.Collection;
                             memberType = typeof(object);
@@ -235,13 +244,13 @@ namespace LWJ.Data
                         }
                     }
 
-                    targetType = oldTargetType;
                 }
 
                 ListenerChanged();
             }
             else
             {
+                flags = Flags.None;
                 accessMemberType = AccessMemberType.None;
                 targetType = null;
                 access = null;
@@ -256,10 +265,7 @@ namespace LWJ.Data
 
         void ListenerChanged()
         {
-            //if (!allowListenerChanged)
-            //    return;
-
-            if (isListenerChanged || memberName == null)
+            if (((flags & Flags.ListenerMember) != 0) || memberName == null || ((flags & Flags.AllowListenerMember) == 0))
                 return;
 
             if (accessMemberType == AccessMemberType.Member)
@@ -267,7 +273,7 @@ namespace LWJ.Data
                 if (target is INotifyPropertyChanged)
                 {
                     ((INotifyPropertyChanged)target).PropertyChanged += Target_PropertyChanged;
-                    isListenerChanged = true;
+                    flags |= Flags.ListenerMember;
                 }
             }
             else if (accessMemberType == AccessMemberType.Collection)
@@ -275,7 +281,7 @@ namespace LWJ.Data
                 if (target is INotifyCollectionChanged)
                 {
                     ((INotifyCollectionChanged)target).CollectionChanged += Target_CollectionChanged;
-                    isListenerChanged = true;
+                    flags |= Flags.ListenerMember;
                 }
             }
         }
@@ -284,7 +290,7 @@ namespace LWJ.Data
 
         void ReleaseListenerChanged()
         {
-            if (!isListenerChanged)
+            if ((flags & Flags.ListenerMember) == 0)
                 return;
             if (target != null)
             {
@@ -305,7 +311,7 @@ namespace LWJ.Data
                 }
             }
 
-            isListenerChanged = false;
+            flags &= ~Flags.ListenerMember;
         }
 
         private void Target_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -364,7 +370,7 @@ namespace LWJ.Data
                 {
                     value = null;
                 }
-                if (next.SetTarget(value))
+                if (next.SetTarget(value, flags))
                     return;
             }
 
@@ -427,7 +433,24 @@ namespace LWJ.Data
 
         public bool TryGetValue(out object value)
         {
-            return last.TryGetMemberValue(out value);
+            if (next != null)
+            {
+                if ((flags & Flags.ListenerMember) == 0)
+                {
+                    object tmp;
+                    if (TryGetMemberValue(out tmp))
+                    {
+                        next.SetTarget(tmp);
+                    }
+                    else
+                    {
+                        value = null;
+                        return false;
+                    }
+                }
+                return next.TryGetValue(out value);
+            }
+            return TryGetMemberValue(out value);
         }
 
 
@@ -447,12 +470,12 @@ namespace LWJ.Data
         }
 
 
-        public static PathAccess Create(string path)
+        public static PropertyPath Create(string path)
         {
-            PathAccess first = null;
+            PropertyPath first = null;
             if (string.IsNullOrEmpty(path) || path == ".")
             {
-                first = new PathAccess(null);
+                first = new PropertyPath(null);
                 first.first = first;
                 first.last = first;
                 return first;
@@ -460,7 +483,7 @@ namespace LWJ.Data
 
             string[] propertys = path.Split('.');
 
-            PathAccess last = null;
+            PropertyPath last = null;
             foreach (var p in propertys)
             {
                 var parts = p.Trim().Split('[');
@@ -481,7 +504,7 @@ namespace LWJ.Data
                     }
 
 
-                    PathAccess binder = new PathAccess(propName, isIndexer);
+                    PropertyPath binder = new PropertyPath(propName, isIndexer);
                     if (first == null)
                     {
                         first = binder;
@@ -495,7 +518,7 @@ namespace LWJ.Data
                 }
 
             }
-            PathAccess current = first;
+            PropertyPath current = first;
             while (current != null)
             {
                 current.first = first;
@@ -514,8 +537,8 @@ namespace LWJ.Data
                 next.Dispose();
                 next = null;
             }
-            if (isListenerChanged)
-                ReleaseListenerChanged();
+
+            ReleaseListenerChanged();
         }
 
         public override string ToString()
@@ -527,7 +550,7 @@ namespace LWJ.Data
 
 
 
-        ~PathAccess()
+        ~PropertyPath()
         {
             Dispose();
         }

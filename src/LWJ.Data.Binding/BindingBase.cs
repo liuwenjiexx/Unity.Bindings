@@ -11,7 +11,7 @@ namespace LWJ.Data
     {
         private object target;
         private string targetPath;
-        internal PathAccess targetBinder;
+        internal PropertyPath targetBinder;
         private bool isNullValue;
         private bool isFallbackValue;
         private string stringFormat;
@@ -63,7 +63,7 @@ namespace LWJ.Data
             if (string.IsNullOrEmpty(targetPath))
                 throw new Exception("TargetPath Empty");
 
-            targetBinder = PathAccess.Create(targetPath);
+            targetBinder = PropertyPath.Create(targetPath);
             targetBinder.Target = target;
             targetBinder.ChangedCallback = UpdateTargetToSource;
         }
@@ -126,6 +126,15 @@ namespace LWJ.Data
         static Dictionary<string, Tuple<Type, IValueConverter>> converters;
         static Dictionary<string, Tuple<Type, IMultiValueConverter>> multiConverters;
 
+        class ConverterItem
+        {
+            public Type type;
+            public IValueConverter valueConverter;
+            public IMultiValueConverter multiValueConverter;
+        }
+        static Dictionary<string, ConverterItem> cachedConverters;
+
+
         static BindingBase()
         {
             Init();
@@ -133,6 +142,7 @@ namespace LWJ.Data
 
         static void Init()
         {
+            cachedConverters = new Dictionary<string, ConverterItem>(StringComparer.InvariantCultureIgnoreCase);
             converters = new Dictionary<string, Tuple<Type, IValueConverter>>();
             multiConverters = new Dictionary<string, Tuple<Type, IMultiValueConverter>>();
 

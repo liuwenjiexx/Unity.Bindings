@@ -56,7 +56,7 @@
     <Compile Include="INotifyCollectionChanged.cs" />
     <Compile Include="INotifyPropertyChanged.cs" />
     <Compile Include="IValueConverter.cs" />
-    <Compile Include="PathAccess.cs" />
+    <Compile Include="PropertyPath.cs" />
     <Compile Include="MultiBinding.cs" />
     <Compile Include="PriorityBinding.cs" />
     <Compile Include="RelativeSource.cs" />
