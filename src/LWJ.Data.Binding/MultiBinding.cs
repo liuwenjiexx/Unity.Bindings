@@ -25,7 +25,7 @@ namespace LWJ.Data
         public MultiBinding()
         {
             mode = BindingMode.OneWay;
-            sourceValues = new ObservableCollection<object>(); 
+            sourceValues = new ObservableCollection<object>();
         }
 
         public BindingMode Mode { get => mode; set => mode = value; }
@@ -50,7 +50,7 @@ namespace LWJ.Data
         public override void Bind()
         {
             base.Bind();
-         
+
             sourceValues.Clear();
             sourceValues.CollectionChanged += SourceValues_CollectionChanged;
 

@@ -106,7 +106,7 @@ namespace LWJ.Data.Test
             int i = 0;
 
             PropertyPath path = PropertyPath.Create("Next.Next.Next");
-            path.ChangedCallback = () =>
+            path.TargetUpdatedCallback = () =>
             {
                 i++;
             };
@@ -148,7 +148,7 @@ namespace LWJ.Data.Test
             bool changed = false;
 
             PropertyPath path = PropertyPath.Create("IntProperty");
-            path.ChangedCallback = () =>
+            path.TargetUpdatedCallback = () =>
             {
                 changed = true;
             };
@@ -181,7 +181,7 @@ namespace LWJ.Data.Test
             TestStructData data1 = new TestStructData("struct1");
             PropertyPath path = PropertyPath.Create("IntProperty");
             data1.IntProperty = 1;
-            path.ChangedCallback = () =>
+            path.TargetUpdatedCallback = () =>
             {
                 changed = true;
             };
@@ -217,7 +217,7 @@ namespace LWJ.Data.Test
             bool changed = false;
             object value;
 
-            path.ChangedCallback = () =>
+            path.TargetUpdatedCallback = () =>
             {
                 changed = true;
             };
@@ -254,7 +254,7 @@ namespace LWJ.Data.Test
             bool changed = false;
             object value;
 
-            path.ChangedCallback = () =>
+            path.TargetUpdatedCallback = () =>
             {
                 changed = true;
             };
@@ -269,13 +269,13 @@ namespace LWJ.Data.Test
             Assert.IsFalse(changed);
             Assert.IsTrue(path.TryGetValue(out value));
             Assert.AreEqual(2, value);
-  
+
         }
 
         [TestMethod]
         public void NoNotify_Path()
         {
-            TestDataNoNotify data1 = new TestDataNoNotify("data1"); 
+            TestDataNoNotify data1 = new TestDataNoNotify("data1");
             TestDataNoNotify data2 = new TestDataNoNotify("data2");
 
             data1.Next = data2;
@@ -286,7 +286,7 @@ namespace LWJ.Data.Test
             bool changed = false;
             object value;
 
-            path.ChangedCallback = () =>
+            path.TargetUpdatedCallback = () =>
             {
                 changed = true;
             };
@@ -311,6 +311,35 @@ namespace LWJ.Data.Test
 
 
         }
+
+        [TestMethod]
+        public void UpdateCallback()
+        {
+            TestData target = new TestData("target");
+            target.StringProperty = "abc";
+
+            PropertyPath path = PropertyPath.Create("StringProperty");
+
+            int changed = 0;
+
+            path.TargetUpdatedCallback = () =>
+            {
+                changed++;
+            };
+
+            changed = 0;
+            path.Target = target;
+
+            Assert.AreEqual(1, changed);
+
+            changed = 0;
+            target.StringProperty = "123";
+
+            Assert.AreEqual(1, changed);
+
+
+        }
+
 
     }
 }

@@ -65,7 +65,7 @@ namespace LWJ.Data
 
             targetBinder = PropertyPath.Create(targetPath);
             targetBinder.Target = target;
-            targetBinder.ChangedCallback = UpdateTargetToSource;
+            targetBinder.TargetUpdatedCallback = UpdateTargetToSource;
         }
 
         public virtual void Unbind()

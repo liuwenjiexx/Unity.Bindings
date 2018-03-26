@@ -14,7 +14,7 @@ namespace LWJ.Data
         private object target;
         private Type targetType;
         private string memberName;
-        public Action ChangedCallback;
+        public Action TargetUpdatedCallback;
 
         private AccessMemberType accessMemberType;
         private IMemberAccess access;
@@ -377,13 +377,13 @@ namespace LWJ.Data
 
             if (first == this)
             {
-                if (ChangedCallback != null)
-                    ChangedCallback();
+                if (TargetUpdatedCallback != null)
+                    TargetUpdatedCallback();
             }
             else
             {
-                if (first.ChangedCallback != null)
-                    first.ChangedCallback();
+                if (first.TargetUpdatedCallback != null)
+                    first.TargetUpdatedCallback();
             }
 
         }

@@ -11,15 +11,13 @@ namespace LWJ.Data.Test
         [TestMethod]
         public void Bind_SourcePath_Null()
         {
-            string value = "hello";
-
             TestData target = new TestData();
-            Binding binding = new Binding(value, null, target, "StringProperty", BindingMode.OneWay);
 
-            Assert.IsNull(target.StringProperty);
+            Binding binding = new Binding("abc", null, target, "StringProperty", BindingMode.OneWay);
+
             binding.Bind();
 
-            Assert.AreEqual(value, target.StringProperty);
+            Assert.AreEqual("abc", target.StringProperty);
         }
 
         [TestMethod]
@@ -140,6 +138,19 @@ namespace LWJ.Data.Test
             Assert.AreEqual(2, target.IntProperty, "target");
         }
 
+        [TestMethod]
+        public void StringFormat()
+        {
+            TestData target = new TestData();
+
+            Binding binding = new Binding("123", null, target, "StringProperty", BindingMode.OneWay);
+            binding.StringFormat = "{0}456";
+
+            binding.Bind();
+
+            Assert.AreEqual("123456", target.StringProperty);
+        }
+
 
         private void TestPropertyType<T>(T value, string propertyName)
         {
@@ -173,7 +184,7 @@ namespace LWJ.Data.Test
 
             PropertyPath path = PropertyPath.Create("IntProperty");
             bool changed = false;
-            path.ChangedCallback = () =>
+            path.TargetUpdatedCallback = () =>
             {
                 changed = true;
             };
@@ -197,7 +208,7 @@ namespace LWJ.Data.Test
             data1.IntProperty = 0;
             Assert.IsTrue(path.TrySetValue(2));
             changed = false;
-            path.ChangedCallback = () =>
+            path.TargetUpdatedCallback = () =>
             {
                 changed = true;
             };
@@ -239,6 +250,124 @@ namespace LWJ.Data.Test
             Assert.AreEqual(1, data1.IntProperty);
             Assert.AreEqual(2, data2.IntProperty);
             Assert.AreEqual(1, i);
+        }
+
+
+        [TestMethod]
+        public void TargetUpdated_OneWay()
+        {
+            TestData target = new TestData();
+
+            Binding binding = new Binding("abc", null, target, "StringProperty", BindingMode.OneWay);
+
+            int sourceChanged = 0, targetChanged = 0;
+            binding.SourceUpdated += (o, e) =>
+            {
+                sourceChanged++;
+            };
+            binding.TargetUpdated += (o, e) =>
+            {
+                targetChanged++;
+            };
+            Action reset= ()=> {
+                sourceChanged = 0;
+                targetChanged = 0;
+            };
+
+            reset();
+            binding.Bind();
+
+            Assert.AreEqual(0, sourceChanged);
+            Assert.AreEqual(1, targetChanged);
+
+            reset();
+            binding.Source = "123";
+            Assert.AreEqual(0, sourceChanged);
+            Assert.AreEqual(1, targetChanged);
+
+
+            binding.Unbind();
+
+            TestData data1 = new TestData();
+            data1.StringProperty = "abc";
+
+            binding.Path = "StringProperty";
+            binding.Source = data1;
+
+            reset();
+            binding.Bind();
+            Assert.AreEqual(0, sourceChanged);
+            Assert.AreEqual(1, targetChanged);
+
+            reset();
+            data1.StringProperty = "123";
+            Assert.AreEqual(0, sourceChanged);
+            Assert.AreEqual(1, targetChanged);
+            
+            reset();
+            target.StringProperty = "456";
+            Assert.AreEqual(0, sourceChanged);
+            Assert.AreEqual(0, targetChanged);
+
+        }
+
+
+
+        [TestMethod]
+        public void TargetUpdated_TwoWay()
+        {
+            TestData target = new TestData();
+
+            Binding binding = new Binding("abc", null, target, "StringProperty", BindingMode.TwoWay);
+
+            int sourceChanged = 0, targetChanged = 0;
+            binding.SourceUpdated += (o, e) =>
+            {
+                sourceChanged++;
+            };
+            binding.TargetUpdated += (o, e) =>
+            {
+                targetChanged++;
+            };
+            Action reset = () => {
+                sourceChanged = 0;
+                targetChanged = 0;
+            };
+
+            reset();
+            binding.Bind();
+
+            Assert.AreEqual(0, sourceChanged);
+            Assert.AreEqual(1, targetChanged);
+
+            reset();
+            binding.Source = "123";
+            Assert.AreEqual(0, sourceChanged);
+            Assert.AreEqual(1, targetChanged);
+
+
+            binding.Unbind();
+
+            TestData data1 = new TestData();
+            data1.StringProperty = "abc";
+
+            binding.Path = "StringProperty";
+            binding.Source = data1;
+
+            reset();
+            binding.Bind();
+            Assert.AreEqual(1, sourceChanged);
+            Assert.AreEqual(1, targetChanged);
+
+            reset();
+            data1.StringProperty = "123";
+            Assert.AreEqual(1, sourceChanged);
+            Assert.AreEqual(1, targetChanged);
+
+            reset();
+            target.StringProperty = "456";
+            Assert.AreEqual(1, sourceChanged);
+            Assert.AreEqual(1, targetChanged);
         }
 
 

@@ -70,7 +70,7 @@ namespace LWJ.Data
                     if (sourceBinder != null)
                     {
                         sourceBinder.Target = source;
-                        UpdateSourceToTarget();
+                        //UpdateSourceToTarget();
                     }
 
                 }
@@ -212,7 +212,7 @@ namespace LWJ.Data
 
             //sourceBinder.AllowListenerChanged = isBindToTarget;
             sourceBinder.Target = source;
-            sourceBinder.ChangedCallback = UpdateSourceToTarget;
+            sourceBinder.TargetUpdatedCallback = UpdateSourceToTarget;
 
 
             if (mode == BindingMode.OneWayToSource)
