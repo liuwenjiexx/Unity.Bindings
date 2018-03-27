@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{B9007D96-5E31-4899-B932-81631CCF40B1}</ProjectGuid>
+    <ProjectGuid>{32172768-5DD6-44D8-B5D0-854333C3142A}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>LWJ.Data.Binding</RootNamespace>

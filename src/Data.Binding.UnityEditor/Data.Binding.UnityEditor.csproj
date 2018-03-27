@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{FDFAA166-DB4F-433F-AE88-B76FEBC1CDB2}</ProjectGuid>
+    <ProjectGuid>{E4A93705-3F58-476A-9B11-790F35846ACC}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>LWJ.Data.Binding.UnityEditor</RootNamespace>
@@ -58,13 +58,13 @@
     <Compile Include="RelativeSourceEntryPropertyDrawer.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\LWJ.Data.Binding.Unity\LWJ.Data.Binding.Unity.csproj">
-      <Project>{4787a92c-d792-4529-8916-0341595c3ec2}</Project>
-      <Name>LWJ.Data.Binding.Unity</Name>
+    <ProjectReference Include="..\Data.Binding.Unity\Data.Binding.Unity.csproj">
+      <Project>{b159fbed-de5c-4ba7-a685-93434a344df6}</Project>
+      <Name>Data.Binding.Unity</Name>
     </ProjectReference>
-    <ProjectReference Include="..\LWJ.Data.Binding\LWJ.Data.Binding.csproj">
-      <Project>{b9007d96-5e31-4899-b932-81631ccf40b1}</Project>
-      <Name>LWJ.Data.Binding</Name>
+    <ProjectReference Include="..\Data.Binding\Data.Binding.csproj">
+      <Project>{32172768-5dd6-44d8-b5d0-854333c3142a}</Project>
+      <Name>Data.Binding</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

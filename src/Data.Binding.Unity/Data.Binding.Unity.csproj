@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4787A92C-D792-4529-8916-0341595C3EC2}</ProjectGuid>
+    <ProjectGuid>{B159FBED-DE5C-4BA7-A685-93434A344DF6}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>LWJ.Data.Binding.Unity</RootNamespace>
@@ -54,9 +54,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\LWJ.Data.Binding\LWJ.Data.Binding.csproj">
-      <Project>{b9007d96-5e31-4899-b932-81631ccf40b1}</Project>
-      <Name>LWJ.Data.Binding</Name>
+    <ProjectReference Include="..\Data.Binding\Data.Binding.csproj">
+      <Project>{32172768-5dd6-44d8-b5d0-854333c3142a}</Project>
+      <Name>Data.Binding</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
