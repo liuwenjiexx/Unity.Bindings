@@ -21,6 +21,7 @@ namespace LWJ.UnityEditor
 
         static GUIStyle whiteTextureStyle;
         static Dictionary<Type, GUIContent[]> propertys;
+        static Dictionary<Type, GUIContent[]> writablePropertys;
 
         private static Dictionary<string, GUIContent> contents;
 
@@ -134,7 +135,7 @@ namespace LWJ.UnityEditor
             if (icon != null)
                 GUI.DrawTexture(rect, icon, scaleMode);
         }
-        static GUIContent[] GetPropertyContents(Type type)
+        static GUIContent[] GetPropertyContents(Type type, bool canWrite = false)
         {
             if (type == null)
                 return EmptyArray;
@@ -145,23 +146,41 @@ namespace LWJ.UnityEditor
             return propertys.GetOrCreateValue(type, (t) =>
             {
                 return (from o in ((from o in t.GetProperties()
-                                    select o.Name)/*.Concat((from o in t.GetFields()
+                                    orderby o.Name
+                                    select string.Format("{0}({1})", o.Name, o.PropertyType.Name))/*.Concat((from o in t.GetFields()
                                                             select o.Name))*/)
-                        orderby o
+                        select new GUIContent(o)).ToArray();
+            });
+        }
+        static GUIContent[] GetWritablePropertyContents(Type type)
+        {
+            if (type == null)
+                return EmptyArray;
+
+            if (writablePropertys == null)
+                writablePropertys = new Dictionary<Type, GUIContent[]>();
+
+            return writablePropertys.GetOrCreateValue(type, (t) =>
+            {
+                return (from o in ((from o in t.GetProperties()
+                                    where o.CanWrite
+                                    orderby o.Name
+                                    select string.Format("{0}({1})", o.Name, o.PropertyType.Name))/*.Concat((from o in t.GetFields()
+                                                            select o.Name))*/)
                         select new GUIContent(o)).ToArray();
             });
         }
 
-        public static string PropertyNamesField(string label, Type type, string propertyName, params GUILayoutOption[] options)
+        public static string PropertyNamesField(string label, Type type, string propertyName, bool canWrite, params GUILayoutOption[] options)
         {
 
-            return PropertyNamesField(true, label, type, propertyName, options);
+            return PropertyNamesField(true, label, type, propertyName, canWrite, options);
         }
-        public static string PropertyNamesField(Type type, string propertyName, params GUILayoutOption[] options)
+        public static string PropertyNamesField(Type type, string propertyName, bool canWrite, params GUILayoutOption[] options)
         {
-            return PropertyNamesField(false, null, type, propertyName, options);
+            return PropertyNamesField(false, null, type, propertyName, canWrite, options);
         }
-        private static string PropertyNamesField(bool hasLabel, string label, Type type, string propertyName, params GUILayoutOption[] options)
+        private static string PropertyNamesField(bool hasLabel, string label, Type type, string propertyName, bool canWrite, params GUILayoutOption[] options)
         {
 
             using (new GUILayout.HorizontalScope())
@@ -174,7 +193,7 @@ namespace LWJ.UnityEditor
                 int selectedIndex = -1;
                 int width = 30;
 
-                selectedIndex = EditorGUILayout.Popup(selectedIndex, contents, GUILayout.Width(width), GUILayout.MaxWidth(width), GUILayout.ExpandWidth(false));
+                selectedIndex = EditorGUILayout.Popup(selectedIndex, contents, GUILayout.Width(width), GUILayout.MaxWidth(width),GUILayout.MinWidth(width), GUILayout.ExpandWidth(false));
                 if (selectedIndex != -1)
                     propertyName = contents[selectedIndex].text;
 
@@ -185,7 +204,7 @@ namespace LWJ.UnityEditor
 
 
 
-        public static Object ComponentAndGameObjectPop(string label, Object value, bool allowSetObject, params GUILayoutOption[] options)
+        public static Object ComponentAndGameObjectPop(string label, GameObject go, Object value, bool allowSetObject, params GUILayoutOption[] options)
         {
             if (allowSetObject)
             {
@@ -194,18 +213,18 @@ namespace LWJ.UnityEditor
 
                     value = EditorGUILayout.ObjectField(label, value, typeof(Object), true);
 
-                    value = ComponentAndGameObjectPop(value, GUILayout.MaxWidth(120));
+                    value = ComponentAndGameObjectPop(go, value, GUILayout.MaxWidth(120));
 
                 }
             }
             else
             {
-                value = ComponentAndGameObjectPop(label, value, GUILayout.MaxWidth(120));
+                value = ComponentAndGameObjectPop(label, go, value, GUILayout.MaxWidth(120));
             }
             return value;
         }
 
-        public static Object ComponentAndGameObjectPop(Object value, bool allowSetObject, params GUILayoutOption[] options)
+        public static Object ComponentAndGameObjectPop(GameObject go, Object value, bool allowSetObject, params GUILayoutOption[] options)
         {
             if (allowSetObject)
             {
@@ -214,28 +233,28 @@ namespace LWJ.UnityEditor
 
                     value = EditorGUILayout.ObjectField(value, typeof(Object), true);
 
-                    value = ComponentAndGameObjectPop(value, GUILayout.MaxWidth(120));
+                    value = ComponentAndGameObjectPop(go, value, GUILayout.MaxWidth(120));
 
                 }
             }
             else
             {
-                value = ComponentAndGameObjectPop(value, GUILayout.MaxWidth(120));
+                value = ComponentAndGameObjectPop(go, value, GUILayout.MaxWidth(120));
             }
             return value;
         }
 
 
-        public static Object ComponentAndGameObjectPop(string label, Object value, params GUILayoutOption[] options)
+        public static Object ComponentAndGameObjectPop(string label, GameObject go, Object value, params GUILayoutOption[] options)
         {
-            return ComponentAndGameObjectPop(true, label, value, options);
+            return ComponentAndGameObjectPop(true, label, go, value, options);
         }
 
-        public static Object ComponentAndGameObjectPop(Object value, params GUILayoutOption[] options)
+        public static Object ComponentAndGameObjectPop(GameObject go, Object value, params GUILayoutOption[] options)
         {
-            return ComponentAndGameObjectPop(false, null, value, options);
+            return ComponentAndGameObjectPop(false, null, go, value, options);
         }
-        private static Object ComponentAndGameObjectPop(bool hasLabel, string label, Object value, params GUILayoutOption[] options)
+        private static Object ComponentAndGameObjectPop(bool hasLabel, string label, GameObject go1, Object value, params GUILayoutOption[] options)
         {
             int selectedIndex = -1;
             Object[] values = null;
@@ -257,22 +276,32 @@ namespace LWJ.UnityEditor
 
             if (go != null)
             {
-                values = go.GetComponents<Component>().Union(new Object[] { go }).ToArray();
+                values = go.GetComponents<Component>().Union(new Object[] { go }).OrderBy(o => o.GetType().Name).ToArray();
                 displayNames = values.Select(o => o.GetType().Name).ToArray();
                 if (value != null)
-                    selectedIndex = displayNames.IndexOf(value.GetType().Name);
+                {
+                    for (int i = 0; i < values.Length; i++)
+                    {
+                        if (values[i] == value)
+                        {
+                            selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
             }
             else
             {
                 displayNames = new string[] { };
 
             }
-
+            
             int newIndex;
             if (hasLabel)
                 newIndex = EditorGUILayout.Popup(label, selectedIndex, displayNames, options);
             else
                 newIndex = EditorGUILayout.Popup(selectedIndex, displayNames, options);
+            
             if (newIndex != selectedIndex)
             {
                 value = values[newIndex];

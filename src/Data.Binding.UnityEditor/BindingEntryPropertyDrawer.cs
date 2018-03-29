@@ -162,7 +162,7 @@ namespace LWJ.UnityEditor
         SerializedProperty converterParameterProperty;
         SerializedProperty notifyOnSourceUpdatedProperty;
         SerializedProperty notifyOnTargetUpdatedProperty;
-        SerializedProperty childProperty;
+        SerializedProperty childrenProperty;
         SerializedProperty bindingTypeProperty;
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
@@ -174,6 +174,9 @@ namespace LWJ.UnityEditor
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
+            //if (property.depth > 5)
+            //    return;                
+
             sourceTypeProperty = property.FindPropertyRelative("sourceType");
             sourceProperty = property.FindPropertyRelative("source");
             relativeProperty = property.FindPropertyRelative("relativeSource");
@@ -188,17 +191,18 @@ namespace LWJ.UnityEditor
             converterParameterProperty = property.FindPropertyRelative("converterParameter");
             notifyOnSourceUpdatedProperty = property.FindPropertyRelative("enabledSourceUpdated");
             notifyOnTargetUpdatedProperty = property.FindPropertyRelative("enabledTargetUpdated");
-            childProperty = property.FindPropertyRelative("children");
+            childrenProperty = property.FindPropertyRelative("children");
             bindingTypeProperty = property.FindPropertyRelative("bindingType");
 
 
             BindingBehaviour.BindingType bindingType = BindingBehaviour.BindingType.Binding;
             bindingType = (BindingBehaviour.BindingType)bindingTypeProperty.intValue;
 
+
             EditorGUI.BeginProperty(position, label, property);
 
             if (label != GUIContent.none)
-                position = EditorGUI.PrefixLabel(position, GUIUtility.GetControlID(FocusType.Passive), label);
+                EditorGUI.LabelField(position, label);
 
             using (new GUILayout.VerticalScope())
             {
@@ -211,40 +215,41 @@ namespace LWJ.UnityEditor
                     Type sourceType = null;
                     if (sourceProperty.objectReferenceValue != null)
                         sourceType = sourceProperty.objectReferenceValue.GetType();
-                    pathProperty.stringValue = EditorGUIHelper.PropertyNamesField(pathProperty.displayName, sourceType, pathProperty.stringValue);
+                    pathProperty.stringValue = EditorGUIHelper.PropertyNamesField(pathProperty.displayName, sourceType, pathProperty.stringValue, true);
                 }
 
 
                 Type targetType = null;
-                GameObject targetGo = ((BindingBehaviour)property.serializedObject.targetObject).gameObject;
+                //GameObject targetGo = ((BindingBehaviour)property.serializedObject.targetObject).gameObject;
 
-                if (targetProperty.objectReferenceValue != null)
-                {
-                    if (targetProperty.objectReferenceValue is GameObject)
-                    {
-                        if (targetProperty.objectReferenceValue != targetGo)
-                            targetProperty.objectReferenceValue = null;
-                    }
-                    else if (targetProperty.objectReferenceValue is Component)
-                    {
-                        if (((Component)targetProperty.objectReferenceValue).gameObject != targetGo)
-                            targetProperty.objectReferenceValue = null;
-                    }
-                    else
-                    {
-                        targetProperty.objectReferenceValue = null;
-                    }
+                //if (targetProperty.objectReferenceValue != null)
+                //{
+                //if (targetProperty.objectReferenceValue is GameObject)
+                //{
+                //    if (targetProperty.objectReferenceValue != targetGo)
+                //        targetProperty.objectReferenceValue = null;
+                //}
+                //else if (targetProperty.objectReferenceValue is Component)
+                //{
+                //    if (((Component)targetProperty.objectReferenceValue).gameObject != targetGo)
+                //        targetProperty.objectReferenceValue = null;
+                //}
+                //else
+                //{
+                //    targetProperty.objectReferenceValue = null;
+                //}
 
-                }
-                if (targetProperty.objectReferenceValue == null)
-                    targetProperty.objectReferenceValue = targetGo;
+                //}
+                //if (targetProperty.objectReferenceValue == null)
+                //    targetProperty.objectReferenceValue = targetGo;
 
-                targetProperty.objectReferenceValue = EditorGUIHelper.ComponentAndGameObjectPop(targetProperty.displayName, targetProperty.objectReferenceValue);
+                //targetProperty.objectReferenceValue = EditorGUIHelper.ComponentAndGameObjectPop(targetProperty.displayName, targetProperty.objectReferenceValue);
+                DrawTarget(property);
 
                 if (targetProperty.objectReferenceValue != null)
                     targetType = targetProperty.objectReferenceValue.GetType();
 
-                targetPathProperty.stringValue = EditorGUIHelper.PropertyNamesField(targetPathProperty.displayName, targetType, targetPathProperty.stringValue);
+                targetPathProperty.stringValue = EditorGUIHelper.PropertyNamesField(targetPathProperty.displayName, targetType, targetPathProperty.stringValue, true);
 
                 EditorGUILayout.PropertyField(targetNullValueProperty);
 
@@ -260,9 +265,9 @@ namespace LWJ.UnityEditor
 
                             EditorGUILayout.PropertyField(converterParameterProperty);
 
-                            EditorGUILayout.PropertyField(notifyOnSourceUpdatedProperty);
+                            //EditorGUILayout.PropertyField(notifyOnSourceUpdatedProperty);
 
-                            EditorGUILayout.PropertyField(notifyOnTargetUpdatedProperty);
+                            //EditorGUILayout.PropertyField(notifyOnTargetUpdatedProperty);
                         }
                         break;
                     case BindingBehaviour.BindingType.MultiBinding:
@@ -271,14 +276,15 @@ namespace LWJ.UnityEditor
                             //EditorGUILayout.PropertyField(converterProperty);
                             BindingEditor.MultiValueConverterField(converterProperty);
                             EditorGUILayout.PropertyField(converterParameterProperty);
-                            EditorGUILayout.PropertyField(notifyOnSourceUpdatedProperty);
-                            EditorGUILayout.PropertyField(notifyOnTargetUpdatedProperty);
+                            //EditorGUILayout.PropertyField(notifyOnSourceUpdatedProperty);
+                            //EditorGUILayout.PropertyField(notifyOnTargetUpdatedProperty);
 
                             using (new EditorGUILayoutScopes.IndentLevel())
                             {
                                 // DrawEntryArray(childProperty);
                                 // EditorGUILayout.PropertyField(childProperty, true);
-                                BindingEditor.DrawEntryArray(childProperty);
+                                //BindingEditor.DrawEntryArray(childProperty);
+                                BindingEditor.DrawMultiBindingChildren(childrenProperty);
                             }
 
                         }
@@ -292,13 +298,26 @@ namespace LWJ.UnityEditor
 
             EditorGUI.EndProperty();
         }
+
+        public static void DrawTarget(SerializedProperty item)
+        {
+            var targetProperty = item.FindPropertyRelative("target");
+            GameObject targetGo = ((BindingBehaviour)item.serializedObject.targetObject).gameObject;
+
+            // EditorGUILayout.PropertyField(targetProperty);
+
+            targetProperty.objectReferenceValue = EditorGUIHelper.ComponentAndGameObjectPop(targetProperty.displayName, targetGo, targetProperty.objectReferenceValue, true);
+
+        }
+
         public static void DrawSource(SerializedProperty item)
         {
             var sourceTypeProperty = item.FindPropertyRelative("sourceType");
             var sourceProperty = item.FindPropertyRelative("source");
             var relativeProperty = item.FindPropertyRelative("relativeSource");
+            GameObject go = ((BindingBehaviour)item.serializedObject.targetObject).gameObject;
 
-            EditorGUILayout.PropertyField(sourceTypeProperty);
+            sourceTypeProperty.intValue =(int)(object) EditorGUILayout.EnumPopup(sourceTypeProperty.displayName, (BindingBehaviour.SourceType)sourceTypeProperty.intValue);
             using (new EditorGUILayoutScopes.IndentLevel())
             {
                 switch ((BindingBehaviour.SourceType)sourceTypeProperty.intValue)
@@ -327,7 +346,7 @@ namespace LWJ.UnityEditor
                     case BindingBehaviour.SourceType.Source:
                     default:
 
-                        sourceProperty.objectReferenceValue = EditorGUIHelper.ComponentAndGameObjectPop(sourceProperty.displayName, sourceProperty.objectReferenceValue, true);
+                        sourceProperty.objectReferenceValue = EditorGUIHelper.ComponentAndGameObjectPop(sourceProperty.displayName, go, sourceProperty.objectReferenceValue, true);
                         break;
                 }
             }
@@ -434,7 +453,7 @@ namespace LWJ.UnityEditor
                     Type sourceType = null;
                     if (sourceProperty.objectReferenceValue != null)
                         sourceType = sourceProperty.objectReferenceValue.GetType();
-                    pathProperty.stringValue = EditorGUIHelper.PropertyNamesField(pathProperty.displayName, sourceType, pathProperty.stringValue);
+                    pathProperty.stringValue = EditorGUIHelper.PropertyNamesField(pathProperty.displayName, sourceType, pathProperty.stringValue, false);
                 }
 
 
@@ -450,12 +469,9 @@ namespace LWJ.UnityEditor
                             EditorGUILayout.PropertyField(modeProperty);
                             //EditorGUILayout.PropertyField(converterProperty);
                             BindingEditor.ValueConverterField(converterProperty);
-
                             EditorGUILayout.PropertyField(converterParameterProperty);
-
-                            EditorGUILayout.PropertyField(notifyOnSourceUpdatedProperty);
-
-                            EditorGUILayout.PropertyField(notifyOnTargetUpdatedProperty);
+                            //EditorGUILayout.PropertyField(notifyOnSourceUpdatedProperty);
+                            //EditorGUILayout.PropertyField(notifyOnTargetUpdatedProperty);
                         }
                         break;
                     case BindingBehaviour.BindingType.MultiBinding:
@@ -464,8 +480,8 @@ namespace LWJ.UnityEditor
                             //EditorGUILayout.PropertyField(converterProperty);
                             BindingEditor.MultiValueConverterField(converterProperty);
                             EditorGUILayout.PropertyField(converterParameterProperty);
-                            EditorGUILayout.PropertyField(notifyOnSourceUpdatedProperty);
-                            EditorGUILayout.PropertyField(notifyOnTargetUpdatedProperty);
+                            //EditorGUILayout.PropertyField(notifyOnSourceUpdatedProperty);
+                            //EditorGUILayout.PropertyField(notifyOnTargetUpdatedProperty);
 
                         }
                         break;

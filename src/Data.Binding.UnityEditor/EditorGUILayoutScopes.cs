@@ -12,16 +12,23 @@ namespace LWJ.UnityEditor
         {
 
             public static int IndentPixels;
+            private int indentLevel;
 
             public IndentLevel()
             {
-                EditorGUI.indentLevel++;
-                EditorGUILayout.Space(); 
+                indentLevel = EditorGUI.indentLevel++;
+                //EditorGUILayout.Space();
+            }
+
+            public IndentLevel(int indentLevel)
+            {
+                this.indentLevel = indentLevel;
+                EditorGUI.indentLevel = indentLevel;
             }
 
             public void Dispose()
             {
-                EditorGUI.indentLevel--;
+                EditorGUI.indentLevel = indentLevel;
             }
 
         }

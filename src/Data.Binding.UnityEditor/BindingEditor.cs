@@ -74,16 +74,19 @@ namespace LWJ.UnityEditor
                 RemoveEntry(itemsProperty, toBeRemovedEntry);
             }
 
-
-
-            Rect pos = GUILayoutUtility.GetRect(addButtonContent, GUI.skin.button);
+            
             const float addButonWidth = 200f;
-            pos.x = pos.x + (pos.width - addButonWidth) / 2;
-            pos.width = addButonWidth;
-            if (GUI.Button(pos, addButtonContent))
+
+            using (new GUILayout.HorizontalScope())
             {
-                ShowAddBindingMenu(itemsProperty);
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button(addButtonContent, GUILayout.MinWidth(addButonWidth)))
+                {
+                    ShowAddBindingMenu(itemsProperty);
+                }
+                GUILayout.FlexibleSpace();
             }
+
         }
 
 
@@ -128,37 +131,200 @@ namespace LWJ.UnityEditor
                 }
                 GUIContent content = new GUIContent(names[i]);
                 if (active)
-                    menu.AddItem(content, false, OnAddNewSelected, new object[] { itemsProperty, i });
+                    menu.AddItem(content, false, (data) =>
+                    {
+                        object[] array = (object[])data;
+                        //var itemsProperty = (SerializedProperty)array[0];
+                        int selected = (int)array[1];
+
+                        itemsProperty.arraySize += 1;
+
+                        SerializedProperty bindingEntry = itemsProperty.GetArrayElementAtIndex(itemsProperty.arraySize - 1);
+
+                        var sp1 = bindingEntry.FindPropertyRelative("bindings");
+                        sp1.ClearArray();
+                        sp1.arraySize = 1;
+
+                        SerializedProperty typeProperty = bindingEntry.FindPropertyRelative("type");
+
+                        typeProperty.enumValueIndex = selected;
+
+                        itemsProperty.serializedObject.ApplyModifiedProperties();
+                    }, new object[] { itemsProperty, i });
                 //else
-                    //menu.AddDisabledItem(content);
+                //menu.AddDisabledItem(content);
             }
             menu.ShowAsContext();
             Event.current.Use();
         }
-        private static void OnAddNewSelected(object data)
+
+
+        public static void DrawArrayStyle2(GUIContent label, SerializedProperty arrayProperty, Func<SerializedProperty, GUIContent> getItemLabel)
         {
-            object[] array = (object[])data;
-            var itemsProperty = (SerializedProperty)array[0];
-            int selected = (int)array[1];
+            using (new EditorGUILayoutScopes.IndentLevel(0))
+            using (new GUILayout.HorizontalScope())
+            {
+              
+                Event evt = Event.current;
 
-            itemsProperty.arraySize += 1;
+                EditorArrayState ctrlState;
+                int ctrlId = GUIUtility.GetControlID(FocusType.Passive);
+                ctrlState = (EditorArrayState)GUIUtility.GetStateObject(typeof(EditorArrayState), ctrlId);
 
-            SerializedProperty bindingEntry = itemsProperty.GetArrayElementAtIndex(itemsProperty.arraySize - 1);
 
-            var sp1 = bindingEntry.FindPropertyRelative("bindings");
-            sp1.ClearArray();
-            sp1.arraySize = 1;
 
-            SerializedProperty typeProperty = bindingEntry.FindPropertyRelative("type");
+                using (new EditorGUILayout.VerticalScope("box"))
+                {
+                   
+                    GUILayout.Label(label ?? GUIContent.none);
+                    int removeIndex = -1;
+                    using (new GUILayout.VerticalScope())
+                    {
 
-            typeProperty.enumValueIndex = selected;
+                        for (int i = 0; i < arrayProperty.arraySize; i++)
+                        {
 
-            itemsProperty.serializedObject.ApplyModifiedProperties();
+                            if (ctrlState.SelectedIndex == i)
+                            {
+                                GUI.backgroundColor = Color.blue;
+                            }
+                            using (new GUILayout.HorizontalScope())
+                            {
+                                //GUILayout.Space(EditorGUI.indentLevel * 14);                                
+                                // EditorGUILayout.Space();
+                                //using (new EditorGUIScopes.IndentLevel())
+                                using (new GUILayout.VerticalScope("box"))
+                                {
+                                    GUI.backgroundColor = Color.white;
+                                    SerializedProperty itemProperty = arrayProperty.GetArrayElementAtIndex(i);
+                                    using (new GUILayout.HorizontalScope())
+                                    {
+                                        GUIContent itemLabel = GUIContent.none;
+                                        if (getItemLabel != null)
+                                            itemLabel = getItemLabel(itemProperty);
+                                        EditorGUILayout.LabelField(itemLabel);
+                                        GUILayout.FlexibleSpace();
+                                        if (GUILayout.Button(EditorGUIHelper.IconToolbarMinus, GUIStyle.none))
+                                        {
+                                            removeIndex = i;
+                                        }
+                                    }
+                                    EditorGUILayout.PropertyField(itemProperty, GUIContent.none, true);
+                                }
+                                if (GUILayoutUtility.GetLastRect().Contains(evt.mousePosition))
+                                {
+                                    if (evt.type == EventType.MouseDown)
+                                    {
+                                        ctrlState.SelectedIndex = i;
+                                        evt.Use();
+                                    }
+                                }
+                                else
+                                {
+                                    if (evt.type == EventType.mouseDown)
+                                    {
+                                        ctrlState.SelectedIndex = -1;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+
+                    if (removeIndex >= 0)
+                    {
+                        arrayProperty.DeleteArrayElementAtIndex(removeIndex);
+                    }
+                }
+                 
+            }
         }
 
+        public static void DrawMultiBindingChildren(SerializedProperty itemsProperty)
+        {
+            /*  int toBeRemovedEntry = -1;
+              Vector2 removeButtonSize = GUIStyle.none.CalcSize(EditorGUIHelper.IconToolbarMinus);
+
+              for (int i = 0; i < itemsProperty.arraySize; ++i)
+              {
+                  SerializedProperty itemProperty = itemsProperty.GetArrayElementAtIndex(i);
+
+                  using (new GUILayout.HorizontalScope())
+                  {
+                      EditorGUILayout.LabelField(((BindingBehaviour.BindingType)itemProperty.FindPropertyRelative("bindingType").intValue).ToStringOrEmpty());
+                      GUILayout.FlexibleSpace();
+                      if (GUILayout.Button(EditorGUIHelper.IconToolbarMinus, GUIStyle.none))
+                      {
+                          toBeRemovedEntry = i;
+                      }
+                  }
+                  using (new EditorGUILayoutScopes.IndentLevel())
+                  {
+                      EditorGUILayout.PropertyField(itemProperty, GUIContent.none);
+                  }
+                  //Rect callbackRect = GUILayoutUtility.GetLastRect();
+
+                  //Rect removeButtonPos = new Rect(callbackRect.xMax - removeButtonSize.x - 8, callbackRect.y + 1, removeButtonSize.x, removeButtonSize.y);
+                  //if (GUI.Button(removeButtonPos, EditorGUIHelper.IconToolbarMinus, GUIStyle.none))
+                  //{
+                  //    toBeRemovedEntry = i;
+                  //}
+
+              }
+
+              if (toBeRemovedEntry > -1)
+              {
+                  RemoveEntry(itemsProperty, toBeRemovedEntry);
+              }*/
+
+            using (new GUILayout.HorizontalScope())
+            {
+                EditorGUILayout.Space();
+                DrawArrayStyle2(new GUIContent("Bindings"),
+                    itemsProperty,
+                    (itemProperty) => new GUIContent(((BindingBehaviour.BindingType)itemProperty.FindPropertyRelative("bindingType").intValue).ToStringOrEmpty())
+                    );
+                EditorGUILayout.Space();
+            }
+            EditorGUILayout.Space();
+
+            const float addButonWidth = 200f;
+            using (new GUILayout.HorizontalScope())
+            {
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button(new GUIContent("Add"), GUILayout.MinWidth(addButonWidth)))
+                {
+                    GenericMenu menu = new GenericMenu();
+                    Type enumType = typeof(BindingBehaviour.BindingType);
+                    string[] names = new string[] { BindingBehaviour.BindingType.Binding.ToString() };
+                    int[] values = new int[] { (int)BindingBehaviour.BindingType.Binding };
+
+                    GUIContent content = new GUIContent(names[0]);
+
+                    menu.AddItem(content, false, (data) =>
+                    {
+                        object[] array = (object[])data;
+                        //var itemsProperty = (SerializedProperty)array[0];
+                        int value = (int)array[1];
+
+                        itemsProperty.arraySize += 1;
+
+                        SerializedProperty bindingEntry = itemsProperty.GetArrayElementAtIndex(itemsProperty.arraySize - 1);
+
+                        SerializedProperty typeProperty = bindingEntry.FindPropertyRelative("bindingType");
+
+                        typeProperty.intValue = value;
+
+                        itemsProperty.serializedObject.ApplyModifiedProperties();
+                    }, new object[] { itemsProperty, values[0] });
 
 
-
+                    menu.ShowAsContext();
+                    Event.current.Use();
+                }
+                GUILayout.FlexibleSpace();
+            }
+        }
 
 
         public static void ValueConverterField(SerializedProperty property, params GUILayoutOption[] options)
