@@ -8,7 +8,7 @@ namespace LWJ.Data
 {
     public class PriorityBinding : BindingBase
     {
-        private List<BindingBase> bindings = new List<BindingBase>();
+        private List<BindingBase> bindings;
         private BindingBase current;
         private int currentIndex;
         private bool isUpdating;
@@ -18,6 +18,7 @@ namespace LWJ.Data
         {
             currentIndex = -1;
             sourceValues = new ObservableCollection<object>();
+            bindings = new List<BindingBase>();
             sourceValues.CollectionChanged += SourceValues_CollectionChanged;
 
         }
@@ -106,9 +107,9 @@ namespace LWJ.Data
             if (!isUpdating)
                 UpdateSourceToTarget();
         }
-         
+
         protected override void UpdateSourceToTarget()
-        { 
+        {
 
             if (!targetBinder.CanSetValue())
                 return;
@@ -154,7 +155,7 @@ namespace LWJ.Data
             bindings.Remove(binding);
         }
 
-         
+
     }
 
 

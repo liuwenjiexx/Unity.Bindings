@@ -10,6 +10,13 @@ namespace LWJ.Unity
 {
     internal static partial class InternalExtensions
     {
+        public static bool IsNull(this object obj)
+        {
+            if (obj is UnityEngine.Object)
+                return !(UnityEngine.Object)obj;
+            return obj == null;
+        }
+
         public static string ToStringOrEmpty(this object source)
         {
             string result;
@@ -73,7 +80,7 @@ namespace LWJ.Unity
 
         public static string GetDefaultMemberName(this Type type)
         {
-            var attrMember= type.GetCustomAttribute<DefaultMemberAttribute>(true);
+            var attrMember = type.GetCustomAttribute<DefaultMemberAttribute>(true);
             if (attrMember == null)
                 return null;
             return attrMember.MemberName;
@@ -95,7 +102,7 @@ namespace LWJ.Unity
 
             return result;
         }
-       
+
         public static object GetValueUnity(this PropertyInfo source, object obj/*, object[] index*/)
         {
             if (source == null) throw new NullReferenceException();

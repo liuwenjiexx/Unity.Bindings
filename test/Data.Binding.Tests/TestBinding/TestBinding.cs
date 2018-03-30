@@ -1,4 +1,8 @@
-﻿using System;
+﻿#define DEBUG_CMD
+using System;
+using System.Diagnostics;
+using System.IO;
+using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace LWJ.Data.Test
@@ -6,7 +10,63 @@ namespace LWJ.Data.Test
     [TestClass]
     public class TestBinding
     {
+        [TestMethod]
+        public void Test11()
+        {
+            ExecuteCommand("pdb2mdb LWJ.Data.Binding.dll", @"D:\LWJ\github\build\debug");
+        }
+        private void ExecuteCommand(string cmdText, string baseDir)
+        {
+            if (string.IsNullOrEmpty(cmdText))
+                return;
 
+
+            ProcessStartInfo startInfo = new ProcessStartInfo("cmd");
+            startInfo.UseShellExecute = false;
+            startInfo.RedirectStandardInput = true;
+            startInfo.WorkingDirectory = baseDir;
+
+#if DEBUG_CMD
+            
+            startInfo.CreateNoWindow = false;
+            startInfo.WindowStyle = ProcessWindowStyle.Normal;
+            startInfo.RedirectStandardError = false;
+#else
+
+            startInfo.CreateNoWindow = true;
+            startInfo.RedirectStandardError = true;
+            startInfo.StandardErrorEncoding = Encoding.Default;
+#endif
+
+            using (var process = Process.Start(startInfo))
+            {
+                Encoding encoding = process.StandardInput.Encoding;
+
+                var input = process.StandardInput;
+
+                input.WriteLine();
+                input.WriteLine(cmdText);
+                input.Flush();
+
+                input.WriteLine("exit");
+                input.Flush();
+                process.WaitForExit();
+#if !DEBUG_CMD
+                using (MemoryStream ms = new MemoryStream())
+                using (var reader = new StreamReader(ms, Encoding.UTF8))
+                {
+                    process.WaitForExit();
+
+                    string error = process.StandardError.ReadToEnd();
+                    if (!string.IsNullOrEmpty(error))
+                    {
+                        throw new Exception(error);
+                    }
+                }
+#endif
+            }
+
+        }
 
         [TestMethod]
         public void Bind_SourcePath_Null()
@@ -269,7 +329,8 @@ namespace LWJ.Data.Test
             {
                 targetChanged++;
             };
-            Action reset= ()=> {
+            Action reset = () =>
+            {
                 sourceChanged = 0;
                 targetChanged = 0;
             };
@@ -303,7 +364,7 @@ namespace LWJ.Data.Test
             data1.StringProperty = "123";
             Assert.AreEqual(0, sourceChanged);
             Assert.AreEqual(1, targetChanged);
-            
+
             reset();
             target.StringProperty = "456";
             Assert.AreEqual(0, sourceChanged);
@@ -329,7 +390,8 @@ namespace LWJ.Data.Test
             {
                 targetChanged++;
             };
-            Action reset = () => {
+            Action reset = () =>
+            {
                 sourceChanged = 0;
                 targetChanged = 0;
             };

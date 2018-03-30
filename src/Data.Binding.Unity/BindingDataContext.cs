@@ -2,11 +2,12 @@
 using System.Collections;
 using LWJ.Data;
 using System.ComponentModel;
+using System.Reflection;
 
 namespace LWJ.Unity
 {
 
-
+    [DefaultMember("DataContext")]
     public class BindingDataContext : MonoBehaviour, IDataContext, INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;

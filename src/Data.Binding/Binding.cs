@@ -46,8 +46,8 @@ namespace LWJ.Data
         {
             //if (path == null)
             //    throw new ArgumentNullException("path");
-            if (targetPath == null)
-                throw new ArgumentNullException("targetPath");
+            //if (targetPath == null)
+            //    throw new ArgumentNullException("targetPath");
             this.mode = mode;
             this.source = source;
             this.path = path;

@@ -14,18 +14,21 @@ namespace LWJ.Data
         private IMultiValueConverter converter;
         private object converterParameter;
         private BindingMode mode;
-        private bool enabledSourceUpdated = true;
-        private bool enabledTargetUpdated = true;
+        private bool enabledSourceUpdated;
+        private bool enabledTargetUpdated;
 
-        private List<BindingBase> bindings = new List<BindingBase>();
+        private List<BindingBase> bindings;
 
         private ObservableCollection<object> sourceValues;
 
 
         public MultiBinding()
         {
+            enabledSourceUpdated = true;
+            enabledTargetUpdated = true;
             mode = BindingMode.OneWay;
             sourceValues = new ObservableCollection<object>();
+            bindings = new List<BindingBase>();
         }
 
         public BindingMode Mode { get => mode; set => mode = value; }

@@ -9,6 +9,8 @@ using System.Linq;
 using LWJ.Data;
 using System.ComponentModel;
 using Component = UnityEngine.Component;
+using UnityEngine.UI;
+
 public class ArrayPropertyAttribute : PropertyAttribute
 {
 
@@ -26,10 +28,23 @@ namespace LWJ.Unity
         private object contextData;
         private Dictionary<BindingEntry, BindingBase> bindings = new Dictionary<BindingEntry, BindingBase>();
 
-        IDataContext dataContext;
+        //IDataContext dataContext;
         //private bool isFindDataContext;
         [SerializeField]
         public bool startedBinding;
+
+        static BindingBehaviour()
+        {
+            #region UnityEngine.UI
+
+            BindingBase.SetDefaultMember(typeof(Text), "text");
+            BindingBase.SetDefaultMember(typeof(Image), "sprite");
+            BindingBase.SetDefaultMember(typeof(RawImage), "texture");
+
+            #endregion
+
+        }
+
         void Awake()
         {
             //if (items != null)
@@ -52,9 +67,15 @@ namespace LWJ.Unity
 
             if (startedBinding)
                 Bind();
-            //  enabled = false;
+            enabled = false;
         }
 
+        void Update()
+        {
+            this.enabled = false;
+        }
+
+        /*
         public IDataContext DataContext
         {
             get { return dataContext; }
@@ -73,14 +94,9 @@ namespace LWJ.Unity
                     }
                 }
             }
-        }
+        }*/
 
 
-
-        void OnDataMemberChanged()
-        {
-
-        }
 
 
 
@@ -98,42 +114,9 @@ namespace LWJ.Unity
         }
 
 
-        public IDataContext FindDataContext()
-        {
-            IDataContext result = null;
-            Transform p = transform;
-            while (p != null)
-            {
-                result = p.GetComponent<IDataContext>();
-                if (result != null)
-                    break;
-                p = p.parent;
-            }
-            return result;
-        }
 
 
 
-
-        private object GetSource(BindingEntry entry)
-        {
-            object source = null;
-
-            switch (entry.sourceType)
-            {
-                //case SourceType.Relative:
-                //    source = ResolveRelativeSource(entry.relativeSource);
-                //    break;
-                case SourceType.Name:
-                    source = ResolveNameSource(entry.nameSource);
-                    break;
-                default:
-                    source = ResolveSource(entry.source);
-                    break;
-            }
-
-            return source;
-        }
         /*
         private object GetSource(ChildBindingEntry entry)
         {
@@ -188,113 +171,94 @@ namespace LWJ.Unity
         }
 
 
-        private void InitBinding(BindingBase bindingBase, BindingEntry entry)
+
+        BindingBase ToBinding(BindingType type, BindingEntry entry)
         {
+            BindingBase bindingBase;
+            switch (type)
+            {
+                case BindingType.MultiBinding:
+                    {
+                        var binding = new MultiBinding()
+                        {
+                            Mode = entry.mode,
+                            EnabledSourceUpdated = entry.enabledSourceUpdated,
+                            EnabledTargetUpdated = entry.enabledTargetUpdated,
+                            Converter = ResolveMultiValueConverter(entry.converter),
+                            ConverterParameter = string.IsNullOrEmpty(entry.converterParameter) ? null : entry.converterParameter,
+                        };
+
+                        //foreach (var item in ToBindings(entry.Children))
+                        //{
+                        //    binding.Add(item.Item2);
+                        //}
+                        foreach (var item in entry.Children)
+                        {
+                            binding.Add(ToBinding(item.bindingType, item));
+                        }
+                        bindingBase = binding;
+                    }
+                    break;
+                case BindingType.PriorityBinding:
+                    {
+                        var binding = new PriorityBinding()
+                        {
+                        };
+
+
+                        bindingBase = binding;
+                    }
+                    break;
+                case BindingType.Binding:
+                default:
+                    {
+                        Binding binding = new Binding()
+                        {
+                            Source = ResolveSource(entry),
+                            Mode = entry.mode,
+                            EnabledSourceUpdated = entry.enabledSourceUpdated,
+                            EnabledTargetUpdated = entry.enabledTargetUpdated,
+                            Converter = ResolveValueConverter(entry.converter),
+                            ConverterParameter = string.IsNullOrEmpty(entry.converterParameter) ? null : entry.converterParameter,
+                        };
+                        //string path = entry.path;
+                        //if (string.IsNullOrEmpty(path))
+                        //{
+                        //    if (binding.Source != null)
+                        //        path = binding.Source.GetType().GetDefaultMemberName();
+                        //}
+
+                        //if (string.IsNullOrEmpty(path))
+                        //    throw new Exception("Binding Path Null, {0}".FormatArgs(gameObject.name));
+
+                        binding.Path = entry.path;
+                        bindingBase = binding;
+                        Debug.Log("src:" + binding.Source + "," + binding.Path);
+                    }
+                    break;
+            }
+
             bindingBase.Target = entry.target;
             bindingBase.NullValue = string.IsNullOrEmpty(entry.nullValue) ? null : entry.nullValue;
             bindingBase.StringFormat = string.IsNullOrEmpty(entry.stringFormat) ? null : entry.stringFormat;
             bindingBase.FallbackValue = string.IsNullOrEmpty(entry.fallbackValue) ? null : entry.fallbackValue;
             bindingBase.Delay = entry.delay;
 
-            string targetPath = entry.targetPath;
-            if (string.IsNullOrEmpty(targetPath))
-            {
-                if (entry.target != null)
-                {
-                    targetPath = entry.target.GetType().GetDefaultMemberName();
-                }
-            }
+            //string targetPath = entry.targetPath;
+            //if (string.IsNullOrEmpty(targetPath))
+            //{
+            //    if (entry.target != null)
+            //    {
+            //        targetPath = entry.target.GetType().GetDefaultMemberName();
+            //    }
+            //}
 
             //multi binding
             //if (string.IsNullOrEmpty(targetPath))
             //    throw new Exception("Binding Target Path Null, {0}".FormatArgs(gameObject.name));
-            bindingBase.TargetPath = targetPath;
+            bindingBase.TargetPath = entry.targetPath;
 
-        }
-
-
-        private BindingBase ToBinding(BindingEntry entry)
-        {
-            var binding = new Binding()
-            {
-                Source = GetSource(entry),
-               
-                Mode = entry.mode,
-                EnabledSourceUpdated = entry.enabledSourceUpdated,
-                EnabledTargetUpdated = entry.enabledTargetUpdated,
-                Converter = ResolveValueConverter(entry.converter),
-                ConverterParameter = string.IsNullOrEmpty(entry.converterParameter) ? null : entry.converterParameter,
-            };
-            string path = entry.path;
-            if (string.IsNullOrEmpty(path))
-            {
-                if (binding.Source != null)
-                    path = binding.Source.GetType().GetDefaultMemberName();
-            }
-
-            if (string.IsNullOrEmpty(path))
-                throw new Exception("Binding Path Null, {0}".FormatArgs(gameObject.name));
-
-            binding.Path = path;
-     
-            InitBinding(binding, entry);
-
-            return binding;
-        }
-
-
-
-        private BindingBase ToMultiBinding(BindingEntry entry)
-        {
-            var binding = new MultiBinding()
-            {
-                Mode = entry.mode,
-                EnabledSourceUpdated = entry.enabledSourceUpdated,
-                EnabledTargetUpdated = entry.enabledTargetUpdated,
-                Converter = ResolveMultiValueConverter(entry.converter),
-                ConverterParameter = string.IsNullOrEmpty(entry.converterParameter) ? null : entry.converterParameter,
-            };
-
-
-            InitBinding(binding, entry);
-
-            foreach (var item in ToBindings(entry.Children))
-            {
-                binding.Add(item.Item2);
-            }
-
-            return binding;
-        }
-
-
-        private BindingBase ToPrirotyBinding(BindingEntry entry)
-        {
-            var binding = new PriorityBinding()
-            {
-            };
-
-            InitBinding(binding, entry);
-
-            return binding;
-        }
-
-        BindingBase ToBinding(BindingType type, BindingEntry bindingEntry)
-        {
-            Func<BindingEntry, BindingBase> bind;
-            switch (type)
-            {
-                case BindingType.MultiBinding:
-                    bind = ToMultiBinding;
-                    break;
-                case BindingType.PriorityBinding:
-                    bind = ToPrirotyBinding;
-                    break;
-                case BindingType.Binding:
-                default:
-                    bind = ToBinding;
-                    break;
-            }
-            return bind(bindingEntry);
+            return bindingBase;
         }
 
         IEnumerable<Tuple<BindingEntry, BindingBase>> ToBindings(IEnumerable<Entry> entrys)
@@ -315,16 +279,16 @@ namespace LWJ.Unity
             }
         }
 
-
+        [ContextMenu("Bind")]
         public void Bind()
         {
             if (isBinding)
                 return;
             gameObject.SendMessage("OnDataBinding", SendMessageOptions.DontRequireReceiver);
-            if (dataContext != null)
-                contextData = dataContext.DataContext;
-            else
-                contextData = null;
+            //if (dataContext != null)
+            //    contextData = dataContext.DataContext;
+            //else
+            //    contextData = null;
 
             foreach (var item in ToBindings(items))
             {
@@ -338,7 +302,7 @@ namespace LWJ.Unity
             isBinding = true;
             gameObject.SendMessage("OnDataBind", SendMessageOptions.DontRequireReceiver);
         }
-
+        [ContextMenu("Unbind")]
         public void Unbind()
         {
             if (!isBinding)
@@ -379,73 +343,197 @@ namespace LWJ.Unity
 
             if (isBinding)
                 Unbind();
-            DataContext = null;
-
         }
 
-        private void DataContext_PropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            if (isBinding)
-            {
-                if (e.PropertyName == "DataContext")
-                {
-                    var oldContextData = contextData;
-                    contextData = dataContext.DataContext;
-                    if (items != null)
-                    {
-                        foreach (var item in items)
-                        {
-                            switch (item.type)
-                            {
-                                case BindingType.Binding:
-                                    if (item.bindings != null)
-                                    {
-                                        foreach (var bindingEntry in item.bindings)
-                                        {
-                                            if (!bindings.ContainsKey(bindingEntry))
-                                                continue;
+        //private void DataContext_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        //{
+        //    if (isBinding)
+        //    {
+        //        if (e.PropertyName == "DataContext")
+        //        {
+        //            var oldContextData = contextData;
+        //            contextData = dataContext.DataContext;
+        //            if (items != null)
+        //            {
+        //                foreach (var item in items)
+        //                {
+        //                    switch (item.type)
+        //                    {
+        //                        case BindingType.Binding:
+        //                            if (item.bindings != null)
+        //                            {
+        //                                foreach (var bindingEntry in item.bindings)
+        //                                {
+        //                                    if (!bindings.ContainsKey(bindingEntry))
+        //                                        continue;
 
-                                            Binding binding = (Binding)bindings[bindingEntry];
-                                            if (bindingEntry.source == null && binding.Source == oldContextData)
-                                            {
-                                                binding.Source = contextData;
-                                            }
-                                        }
-                                    }
-                                    break;
-                            }
-                        }
+        //                                    Binding binding = (Binding)bindings[bindingEntry];
+        //                                    if (bindingEntry.source == null && binding.Source == oldContextData)
+        //                                    {
+        //                                        binding.Source = contextData;
+        //                                    }
+        //                                }
+        //                            }
+        //                            break;
+        //                    }
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
+
+        public static bool IsNull(object obj)
+        {
+            return obj == null || ReferenceEquals(obj, null) || obj.Equals(null);
+        }
+        
+        protected object ResolveSource(BindingEntry entry)
+        {
+            object result;
+            result = entry.source;
+            if (result.IsNull())
+            {
+
+                if (!string.IsNullOrEmpty(entry.sourceName))
+                {
+                    result = ResolveNameSource(entry);
+                }
+                else if (!string.IsNullOrEmpty(entry.sourceType))
+                {
+                    result = ResolveTypeSource(entry);
+                }
+
+            }
+
+            if (result != null)
+            {
+                IDataContext ctx = result as IDataContext;
+                if (ctx != null && ctx.DataContext != null)
+                {
+                    result = ctx.DataContext;
+                }
+            }
+            return result;
+        }
+
+        protected bool ResolveDataContextSource(BindingEntry entry, out Object result)
+        {
+
+
+            int level = entry.ancestorLevel;
+            Transform t;
+            IDataContext ctx = null;
+
+            result = null;
+            t = transform;
+
+            while (t != null)
+            {
+                ctx = t.GetComponentInParent<IDataContext>();
+
+                if (ctx == null)
+                    break;
+
+                Component c = ctx as Component;
+                if (ctx.DataContext != null)
+                {
+                    if (--level < 0)
+                    {
+                        result = c;
+                        break;
                     }
                 }
+                t = c.transform.parent;
             }
+
+            if (result != null)
+                return true;
+
+            return false;
         }
 
-        object ResolveSource(Object source)
+        protected Object ResolveNameSource(BindingEntry entry)
         {
-            object result = source;
+            Object result = null;
+            string sourceName = entry.sourceName;
+            if (string.IsNullOrEmpty(sourceName))
+                return null;
 
-            if (source != null)
-            {
-                result = source;
-            }
-            else
-            {
-                //if (dataContext == null && !isFindDataContext)
-                //{
-                DataContext = FindDataContext();
-                //isFindDataContext = true;
-                //}
+            int level = entry.ancestorLevel;
+            Transform t;
+            t = transform;
 
-                if (dataContext != null)
+            while (t != null)
+            {
+                if (string.Equals(t.name, sourceName, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    result = dataContext.DataContext;
-                }
+                    if (--level < 0)
+                    {
+                        if (string.IsNullOrEmpty(entry.sourceType))
+                        {
+                            result = t.GetComponents<IDataContext>().Where(o => o.DataContext != null).FirstOrDefault() as Object;
+                        }
+                        else
+                        {
+                            if (entry.sourceType == "GameObject")
+                                result = t.gameObject;
+                            else
+                                result = t.GetComponent(entry.sourceType);
+                        }
 
+                        break;
+                    }
+                }
+                t = t.parent;
             }
             return result;
         }
 
 
+        protected Object ResolveTypeSource(BindingEntry entry)
+        {
+            Object result = null;
+            if (string.IsNullOrEmpty(entry.sourceType))
+                return null;
+
+            int level = entry.ancestorLevel;
+            Transform t = transform;
+
+            if (entry.sourceType == "GameObject")
+            {
+                while (t != null)
+                {
+                    if (--level < 0)
+                    {
+                        result = t.GetComponents<IDataContext>().Where(o => o.DataContext != null).FirstOrDefault() as Object;
+                        if (result == null)
+                            result = t.gameObject;
+                        break;
+                    }
+                    t = t.parent;
+                }
+            }
+            else
+            {
+                while (t != null)
+                {
+                    Object c = t.GetComponent(entry.sourceType);
+                    if (c)
+                    {
+                        if (--level < 0)
+                        {
+                            result = c;
+                            break;
+                        }
+                    }
+                    t = t.parent;
+                }
+            }
+
+            return result;
+        }
+
+        /*
         object ResolveRelativeSource(RelativeSourceEntry relativeSourceEntry)
         {
             object result = null;
@@ -480,7 +568,7 @@ namespace LWJ.Unity
                     break;
             }
             return result;
-        }
+        }*//*
 
         object ResolveNameSource(FindNameEntry nameSourceEntry)
         {
@@ -546,7 +634,7 @@ namespace LWJ.Unity
             //result = FindNameComponentInParent(transform, name, type);
 
             return result;
-        }
+        }*/
 
         Component FindNameComponentInParent(Transform parent, string name, Type componetType)
         {
@@ -608,7 +696,7 @@ namespace LWJ.Unity
 
 
             [SerializeField]
-            public BindingEntry[] bindings;
+            public List<BindingEntry> bindings;
         }
 
         [Serializable]
@@ -621,8 +709,15 @@ namespace LWJ.Unity
             public string nullValue;
             public string stringFormat;
             public int delay;
-            public SourceType sourceType;
+            //public SourceType sourceType;
             public Object source;
+            [SerializeField]
+            public string sourceName;
+            [SerializeField]
+            public string sourceType;
+            [SerializeField]
+            public int ancestorLevel;
+
             public RelativeSourceEntry relativeSource;
             public FindNameEntry nameSource;
             public string path;
@@ -634,11 +729,17 @@ namespace LWJ.Unity
             public bool enabledTargetUpdated;
 
 
+            //[SerializeField]
+            //public ChildEntry[] children;
+            //[NonSerialized]
+            //[SerializeField]
+            //public Entry[] Children;
+
             [SerializeField]
-            public ChildEntry[] children;
-            [NonSerialized]
-            [SerializeField]
-            public Entry[] Children;
+            public List<BindingEntry> children;
+            public List<BindingEntry> Children { get => children; }
+
+
 
             public void OnBeforeSerialize()
             {
@@ -647,10 +748,10 @@ namespace LWJ.Unity
 
             public void OnAfterDeserialize()
             {
-                if (children == null)
-                    Children = null;
-                else
-                    Children = children.Select(o => o.ToEntry()).ToArray();
+                //if (children == null)
+                //    Children = null;
+                //else
+                //    Children = children.Select(o => o.ToEntry()).ToArray();
             }
         }
 
@@ -661,14 +762,14 @@ namespace LWJ.Unity
             public BindingType type;
 
             [SerializeField]
-            public ChildBindingEntry[] bindings;
+            public List<ChildBindingEntry> bindings;
 
             public Entry ToEntry()
             {
                 Entry entry = new Entry();
                 entry.type = type;
                 if (bindings != null)
-                    entry.bindings = bindings.Select(o => o.ToBindingEntry()).ToArray();
+                    entry.bindings = bindings.Select(o => o.ToBindingEntry()).ToList();
                 return entry;
             }
 
@@ -676,7 +777,7 @@ namespace LWJ.Unity
             {
                 type = entry.type;
                 if (bindings != null)
-                    bindings = entry.bindings.Select(o => new ChildBindingEntry(o)).ToArray();
+                    bindings = entry.bindings.Select(o => new ChildBindingEntry(o)).ToList();
 
             }
 
@@ -693,7 +794,7 @@ namespace LWJ.Unity
             public string stringFormat;
             public int delay;
 
-            public SourceType sourceType;
+            public string sourceType;
             public Object source;
             public RelativeSourceEntry relativeSource;
             public FindNameEntry nameSource;
@@ -797,6 +898,32 @@ namespace LWJ.Unity
             Source,
             Name,
             //  Relative,
+        }
+
+        public void AddBinding(BindingType type, BindingEntry bindingEntry)
+        {
+            Entry entry = null;
+            if (items != null)
+            {
+                entry = items.Where(o => o.type == type).FirstOrDefault();
+            }
+            if (entry == null)
+            {
+                entry = new Entry() { type = type, bindings = new List<BindingEntry>() };
+                if (items == null)
+                {
+                    items = new Entry[] { entry };
+                }
+                else
+                {
+                    var tmp = new Entry[items.Length + 1];
+                    Array.Copy(items, tmp, items.Length);
+                    items = tmp;
+                    items[items.Length - 1] = entry;
+                }
+            }
+            if (!entry.bindings.Contains(bindingEntry))
+                entry.bindings.Add(bindingEntry);
         }
 
     }

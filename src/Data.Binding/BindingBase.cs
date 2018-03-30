@@ -60,8 +60,18 @@ namespace LWJ.Data
         {
             Unbind();
 
+            if (target == null)
+                throw new Exception(string.Format("{0} Null", nameof(Target)));
+
+            string targetPath = this.targetPath;
+
             if (string.IsNullOrEmpty(targetPath))
-                throw new Exception("TargetPath Empty");
+            {
+                if (target != null)
+                    targetPath = GetDefaultMember(target.GetType());
+               // throw new Exception("TargetPath Empty"+targetPath);
+            }
+
 
             targetBinder = PropertyPath.Create(targetPath);
             targetBinder.Target = target;
@@ -125,6 +135,7 @@ namespace LWJ.Data
 
         static Dictionary<string, Tuple<Type, IValueConverter>> converters;
         static Dictionary<string, Tuple<Type, IMultiValueConverter>> multiConverters;
+        static Dictionary<Type, string> defaultMenbers;
 
         class ConverterItem
         {
@@ -145,7 +156,7 @@ namespace LWJ.Data
             cachedConverters = new Dictionary<string, ConverterItem>(StringComparer.InvariantCultureIgnoreCase);
             converters = new Dictionary<string, Tuple<Type, IValueConverter>>();
             multiConverters = new Dictionary<string, Tuple<Type, IMultiValueConverter>>();
-
+            defaultMenbers = new Dictionary<Type, string>();
             //ImportAttribute.Import<BindingBase>();
 
             AddValueConverter("Boolean", typeof(BooleanConverter));
@@ -155,14 +166,14 @@ namespace LWJ.Data
             AddMultiValueConverter("Divide", typeof(DivideConverter));
             AddMultiValueConverter("StringJoin", typeof(StringJoinConverter));
             AddMultiValueConverter("StringFormat", typeof(StringFormatConverter));
-            
+
         }
 
         public static void AddValueConverter(string name, Type valueConverterType)
         {
-            if (!typeof(IValueConverter).IsAssignableFrom(valueConverterType))            
+            if (!typeof(IValueConverter).IsAssignableFrom(valueConverterType))
                 throw new ArgumentException("Not Implemented Interface [IValueConverter]", nameof(valueConverterType));
-             
+
             converters[name] = new Tuple<Type, IValueConverter>(valueConverterType, null);
         }
 
@@ -171,7 +182,7 @@ namespace LWJ.Data
             if (!typeof(IMultiValueConverter).IsAssignableFrom(multiValueConverterType))
                 throw new ArgumentException("Not Implemented Interface [IMultiValueConverter]", nameof(multiValueConverterType));
 
-            converters[name] = new Tuple<Type, IValueConverter>(multiValueConverterType, null);
+            multiConverters[name] = new Tuple<Type, IMultiValueConverter>(multiValueConverterType, null);
         }
 
 
@@ -276,6 +287,30 @@ namespace LWJ.Data
                 throw new Exception("Not IMultiValueConverter {0}".FormatArgs(name));
             }
             return result;
+        }
+
+        public static string GetDefaultMember(Type type)
+        {
+            string name;
+
+            if (!defaultMenbers.TryGetValue(type, out name))
+            {
+                var members = type.GetDefaultMembers();
+                if (members != null && members.Length > 0)
+                {
+                    name = (from m in members
+                            orderby m.MemberType == MemberTypes.Property ? 0 : 1
+                            orderby m.MemberType == MemberTypes.Field ? 0 : 1
+                            select m).First().Name;
+                }
+                defaultMenbers[type] = name;
+            }
+            return name;
+        }
+
+        public static void SetDefaultMember(Type type, string memberName)
+        {
+            defaultMenbers[type] = memberName;
         }
 
         #endregion
