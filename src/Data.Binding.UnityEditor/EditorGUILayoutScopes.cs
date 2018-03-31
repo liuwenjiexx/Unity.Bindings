@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UnityEditor;
 
 namespace LWJ.UnityEditor
@@ -17,7 +14,6 @@ namespace LWJ.UnityEditor
             public IndentLevel()
             {
                 indentLevel = EditorGUI.indentLevel++;
-                //EditorGUILayout.Space();
             }
 
             public IndentLevel(int indentLevel)

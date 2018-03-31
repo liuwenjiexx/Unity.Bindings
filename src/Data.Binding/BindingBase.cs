@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace LWJ.Data
 {
@@ -18,6 +16,15 @@ namespace LWJ.Data
         private object nullValue;
         private object fallbackValue;
         private int delay;
+
+        private static Dictionary<Type, string> defaultMenbers;
+        private static Dictionary<string, ConverterInfo> cachedConverters;
+        private static Dictionary<Type, ConverterInfo> cachedTypeConverters;
+
+        static BindingBase()
+        {
+            Init();
+        }
 
         public object Target
         {
@@ -132,10 +139,7 @@ namespace LWJ.Data
 
 
         #region Converters
-
-        //static Dictionary<string, Tuple<Type, IValueConverter>> converters;
-        //static Dictionary<string, Tuple<Type, IMultiValueConverter>> multiConverters;
-        static Dictionary<Type, string> defaultMenbers;
+             
 
         class ConverterInfo
         {
@@ -144,13 +148,6 @@ namespace LWJ.Data
             public IMultiValueConverter multiValueConverter;
             public Type valueConverterType;
             public Type multiValueConverterType;
-        }
-        static Dictionary<string, ConverterInfo> cachedConverters;
-        static Dictionary<Type, ConverterInfo> cachedTypeConverters;
-
-        static BindingBase()
-        {
-            Init();
         }
 
         static void Init()

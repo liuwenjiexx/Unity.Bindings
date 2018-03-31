@@ -1,4 +1,6 @@
-Library
-Temp
+Library/
+Temp/
 Data.Binding.Unity.Tests.csproj
 Data.Binding.Unity.Tests.sln
+Assets/LWJ/
+ProjectSettings/ProjectVersion.txt

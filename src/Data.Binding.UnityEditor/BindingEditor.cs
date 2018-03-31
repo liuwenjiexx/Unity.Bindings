@@ -1,13 +1,9 @@
-﻿using UnityEngine;
-using System.Collections;
-using UnityEditor;
-using System.Linq;
-using System.Collections.Generic;
+﻿using LWJ.Data;
 using System;
-using LWJ;
-using Object = UnityEngine.Object;
-using LWJ.Unity;
-using LWJ.Data;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
 
 namespace LWJ.UnityEditor
 {
@@ -360,7 +356,7 @@ namespace LWJ.UnityEditor
                                 }
                                 else
                                 {
-                                    if (evt.type == EventType.mouseDown)
+                                    if (evt.type == EventType.MouseDown)
                                     {
                                         ctrlState.SelectedIndex = -1;
                                     }

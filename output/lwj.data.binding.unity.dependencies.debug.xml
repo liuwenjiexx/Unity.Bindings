@@ -5,7 +5,7 @@
   urn:schema-lwj:build-dependencies ../../LWJ.Build.Dependencies.UnityEditor/resources/lwj.build.dependencies.xsd" 
    log="true">
   <include>lwj.data.binding.unity.dependencies.xml</include>
-  <item to="Assets/LWJ">
+  <item to="Assets/LWJ/Binding">
     <item to="Plugins">
       <item from="LWJ.Data.Binding" ext="dll,dll.mdb">
         <before ext="dll">pdb2mdb LWJ.Data.Binding.dll</before>

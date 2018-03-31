@@ -15,6 +15,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data.Binding.UnityEditor", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data.Binding.Tests", "test\Data.Binding.Tests\Data.Binding.Tests.csproj", "{DCA3F8D2-F49D-4C5A-9745-C377B95B8EF3}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "resources", "resources", "{8837104D-3C30-4C89-AE98-29CCB9320FCE}"
+	ProjectSection(SolutionItems) = preProject
+		output\lwj.data.binding.unity.dependencies.debug.xml = output\lwj.data.binding.unity.dependencies.debug.xml
+		output\lwj.data.binding.unity.dependencies.xml = output\lwj.data.binding.unity.dependencies.xml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

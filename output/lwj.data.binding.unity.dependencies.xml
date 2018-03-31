@@ -4,7 +4,7 @@
   xsi:schemaLocation="
   urn:schema-lwj:build-dependencies ../../LWJ.Build.Dependencies.UnityEditor/resources/lwj.build.dependencies.xsd"
   >
-  <item to="Assets/LWJ">
+  <item to="Assets/LWJ/Binding">
     <item to="Plugins">
       <item from="LWJ.Data.Binding"  ext="dll,dll.meta">
       </item>

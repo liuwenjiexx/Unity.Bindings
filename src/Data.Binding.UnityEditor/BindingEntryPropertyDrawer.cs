@@ -1,8 +1,5 @@
 ﻿using LWJ.Unity;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UnityEditor;
 using UnityEngine;
 
@@ -45,10 +42,7 @@ namespace LWJ.UnityEditor
 
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
-        {
-            //if (property.depth > 5)
-            //    return;                
-
+        { 
            // if (sourceTypeProperty == null)
             {
                 sourceProperty = property.FindPropertyRelative("source");

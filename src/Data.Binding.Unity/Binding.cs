@@ -1,15 +1,12 @@
-﻿using UnityEngine;
-using System.Collections;
-using System.Reflection;
+﻿using LWJ.Data;
 using System;
-using System.Globalization;
-using Object = UnityEngine.Object;
 using System.Collections.Generic;
 using System.Linq;
-using LWJ.Data;
-using System.ComponentModel;
-using Component = UnityEngine.Component;
+using System.Reflection;
+using UnityEngine;
 using UnityEngine.UI;
+using Component = UnityEngine.Component;
+using Object = UnityEngine.Object;
 
 public class ArrayPropertyAttribute : PropertyAttribute
 {
