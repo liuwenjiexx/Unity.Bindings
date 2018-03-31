@@ -22,42 +22,40 @@ public class TestSetImageBinding : MonoBehaviour
 
 
         var binding = spriteTarget.gameObject.AddComponent<Binding>();
-        var entry = new Binding.BindingEntry();
+        var entry = new Binding.Entry();
         entry.source = sprite;
         entry.path = ".";
         entry.target = spriteTarget;
         entry.targetPath = "sprite";
-
-        binding.AddBinding(Binding.BindingType.Binding, entry);
+        binding.AddBinding(entry);
         binding.Bind();
 
 
         binding = spriteTarget2.gameObject.AddComponent<Binding>();
-        entry = new Binding.BindingEntry();
+        entry = new Binding.Entry();
         entry.source = texture2d;
         entry.path = ".";
         entry.target = spriteTarget2;
         entry.targetPath = "sprite";
         entry.converter = "Texture2D";
-        binding.AddBinding(Binding.BindingType.Binding, entry);
+        binding.AddBinding(entry);
         binding.Bind();
-
-
+         
 
         binding = spriteTarget3.gameObject.AddComponent<Binding>();
-        entry = new Binding.BindingEntry();
+        entry = new Binding.Entry();
         entry.source = texture2d;
         entry.path = ".";
         entry.target = spriteTarget3;
         entry.targetPath = "sprite";
-        entry.converter = typeof(Texture2DConverter).FullName;        
-      
-        binding.AddBinding(Binding.BindingType.Binding, entry);
+        entry.converter = typeof(Texture2DConverter).FullName;
+
+        binding.AddBinding(entry);
         binding.Bind();
 
     }
 
- 
+
 
     // Update is called once per frame
     void Update()

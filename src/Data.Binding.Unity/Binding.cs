@@ -21,18 +21,30 @@ namespace LWJ.Unity
 
     public class Binding : MonoBehaviour
     {
-
         [SerializeField]
-        public Entry[] items;
+        private List<Entry> bindings;
+
+        //[SerializeField]
+        //public Entry1[] items;
         [NonSerialized]
         private bool isBinding;
         private object contextData;
-        private Dictionary<BindingEntry, BindingBase> bindings = new Dictionary<BindingEntry, BindingBase>();
+        //private Dictionary<BindingEntry, BindingBase> bindings2 = new Dictionary<BindingEntry, BindingBase>();
 
         //IDataContext dataContext;
         //private bool isFindDataContext;
         [SerializeField]
         public bool startedBinding;
+
+        public List<Entry> Bindings
+        {
+            get
+            {
+                if (bindings == null)
+                    bindings = new List<Entry>();
+                return bindings;
+            }
+        }
 
         static Binding()
         {
@@ -176,7 +188,7 @@ namespace LWJ.Unity
 
 
 
-        BindingBase ToBinding(BindingType type, BindingEntry entry)
+        BindingBase ToBinding(BindingType type, Entry entry)
         {
             BindingBase bindingBase;
             switch (type)
@@ -196,7 +208,7 @@ namespace LWJ.Unity
                         //{
                         //    binding.Add(item.Item2);
                         //}
-                        foreach (var item in entry.Children)
+                        foreach (var item in entry.Bindings)
                         {
                             binding.Add(ToBinding(item.bindingType, item));
                         }
@@ -265,46 +277,47 @@ namespace LWJ.Unity
             return bindingBase;
         }
 
-        IEnumerable<Tuple<BindingEntry, BindingBase>> ToBindings(IEnumerable<Entry> entrys)
-        {
-            if (items == null)
-                yield break;
-            foreach (var entry in entrys)
-            {
-                if (entry.bindings == null)
-                    continue;
+        //IEnumerable<Tuple<BindingEntry, BindingBase>> ToBindings(IEnumerable<Entry1> entrys)
+        //{
+        //    if (items == null)
+        //        yield break;
+        //    foreach (var entry in entrys)
+        //    {
+        //        if (entry.bindings == null)
+        //            continue;
 
-                foreach (var bindingEntry in entry.bindings)
-                {
-                    var binding = ToBinding(entry.type, bindingEntry);
-                    yield return new Tuple<BindingEntry, BindingBase>(bindingEntry, binding);
+        //        foreach (var bindingEntry in entry.bindings)
+        //        {
+        //            var binding = ToBinding(entry.type, bindingEntry);
+        //            yield return new Tuple<BindingEntry, BindingBase>(bindingEntry, binding);
 
-                }
-            }
-        }
+        //        }
+        //    }
+        //}
 
         [ContextMenu("Bind")]
         public void Bind()
         {
             if (isBinding)
                 return;
-            gameObject.SendMessage("OnDataBinding", SendMessageOptions.DontRequireReceiver);
+            //gameObject.SendMessage("OnDataBinding", SendMessageOptions.DontRequireReceiver);
             //if (dataContext != null)
             //    contextData = dataContext.DataContext;
             //else
             //    contextData = null;
 
-            foreach (var item in ToBindings(items))
+            if (bindings != null)
             {
-                var binding = item.Item2;
-                var bindingEntry = item.Item1;
-
-                binding.Bind();
-                bindings[bindingEntry] = binding;
+                BindingBase binding;
+                foreach (var item in bindings)
+                {
+                    binding = ToBinding(item.bindingType, item);
+                    binding.Bind();
+                    item.binding = binding;
+                }
             }
-
             isBinding = true;
-            gameObject.SendMessage("OnDataBind", SendMessageOptions.DontRequireReceiver);
+            //gameObject.SendMessage("OnDataBind", SendMessageOptions.DontRequireReceiver);
         }
         [ContextMenu("Unbind")]
         public void Unbind()
@@ -314,15 +327,20 @@ namespace LWJ.Unity
 
             if (bindings != null)
             {
-                foreach (var bindingItem in bindings)
+                BindingBase binding;
+                foreach (var entry in bindings)
                 {
-                    bindingItem.Value.Unbind();
+                    binding = entry.binding;
+                    if (binding != null)
+                    {
+                        binding.Unbind();
+                        entry.binding = null;
+                    }
                 }
-                bindings.Clear();
             }
 
             isBinding = false;
-            gameObject.SendMessage("OnDataUnbind", SendMessageOptions.DontRequireReceiver);
+            //gameObject.SendMessage("OnDataUnbind", SendMessageOptions.DontRequireReceiver);
         }
 
         public static void Bind(GameObject target)
@@ -391,7 +409,7 @@ namespace LWJ.Unity
             return obj == null || ReferenceEquals(obj, null) || obj.Equals(null);
         }
 
-        protected object ResolveSource(BindingEntry entry)
+        protected object ResolveSource(Entry entry)
         {
             object result;
             result = entry.source;
@@ -420,7 +438,7 @@ namespace LWJ.Unity
             return result;
         }
 
-        protected bool ResolveDataContextSource(BindingEntry entry, out Object result)
+        protected bool ResolveDataContextSource(Entry entry, out Object result)
         {
 
 
@@ -456,7 +474,7 @@ namespace LWJ.Unity
             return false;
         }
 
-        protected Object ResolveNameSource(BindingEntry entry)
+        protected Object ResolveNameSource(Entry entry)
         {
             Object result = null;
             string sourceName = entry.sourceName;
@@ -494,7 +512,7 @@ namespace LWJ.Unity
         }
 
 
-        protected Object ResolveTypeSource(BindingEntry entry)
+        protected Object ResolveTypeSource(Entry entry)
         {
             Object result = null;
             if (string.IsNullOrEmpty(entry.sourceType))
@@ -692,22 +710,22 @@ namespace LWJ.Unity
             }
             return null;
         }
+        //[Serializable]
+        //public class Entry1
+        //{
+        //    [SerializeField]
+        //    public BindingType type;
+
+
+        //    [SerializeField]
+        //    public List<BindingEntry> bindings;
+        //}
+
         [Serializable]
-        public class Entry
-        {
-            [SerializeField]
-            public BindingType type;
-
-
-            [SerializeField]
-            public List<BindingEntry> bindings;
-        }
-
-        [Serializable]
-        public class BindingEntry : ISerializationCallbackReceiver
+        public class Entry : ISerializationCallbackReceiver
         {
 
-            public BindingType bindingType;
+            public BindingType bindingType = BindingType.Binding;
             public Object target;
             public string targetPath;
             public string nullValue;
@@ -722,7 +740,7 @@ namespace LWJ.Unity
             [SerializeField]
             public int ancestorLevel;
 
-            public RelativeSourceEntry relativeSource;
+            //public RelativeSourceEntry relativeSource;
             public FindNameEntry nameSource;
             public string path;
             public BindingMode mode;
@@ -732,6 +750,7 @@ namespace LWJ.Unity
             public bool enabledSourceUpdated;
             public bool enabledTargetUpdated;
 
+            internal BindingBase binding;
 
             //[SerializeField]
             //public ChildEntry[] children;
@@ -740,21 +759,21 @@ namespace LWJ.Unity
             //public Entry[] Children;
 
             [SerializeField]
-            public List<BindingEntry> children;
-            public List<BindingEntry> Children
+            private List<Entry> bindings;
+            public List<Entry> Bindings
             {
                 get
                 {
-                    if (children == null)
-                        children = new List<BindingEntry>();
-                    return children;
+                    if (bindings == null)
+                        bindings = new List<Entry>();
+                    return bindings;
                 }
             }
 
-            public BindingEntry AddBinding(BindingEntry entry)
+            public Entry AddBinding(Entry entry)
             {
-                if (!Children.Contains(entry))
-                    Children.Add(entry);
+                if (!Bindings.Contains(entry))
+                    Bindings.Add(entry);
                 return this;
             }
 
@@ -772,112 +791,112 @@ namespace LWJ.Unity
             }
         }
 
-        [Serializable]
-        public class ChildEntry
-        {
-            [SerializeField]
-            public BindingType type;
+        //[Serializable]
+        //public class ChildEntry
+        //{
+        //    [SerializeField]
+        //    public BindingType type;
 
-            [SerializeField]
-            public List<ChildBindingEntry> bindings;
+        //    [SerializeField]
+        //    public List<ChildBindingEntry> bindings;
 
-            public Entry ToEntry()
-            {
-                Entry entry = new Entry();
-                entry.type = type;
-                if (bindings != null)
-                    entry.bindings = bindings.Select(o => o.ToBindingEntry()).ToList();
-                return entry;
-            }
+        //    public Entry ToEntry()
+        //    {
+        //        Entry entry = new Entry();
+        //        entry.type = type;
+        //        if (bindings != null)
+        //            entry.bindings = bindings.Select(o => o.ToBindingEntry()).ToList();
+        //        return entry;
+        //    }
 
-            public ChildEntry(Entry entry)
-            {
-                type = entry.type;
-                if (bindings != null)
-                    bindings = entry.bindings.Select(o => new ChildBindingEntry(o)).ToList();
+        //    public ChildEntry(Entry entry)
+        //    {
+        //        type = entry.type;
+        //        if (bindings != null)
+        //            bindings = entry.bindings.Select(o => new ChildBindingEntry(o)).ToList();
 
-            }
+        //    }
 
-        }
+        //}
 
 
-        [Serializable]
-        public class ChildBindingEntry
-        {
+        //[Serializable]
+        //public class ChildBindingEntry
+        //{
 
-            public BindingType bindingType;
+        //    public BindingType bindingType;
 
-            public string nullValue;
-            public string stringFormat;
-            public int delay;
+        //    public string nullValue;
+        //    public string stringFormat;
+        //    public int delay;
 
-            public string sourceType;
-            public Object source;
-            public RelativeSourceEntry relativeSource;
-            public FindNameEntry nameSource;
-            public string path;
-            public BindingMode mode;
-            public string fallbackValue;
-            public string converter;
-            public string converterParameter;
-            public bool notifyOnSourceUpdated;
-            public bool notifyOnTargetUpdated;
+        //    public string sourceType;
+        //    public Object source;
+        //    public RelativeSourceEntry relativeSource;
+        //    public FindNameEntry nameSource;
+        //    public string path;
+        //    public BindingMode mode;
+        //    public string fallbackValue;
+        //    public string converter;
+        //    public string converterParameter;
+        //    public bool notifyOnSourceUpdated;
+        //    public bool notifyOnTargetUpdated;
 
-            public BindingEntry ToBindingEntry()
-            {
-                BindingEntry binding = new BindingEntry();
-                binding.bindingType = bindingType;
+        //    public BindingEntry ToBindingEntry()
+        //    {
+        //        BindingEntry binding = new BindingEntry();
+        //        binding.bindingType = bindingType;
 
-                binding.nullValue = nullValue;
-                binding.stringFormat = stringFormat;
-                binding.delay = delay;
-                binding.sourceType = sourceType;
-                binding.source = source;
-                binding.relativeSource = relativeSource;
-                binding.nameSource = nameSource;
-                binding.path = path;
-                binding.mode = mode;
-                binding.fallbackValue = fallbackValue;
-                binding.converter = converter;
-                binding.converterParameter = converterParameter;
-                binding.enabledSourceUpdated = notifyOnSourceUpdated;
-                binding.enabledTargetUpdated = notifyOnTargetUpdated;
-                return binding;
-            }
+        //        binding.nullValue = nullValue;
+        //        binding.stringFormat = stringFormat;
+        //        binding.delay = delay;
+        //        binding.sourceType = sourceType;
+        //        binding.source = source;
+        //        binding.relativeSource = relativeSource;
+        //        binding.nameSource = nameSource;
+        //        binding.path = path;
+        //        binding.mode = mode;
+        //        binding.fallbackValue = fallbackValue;
+        //        binding.converter = converter;
+        //        binding.converterParameter = converterParameter;
+        //        binding.enabledSourceUpdated = notifyOnSourceUpdated;
+        //        binding.enabledTargetUpdated = notifyOnTargetUpdated;
+        //        return binding;
+        //    }
 
-            public ChildBindingEntry(BindingEntry binding)
-            {
-                bindingType = binding.bindingType;
-                nullValue = binding.nullValue;
-                stringFormat = binding.stringFormat;
-                delay = binding.delay;
-                sourceType = binding.sourceType;
-                source = binding.source;
-                relativeSource = binding.relativeSource;
-                nameSource = binding.nameSource;
-                path = binding.path;
-                mode = binding.mode;
-                fallbackValue = binding.fallbackValue;
-                converter = binding.converter;
-                converterParameter = binding.converterParameter;
-                notifyOnSourceUpdated = binding.enabledSourceUpdated;
-                notifyOnTargetUpdated = binding.enabledTargetUpdated;
+        //    public ChildBindingEntry(BindingEntry binding)
+        //    {
+        //        bindingType = binding.bindingType;
+        //        nullValue = binding.nullValue;
+        //        stringFormat = binding.stringFormat;
+        //        delay = binding.delay;
+        //        sourceType = binding.sourceType;
+        //        source = binding.source;
+        //        relativeSource = binding.relativeSource;
+        //        nameSource = binding.nameSource;
+        //        path = binding.path;
+        //        mode = binding.mode;
+        //        fallbackValue = binding.fallbackValue;
+        //        converter = binding.converter;
+        //        converterParameter = binding.converterParameter;
+        //        notifyOnSourceUpdated = binding.enabledSourceUpdated;
+        //        notifyOnTargetUpdated = binding.enabledTargetUpdated;
 
-            }
+        //    }
 
-        }
+        //}
 
-        [Serializable]
-        public class RelativeSourceEntry
-        {
+        //[Serializable]
+        //public class RelativeSourceEntry
+        //{
 
-            public int ancestorLevel;
+        //    public int ancestorLevel;
 
-            public string typeName;
+        //    public string typeName;
 
-            public RelativeSourceMode mode;
+        //    public RelativeSourceMode mode;
 
-        }
+        //}
 
 
         [Serializable]
@@ -917,30 +936,34 @@ namespace LWJ.Unity
             //  Relative,
         }
 
-        public void AddBinding(BindingType type, BindingEntry bindingEntry)
+        public void AddBinding(Entry entry)
         {
-            Entry entry = null;
-            if (items != null)
+            //Entry1 entry = null;
+            //if (items != null)
+            //{
+            //    entry = items.Where(o => o.type == bindingEntry.bindingType).FirstOrDefault();
+            //}
+            //if (entry == null)
+            //{
+            //    entry = new Entry1() { type = bindingEntry.bindingType, bindings = new List<BindingEntry>() };
+            //    if (items == null)
+            //    {
+            //        items = new Entry1[] { entry };
+            //    }
+            //    else
+            //    {
+            //        var tmp = new Entry1[items.Length + 1];
+            //        Array.Copy(items, tmp, items.Length);
+            //        items = tmp;
+            //        items[items.Length - 1] = entry;
+            //    }
+            ////}
+            //if (!entry.bindings.Contains(bindingEntry))
+            //    entry.bindings.Add(bindingEntry);
+            if (!Bindings.Contains(entry))
             {
-                entry = items.Where(o => o.type == type).FirstOrDefault();
+                Bindings.Add(entry);
             }
-            if (entry == null)
-            {
-                entry = new Entry() { type = type, bindings = new List<BindingEntry>() };
-                if (items == null)
-                {
-                    items = new Entry[] { entry };
-                }
-                else
-                {
-                    var tmp = new Entry[items.Length + 1];
-                    Array.Copy(items, tmp, items.Length);
-                    items = tmp;
-                    items[items.Length - 1] = entry;
-                }
-            }
-            if (!entry.bindings.Contains(bindingEntry))
-                entry.bindings.Add(bindingEntry);
         }
 
     }

@@ -20,13 +20,14 @@ public class TestSetBinding : MonoBehaviour
     void TestBinding()
     {
         var binding = target.gameObject.AddComponent<Binding>();
-        var entry = new Binding.BindingEntry();
+        var entry = new Binding.Entry();
+        entry.bindingType = Binding.BindingType.Binding;
         entry.source = source;
         entry.path = "text";
         entry.target = target;
         entry.targetPath = "text";
 
-        binding.AddBinding(Binding.BindingType.Binding, entry);
+        binding.AddBinding( entry);
         binding.Bind();
     }
 

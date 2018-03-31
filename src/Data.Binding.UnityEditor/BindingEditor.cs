@@ -16,7 +16,7 @@ namespace LWJ.UnityEditor
     public class BindingEditor : Editor
     {
 
-        SerializedProperty itemsProperty;
+        SerializedProperty bindingsProperty;
         SerializedProperty startedBindingProperty;
 
         static GUIContent addButtonContent;
@@ -26,7 +26,7 @@ namespace LWJ.UnityEditor
         {
 
 
-            itemsProperty = serializedObject.FindProperty("items");
+            bindingsProperty = serializedObject.FindProperty("bindings");
             startedBindingProperty = serializedObject.FindProperty("startedBinding");
             addButtonContent = new GUIContent("Add Binding");
 
@@ -43,46 +43,186 @@ namespace LWJ.UnityEditor
             //  Debug.Log(itemsProperty.type + "," + itemsProperty.propertyType);
 
             EditorGUILayout.PropertyField(startedBindingProperty);
-            DrawEntryArray(itemsProperty);
+
+            DrawEntryArray(bindingsProperty);
 
             serializedObject.ApplyModifiedProperties();
         }
-
-        public static void DrawEntryArray(SerializedProperty itemsProperty)
+        static void DrawArrayItem(EditorArrayState ctrlState, SerializedProperty arrayProperty, Unity.Binding.BindingType bindingType)
         {
-            int toBeRemovedEntry = -1;
-            Vector2 removeButtonSize = GUIStyle.none.CalcSize(EditorGUIHelper.IconToolbarMinus);
+            //using (new GUILayout.HorizontalScope())
+            //{
+            //    GUILayout.Space(EditorGUI.indentLevel * 14);
 
-            for (int i = 0; i < itemsProperty.arraySize; ++i)
+            //using (new EditorGUIScopes.IndentLevel())
+            //using (new EditorGUILayout.VerticalScope())
+            //{
+            Event evt = Event.current;
+
+
+            //using (new EditorGUILayout.VerticalScope("box"))
+            //{
+
+            //using (new GUILayout.HorizontalScope())
+            //{
+            //    EditorGUILayout.PrefixLabel(label);
+            //}
+
+
+            using (new GUILayout.VerticalScope())
             {
-                SerializedProperty itemProperty = itemsProperty.GetArrayElementAtIndex(i);
 
-                EditorGUILayout.PropertyField(itemProperty);
-
-                Rect callbackRect = GUILayoutUtility.GetLastRect();
-
-                Rect removeButtonPos = new Rect(callbackRect.xMax - removeButtonSize.x - 8, callbackRect.y + 1, removeButtonSize.x, removeButtonSize.y);
-                if (GUI.Button(removeButtonPos, EditorGUIHelper.IconToolbarMinus, GUIStyle.none))
+                for (int i = 0; i < arrayProperty.arraySize; i++)
                 {
-                    toBeRemovedEntry = i;
-                }
+                    SerializedProperty itemProperty = arrayProperty.GetArrayElementAtIndex(i);
+                    if (itemProperty.FindPropertyRelative("bindingType").intValue != (int)bindingType)
+                        continue;
 
+                    if (ctrlState.SelectedIndex == i)
+                    {
+                        GUI.backgroundColor = Color.blue;
+                    }
+
+                    using (new GUILayout.VerticalScope("box"))
+                    {
+                        GUI.backgroundColor = Color.white;
+
+                        EditorGUILayout.PropertyField(itemProperty, GUIContent.none, false);
+                    }
+                    if (evt.type == EventType.MouseDown && GUILayoutUtility.GetLastRect().Contains(evt.mousePosition))
+                    {
+                        ctrlState.SelectedIndex = i;
+                        evt.Use();
+                    }
+
+                }
             }
 
-            if (toBeRemovedEntry > -1)
+            using (new GUILayout.HorizontalScope())
             {
-                RemoveEntry(itemsProperty, toBeRemovedEntry);
+                GUILayout.FlexibleSpace();
+                using (new GUILayout.HorizontalScope("Toolbar"))
+                {
+                    if (GUILayout.Button("+", EditorStyles.toolbarButton))
+                    {
+                        arrayProperty.arraySize++;
+                        arrayProperty.GetArrayElementAtIndex(arrayProperty.arraySize - 1)
+                            .FindPropertyRelative("bindingType").intValue = (int)bindingType;
+                        ctrlState.SelectedIndex = arrayProperty.arraySize - 1;
+
+                    }
+                    //GUI.enabled = ctrlState.SelectedIndex > 0;
+                    if (GUILayout.Button(EditorGUIHelper.IconToolbarMinus, EditorStyles.toolbarButton))
+                    {
+                        int removeIndex = ctrlState.SelectedIndex;
+                        if (removeIndex >= 0)
+                        {
+                            arrayProperty.DeleteArrayElementAtIndex(removeIndex);
+                        }
+                        if (arrayProperty.arraySize >= ctrlState.SelectedIndex)
+                            ctrlState.SelectedIndex--;
+                    }
+                    GUI.enabled = true;
+                }
+            }
+
+            //}
+
+
+            //}
+            //}
+        }
+        public static void DrawEntryArray(SerializedProperty bindingsProperty)
+        {
+            int removeIndex = -1;
+            //Vector2 removeButtonSize = GUIStyle.none.CalcSize(EditorGUIHelper.IconToolbarMinus);
+
+            //for (int i = 0; i < itemsProperty.arraySize; ++i)
+            //{
+            //    SerializedProperty itemProperty = itemsProperty.GetArrayElementAtIndex(i);
+
+            //    EditorGUILayout.PropertyField(itemProperty);
+
+            //    Rect callbackRect = GUILayoutUtility.GetLastRect();
+
+            //    Rect removeButtonPos = new Rect(callbackRect.xMax - removeButtonSize.x - 8, callbackRect.y + 1, removeButtonSize.x, removeButtonSize.y);
+            //    if (GUI.Button(removeButtonPos, EditorGUIHelper.IconToolbarMinus, GUIStyle.none))
+            //    {
+            //        removeIndex = i;
+            //    }
+
+            //}
+
+            EditorArrayState ctrlState;
+            int ctrlId = GUIUtility.GetControlID(FocusType.Passive);
+            ctrlState = (EditorArrayState)GUIUtility.GetStateObject(typeof(EditorArrayState), ctrlId);
+
+            List<int> list = new List<int>();
+            for (int i = 0; i < bindingsProperty.arraySize; i++)
+            {
+                var itemProperty = bindingsProperty.GetArrayElementAtIndex(i);
+                int val = itemProperty.FindPropertyRelative("bindingType").intValue;
+                if (!list.Contains(val))
+                    list.Add(val);
+            }
+
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                Unity.Binding.BindingType bindingType = (Unity.Binding.BindingType)list[i];
+                if (i > 0)
+                    EditorGUILayout.Space();
+                using (new GUILayout.HorizontalScope())
+                {
+                    //GUILayout.Space(EditorGUI.indentLevel * 14);
+                    EditorGUILayout.Space();
+
+                    using (new EditorGUIScopes.IndentLevel())
+                    using (new EditorGUILayout.VerticalScope())
+                    {
+                        using (new EditorGUILayout.VerticalScope("box"))
+                        {
+                            using (new GUILayout.HorizontalScope())
+                            {
+                                EditorGUILayout.LabelField(new GUIContent(bindingType.ToString()));
+                                GUILayout.FlexibleSpace();
+                                if (GUILayout.Button(EditorGUIHelper.IconToolbarMinus, GUIStyle.none))
+                                {
+                                    removeIndex = i;
+                                }
+                            }
+
+                            DrawArrayItem(ctrlState, bindingsProperty, bindingType);
+
+                        }
+
+                    }
+                }
+            }
+
+
+            if (removeIndex > -1)
+            {
+                for (int i = 0; i < bindingsProperty.arraySize; i++)
+                {
+                    SerializedProperty bindingProperty = bindingsProperty.GetArrayElementAtIndex(i);
+                    if (bindingProperty.FindPropertyRelative("bindingType").intValue == list[removeIndex])
+                    {
+                        bindingsProperty.DeleteArrayElementAtIndex(i);
+                        i--;
+                    }
+                }
             }
 
 
             const float addButonWidth = 200f;
-
+            EditorGUILayout.Space();
             using (new GUILayout.HorizontalScope())
             {
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button(addButtonContent, GUILayout.MinWidth(addButonWidth)))
                 {
-                    ShowAddBindingMenu(itemsProperty);
+                    ShowAddBindingMenu(bindingsProperty);
                 }
                 GUILayout.FlexibleSpace();
             }
@@ -98,10 +238,6 @@ namespace LWJ.UnityEditor
 
 
 
-        private static void RemoveEntry(SerializedProperty itemsProperty, int toBeRemovedEntry)
-        {
-            itemsProperty.DeleteArrayElementAtIndex(toBeRemovedEntry);
-        }
 
         static void ShowAddBindingMenu(SerializedProperty itemsProperty)
         {
@@ -116,7 +252,7 @@ namespace LWJ.UnityEditor
                 for (int p = 0; p < itemsProperty.arraySize; ++p)
                 {
                     SerializedProperty bindingEntry = itemsProperty.GetArrayElementAtIndex(p);
-                    SerializedProperty typeProperty = bindingEntry.FindPropertyRelative("type");
+                    SerializedProperty typeProperty = bindingEntry.FindPropertyRelative("bindingType");
                     if (typeProperty.intValue == values[i])
                     {
                         active = false;
@@ -124,35 +260,35 @@ namespace LWJ.UnityEditor
                     }
                 }
 
-                if (itemsProperty.type == typeof(Unity.Binding.ChildEntry).Name)
-                {
-                    if (values[i] != (int)Unity.Binding.BindingType.Binding)
-                        active = false;
-                }
+                //if (itemsProperty.type == typeof(Unity.Binding.ChildEntry).Name)
+                //{
+                //    if (values[i] != (int)Unity.Binding.BindingType.Binding)
+                //        active = false;
+                //}
                 GUIContent content = new GUIContent(names[i]);
                 if (active)
+                {
                     menu.AddItem(content, false, (data) =>
                     {
                         object[] array = (object[])data;
                         //var itemsProperty = (SerializedProperty)array[0];
                         int selected = (int)array[1];
 
-                        itemsProperty.arraySize += 1;
+                        itemsProperty.arraySize++;
 
                         SerializedProperty bindingEntry = itemsProperty.GetArrayElementAtIndex(itemsProperty.arraySize - 1);
 
-                        var sp1 = bindingEntry.FindPropertyRelative("bindings");
-                        sp1.ClearArray();
-                        sp1.arraySize = 1;
-
-                        SerializedProperty typeProperty = bindingEntry.FindPropertyRelative("type");
+                        SerializedProperty typeProperty = bindingEntry.FindPropertyRelative("bindingType");
 
                         typeProperty.enumValueIndex = selected;
 
                         itemsProperty.serializedObject.ApplyModifiedProperties();
                     }, new object[] { itemsProperty, i });
-                //else
-                //menu.AddDisabledItem(content);
+                }
+                else
+                {
+                    menu.AddDisabledItem(content);
+                }
             }
             menu.ShowAsContext();
             Event.current.Use();
@@ -175,8 +311,11 @@ namespace LWJ.UnityEditor
 
                 using (new EditorGUILayout.VerticalScope("box"))
                 {
-
-                    GUILayout.Label(label ?? GUIContent.none);
+                    using (new GUILayout.HorizontalScope())
+                    {
+                        GUILayout.Label(label ?? GUIContent.none);
+                        GUILayout.FlexibleSpace();
+                    }
                     int removeIndex = -1;
                     using (new GUILayout.VerticalScope())
                     {
@@ -339,7 +478,7 @@ namespace LWJ.UnityEditor
             {
                 if (hasLabel)
                     EditorGUILayout.PrefixLabel(new GUIContent(label));
-                property.stringValue = GUILayout.TextField(property.stringValue,GUILayout.ExpandWidth(true));
+                property.stringValue = GUILayout.TextField(property.stringValue, GUILayout.ExpandWidth(true));
 
                 string converterName = property.stringValue;
 
@@ -349,7 +488,7 @@ namespace LWJ.UnityEditor
                 int oldIndex = contents.IndexOf(o => o.text == converterName);
 
                 int selectedIndex;
-                selectedIndex = EditorGUILayout.Popup(oldIndex, contents,GUILayout.MaxWidth(24));
+                selectedIndex = EditorGUILayout.Popup(oldIndex, contents, GUILayout.MaxWidth(24));
                 if (selectedIndex != oldIndex)
                 {
                     if (selectedIndex == 0)

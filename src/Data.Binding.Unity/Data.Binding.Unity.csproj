@@ -50,7 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BindingAdapter.cs" />
-    <Compile Include="BindingBehaviour.cs" />
+    <Compile Include="Binding.cs" />
     <Compile Include="BindingDataContext.cs" />
     <Compile Include="BindingUnityEvent.cs" />
     <Compile Include="Conveters\Texture2Converter.cs" />

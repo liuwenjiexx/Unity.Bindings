@@ -18,24 +18,27 @@ public class TestSetMultiBinding : MonoBehaviour
     void TestBinding1()
     {
         var binding = target.gameObject.AddComponent<Binding>();
-        var entry = new Binding.BindingEntry();
-
+        var entry = new Binding.Entry();
+        entry.bindingType = Binding.BindingType.MultiBinding;
         entry.target = target;
         entry.targetPath = "text";
         entry.converter = "StringFormat";
         entry.converterParameter = "{0} {1}!";
-        entry.AddBinding(new Binding.BindingEntry()
+
+        entry.AddBinding(new Binding.Entry()
         {
             source = source,
             path = "text",
-        }).AddBinding(new Binding.BindingEntry()
+        }).AddBinding(new Binding.Entry()
         {
             source = source2,
             path = "text",
         });
 
-        binding.AddBinding(Binding.BindingType.MultiBinding, entry);
+        binding.AddBinding(entry);
         binding.Bind();
+
+ 
     }
     // Update is called once per frame
     void Update()
