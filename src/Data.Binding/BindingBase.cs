@@ -69,7 +69,7 @@ namespace LWJ.Data
             {
                 if (target != null)
                     targetPath = GetDefaultMember(target.GetType());
-               // throw new Exception("TargetPath Empty"+targetPath);
+                // throw new Exception("TargetPath Empty"+targetPath);
             }
 
 
@@ -133,18 +133,20 @@ namespace LWJ.Data
 
         #region Converters
 
-        static Dictionary<string, Tuple<Type, IValueConverter>> converters;
-        static Dictionary<string, Tuple<Type, IMultiValueConverter>> multiConverters;
+        //static Dictionary<string, Tuple<Type, IValueConverter>> converters;
+        //static Dictionary<string, Tuple<Type, IMultiValueConverter>> multiConverters;
         static Dictionary<Type, string> defaultMenbers;
 
-        class ConverterItem
+        class ConverterInfo
         {
-            public Type type;
+            public string Name;
             public IValueConverter valueConverter;
             public IMultiValueConverter multiValueConverter;
+            public Type valueConverterType;
+            public Type multiValueConverterType;
         }
-        static Dictionary<string, ConverterItem> cachedConverters;
-
+        static Dictionary<string, ConverterInfo> cachedConverters;
+        static Dictionary<Type, ConverterInfo> cachedTypeConverters;
 
         static BindingBase()
         {
@@ -153,38 +155,105 @@ namespace LWJ.Data
 
         static void Init()
         {
-            cachedConverters = new Dictionary<string, ConverterItem>(StringComparer.InvariantCultureIgnoreCase);
-            converters = new Dictionary<string, Tuple<Type, IValueConverter>>();
-            multiConverters = new Dictionary<string, Tuple<Type, IMultiValueConverter>>();
+            cachedConverters = new Dictionary<string, ConverterInfo>();
+            cachedTypeConverters = new Dictionary<Type, ConverterInfo>();
+            //converters = new Dictionary<string, Tuple<Type, IValueConverter>>();
+            //multiConverters = new Dictionary<string, Tuple<Type, IMultiValueConverter>>();
             defaultMenbers = new Dictionary<Type, string>();
             //ImportAttribute.Import<BindingBase>();
 
-            AddValueConverter("Boolean", typeof(BooleanConverter));
-            AddValueConverter("StringFormat", typeof(StringFormatConverter));
+            //AddValueConverter("Boolean", typeof(BooleanConverter));
+            //AddValueConverter("StringFormat", typeof(StringFormatConverter));
 
-            AddMultiValueConverter("Boolean", typeof(BooleanConverter));
-            AddMultiValueConverter("Divide", typeof(DivideConverter));
-            AddMultiValueConverter("StringJoin", typeof(StringJoinConverter));
-            AddMultiValueConverter("StringFormat", typeof(StringFormatConverter));
+            //AddMultiValueConverter("Boolean", typeof(BooleanConverter));
+            //AddMultiValueConverter("Divide", typeof(DivideConverter));
+            //AddMultiValueConverter("StringJoin", typeof(StringJoinConverter));
+            //AddMultiValueConverter("StringFormat", typeof(StringFormatConverter));
 
+
+            foreach (var ass in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                InitAssembly(ass);
+            }
+            AppDomain.CurrentDomain.AssemblyLoad += CurrentDomain_AssemblyLoad;
         }
 
-        public static void AddValueConverter(string name, Type valueConverterType)
+        private static void CurrentDomain_AssemblyLoad(object sender, AssemblyLoadEventArgs args)
         {
-            if (!typeof(IValueConverter).IsAssignableFrom(valueConverterType))
-                throw new ArgumentException("Not Implemented Interface [IValueConverter]", nameof(valueConverterType));
-
-            converters[name] = new Tuple<Type, IValueConverter>(valueConverterType, null);
+            InitAssembly(args.LoadedAssembly);
         }
 
-        public static void AddMultiValueConverter(string name, Type multiValueConverterType)
+        public static void InitAssembly(Assembly assembly)
         {
-            if (!typeof(IMultiValueConverter).IsAssignableFrom(multiValueConverterType))
-                throw new ArgumentException("Not Implemented Interface [IMultiValueConverter]", nameof(multiValueConverterType));
+            Type converterAttrType = typeof(ConverterAttribute);
 
-            multiConverters[name] = new Tuple<Type, IMultiValueConverter>(multiValueConverterType, null);
+            foreach (Type type in assembly.GetTypes())
+            {
+                if (!type.IsDefined(converterAttrType, true))
+                    continue;
+                foreach (ConverterAttribute converterAttr in type.GetCustomAttributes(converterAttrType, true))
+                {
+                    if (!string.IsNullOrEmpty(converterAttr.ConverterName))
+                    {
+                        ConverterInfo cInfo = new ConverterInfo();
+                        cInfo.Name = converterAttr.ConverterName;
+
+                        if (typeof(IValueConverter).IsAssignableFrom(type))
+                        {
+                            cInfo.valueConverterType = type;
+                        }
+                        if (typeof(IMultiValueConverter).IsAssignableFrom(type))
+                        {
+                            cInfo.multiValueConverterType = type;
+                        }
+                        cachedConverters[converterAttr.ConverterName] = cInfo;
+                    }
+                }
+            }
         }
 
+
+
+        //public static void AddValueConverter(string name, Type valueConverterType)
+        //{
+        //    if (!typeof(IValueConverter).IsAssignableFrom(valueConverterType))
+        //        throw new ArgumentException(string.Format("Not Implemented Interface [{0}]", nameof(IValueConverter)), nameof(valueConverterType));
+
+        //    converters[name] = new Tuple<Type, IValueConverter>(valueConverterType, null);
+        //}
+
+        //public static void AddMultiValueConverter(string name, Type multiValueConverterType)
+        //{
+        //    if (!typeof(IMultiValueConverter).IsAssignableFrom(multiValueConverterType))
+        //        throw new ArgumentException(string.Format("Not Implemented Interface [{0}]", nameof(IMultiValueConverter)), nameof(multiValueConverterType));
+
+        //    multiConverters[name] = new Tuple<Type, IMultiValueConverter>(multiValueConverterType, null);
+        //}
+        //public static void AddValueConverter(Type type, Type valueConverterType)
+        //{
+        //    if (type == null)
+        //        throw new ArgumentNullException(nameof(type));
+        //    if (valueConverterType == null)
+        //        throw new ArgumentNullException(nameof(valueConverterType));
+        //    if (!typeof(IValueConverter).IsAssignableFrom(valueConverterType))
+        //        throw new ArgumentException(string.Format("Not Implemented Interface [{0}]", nameof(IValueConverter)), nameof(valueConverterType));
+        //    ConverterInfo cInfo;
+        //    cInfo = cachedTypeConverters.GetOrCreateValue(type, (k) => new ConverterInfo());
+        //    cInfo.valueConverterType = valueConverterType;
+        //}
+
+        //public static void AddMultiValueConverter(Type type, Type multiValueConverterType)
+        //{
+        //    if (type == null)
+        //        throw new ArgumentNullException(nameof(type));
+        //    if (multiValueConverterType == null)
+        //        throw new ArgumentNullException(nameof(multiValueConverterType));
+        //    if (!typeof(IMultiValueConverter).IsAssignableFrom(multiValueConverterType))
+        //        throw new ArgumentException(string.Format("Not Implemented Interface [{0}]", nameof(IMultiValueConverter)), nameof(multiValueConverterType));
+        //    ConverterInfo cInfo;
+        //    cInfo = cachedTypeConverters.GetOrCreateValue(type, (k) => new ConverterInfo());
+        //    cInfo.multiValueConverterType = multiValueConverterType;
+        //}
 
         /*
         [Import(typeof(IValueConverter), Multiple = true)]
@@ -238,33 +307,53 @@ namespace LWJ.Data
             }
         }
         */
-        public static string[] GetValueConveterNames()
+        public static IEnumerable<string> GetValueConveterNames()
         {
-            return converters.Keys.ToArray();
+            return from o in cachedConverters.Values
+                   where o.valueConverterType != null
+                   select o.Name;
         }
 
-        public static string[] GetMultiValueConveterNames()
+        public static IEnumerable<string> GetMultiValueConveterNames()
         {
-            return multiConverters.Keys.ToArray();
+            return from o in cachedConverters.Values
+                   where o.multiValueConverterType != null
+                   select o.Name;
         }
         public static IValueConverter GetValueConveter(string name)
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
             IValueConverter result = null;
-            Tuple<Type, IValueConverter> item;
-            if (converters.TryGetValue(name, out item))
+            ConverterInfo cInfo;
+            if (!cachedConverters.TryGetValue(name, out cInfo))
             {
-                result = item.Item2;
-                if (result == null)
+                Type type = name.FindType();
+                if (type != null)
                 {
-                    result = (IValueConverter)Activator.CreateInstance(item.Item1);
-                    converters[name] = new Tuple<Type, IValueConverter>(item.Item1, result);
+                    if (typeof(IValueConverter).IsAssignableFrom(type))
+                    {
+                        cInfo = new ConverterInfo();
+                        cInfo.valueConverterType = type;
+                        cachedConverters[name] = cInfo;
+                    }
                 }
+
             }
-            else
+
+            if (cInfo != null)
             {
-                throw new Exception("Not IValueConverter {0}".FormatArgs(name));
+                if (cInfo.valueConverter == null && cInfo.valueConverterType != null)
+                {
+                    cInfo.valueConverter = (IValueConverter)Activator.CreateInstance(cInfo.valueConverterType);
+                }
+                result = cInfo.valueConverter;
             }
+
+            if (result == null)
+            {
+                throw new Exception("Not {0} {1}".FormatArgs(nameof(IValueConverter), name));
+            }
+
             return result;
         }
 
@@ -272,22 +361,70 @@ namespace LWJ.Data
         {
             if (name == null) throw new ArgumentNullException(nameof(name));
             IMultiValueConverter result = null;
-            Tuple<Type, IMultiValueConverter> item;
-            if (multiConverters.TryGetValue(name, out item))
+            ConverterInfo cInfo;
+            if (!cachedConverters.TryGetValue(name, out cInfo))
             {
-                result = item.Item2;
-                if (result == null)
+                Type type = name.FindType();
+                if (type != null)
                 {
-                    result = (IMultiValueConverter)Activator.CreateInstance(item.Item1);
-                    multiConverters[name] = new Tuple<Type, IMultiValueConverter>(item.Item1, result);
+                    if (typeof(IMultiValueConverter).IsAssignableFrom(type))
+                    {
+                        cInfo = new ConverterInfo();
+                        cInfo.multiValueConverterType = type;
+                        cachedConverters[name] = cInfo;
+                    }
                 }
+
             }
-            else
+
+            if (cInfo != null)
             {
-                throw new Exception("Not IMultiValueConverter {0}".FormatArgs(name));
+                if (cInfo.multiValueConverter == null && cInfo.multiValueConverterType != null)
+                {
+                    cInfo.multiValueConverter = (IMultiValueConverter)Activator.CreateInstance(cInfo.multiValueConverterType);
+                }
+                result = cInfo.multiValueConverter;
+            }
+
+            if (result == null)
+            {
+                throw new Exception("Not {0} {1}".FormatArgs(nameof(IMultiValueConverter), name));
             }
             return result;
         }
+
+        //public static IValueConverter GetValueConveter(Type type)
+        //{
+        //    if (type == null) throw new ArgumentNullException(nameof(type));
+        //    IValueConverter result = null;
+        //    ConverterInfo cInfo;
+        //    if (!cachedTypeConverters.TryGetValue(type, out cInfo))
+        //        throw new Exception("Not {0} {1}".FormatArgs(nameof(IValueConverter), type));
+
+        //    if (cInfo.valueConverter == null && cInfo.valueConverterType != null)
+        //    {
+        //        cInfo.valueConverter = (IValueConverter)Activator.CreateInstance(cInfo.valueConverterType);
+        //    }
+        //    result = cInfo.valueConverter;
+
+        //    return result;
+        //}
+
+        //public static IMultiValueConverter GetMultiValueConveter(Type type)
+        //{
+        //    if (type == null) throw new ArgumentNullException(nameof(type));
+        //    IMultiValueConverter result = null;
+        //    ConverterInfo cInfo;
+        //    if (!cachedTypeConverters.TryGetValue(type, out cInfo))
+        //        throw new Exception("Not {0} {1}".FormatArgs(nameof(IMultiValueConverter), type));
+
+        //    if (cInfo.multiValueConverter == null && cInfo.multiValueConverterType != null)
+        //    {
+        //        cInfo.multiValueConverter = (IMultiValueConverter)Activator.CreateInstance(cInfo.multiValueConverterType);
+        //    }
+        //    result = cInfo.multiValueConverter;
+        //    return result;
+        //}
 
         public static string GetDefaultMember(Type type)
         {

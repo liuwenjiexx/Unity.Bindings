@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace LWJ.Data
@@ -57,18 +58,43 @@ namespace LWJ.Data
                 return Activator.CreateInstance(type);
             return null;
         }
-    }
 
 
-
-    [AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
-    public class NamedAttribute : Attribute
-    {
-        public NamedAttribute(string name)
+        public static TValue GetOrCreateValue<TKey, TValue>(this IDictionary<TKey, TValue> self, TKey key, Func<TKey, TValue> factory)
         {
-            this.Name = name;
+            if (factory == null)
+                throw new ArgumentNullException(nameof(factory));
+            TValue value;
+            if (!self.TryGetValue(key, out value))
+            {
+                value = factory(key);
+                self[key] = value;
+            }
+            return value;
         }
 
-        public string Name { get; set; }
+
+        public static Type FindType(this string typeName)
+        {
+            Type type;
+            type = Type.GetType(typeName, false);
+            if (type == null)
+            {
+                if (typeName.IndexOf(',') < 0)
+                {
+                    foreach (var ass in AppDomain.CurrentDomain.GetAssemblies())
+                    {
+                        type = ass.GetType(typeName, false);
+                        if (type != null)
+                            break;
+                    }
+                }
+            }
+            return type;
+        }
+
     }
+
+
+
 }

@@ -4,7 +4,7 @@ using LWJ.Data;
 using System;
 namespace LWJ.Unity
 {
-
+    [Converter("Sprite"), Converter("Texture2D")]
     public class Texture2DConverter : IValueConverter
     {
 

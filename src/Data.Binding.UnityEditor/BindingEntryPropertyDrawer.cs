@@ -11,8 +11,8 @@ namespace LWJ.UnityEditor
 {
 
 
-    [CustomPropertyDrawer(typeof(BindingBehaviour.ChildEntry), true)]
-    [CustomPropertyDrawer(typeof(BindingBehaviour.Entry), true)]
+    [CustomPropertyDrawer(typeof(Unity.Binding.ChildEntry), true)]
+    [CustomPropertyDrawer(typeof(Unity.Binding.Entry), true)]
     public class BindingEntryPropertyDrawer : PropertyDrawer
     {
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
@@ -145,7 +145,7 @@ namespace LWJ.UnityEditor
 
 
 
-    [CustomPropertyDrawer(typeof(BindingBehaviour.ChildBindingEntry), true)]
+    [CustomPropertyDrawer(typeof(Unity.Binding.ChildBindingEntry), true)]
     public class BindingBehaviourChildBindingEntryPropertyDrawer : PropertyDrawer
     {
         // SerializedProperty sourceTypeProperty;
@@ -190,8 +190,8 @@ namespace LWJ.UnityEditor
             bindingTypeProperty = property.FindPropertyRelative("bindingType");
 
 
-            BindingBehaviour.BindingType bindingType = BindingBehaviour.BindingType.Binding;
-            bindingType = (BindingBehaviour.BindingType)bindingTypeProperty.intValue;
+            Unity.Binding.BindingType bindingType = Unity.Binding.BindingType.Binding;
+            bindingType = (Unity.Binding.BindingType)bindingTypeProperty.intValue;
 
             EditorGUI.BeginProperty(position, label, property);
 
@@ -201,7 +201,7 @@ namespace LWJ.UnityEditor
             using (new GUILayout.VerticalScope())
             {
 
-                if (bindingType == BindingBehaviour.BindingType.Binding)
+                if (bindingType == Unity.Binding.BindingType.Binding)
                 {
                     //EditorGUILayout.PropertyField(sourceTypeProperty);
                     //            switch ((BindingBehaviour.SourceType)sourceTypeProperty.intValue)
@@ -252,7 +252,7 @@ namespace LWJ.UnityEditor
                 EditorGUILayout.PropertyField(stringFormatProperty);
                 switch (bindingType)
                 {
-                    case BindingBehaviour.BindingType.Binding:
+                    case Unity.Binding.BindingType.Binding:
                         {
                             EditorGUILayout.PropertyField(modeProperty);
                             //EditorGUILayout.PropertyField(converterProperty);
@@ -262,7 +262,7 @@ namespace LWJ.UnityEditor
                             //EditorGUILayout.PropertyField(notifyOnTargetUpdatedProperty);
                         }
                         break;
-                    case BindingBehaviour.BindingType.MultiBinding:
+                    case Unity.Binding.BindingType.MultiBinding:
                         {
                             EditorGUILayout.PropertyField(modeProperty);
                             //EditorGUILayout.PropertyField(converterProperty);
@@ -273,7 +273,7 @@ namespace LWJ.UnityEditor
 
                         }
                         break;
-                    case BindingBehaviour.BindingType.PriorityBinding:
+                    case Unity.Binding.BindingType.PriorityBinding:
                         {
                         }
                         break;

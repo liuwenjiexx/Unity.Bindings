@@ -5,7 +5,7 @@ using System.Text;
 
 namespace LWJ.Data
 {
-    [Named("StringJoin")]
+    [Converter("StringJoin")]
     public class StringJoinConverter : IMultiValueConverter
     {
         public object Convert(object[] values, Type targetType, object parameter)

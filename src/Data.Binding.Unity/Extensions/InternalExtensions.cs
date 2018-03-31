@@ -10,6 +10,11 @@ namespace LWJ.Unity
 {
     internal static partial class InternalExtensions
     {
+        /// <summary>
+        /// Unity3D
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
         public static bool IsNull(this object obj)
         {
             if (obj is UnityEngine.Object)
@@ -21,15 +26,9 @@ namespace LWJ.Unity
         {
             string result;
             if (source == null)
-            {
                 result = string.Empty;
-            }
             else
-            {
-                result = source.ToString();
-                if (result == null)
-                    result = string.Empty;
-            }
+                result = source.ToString() ?? string.Empty;
             return result;
         }
 
@@ -125,18 +124,10 @@ namespace LWJ.Unity
             setter.Invoke(obj, new object[] { value });
         }
 
+
+
     }
 
 
-
-    [AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
-    public class NamedAttribute : Attribute
-    {
-        public NamedAttribute(string name)
-        {
-            this.Name = name;
-        }
-
-        public string Name { get; set; }
-    }
+     
 }

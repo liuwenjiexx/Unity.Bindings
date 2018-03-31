@@ -9,7 +9,7 @@ using UnityEngine;
 namespace LWJ.UnityEditor
 {
 
-    [CustomPropertyDrawer(typeof(BindingBehaviour.BindingEntry), true)]
+    [CustomPropertyDrawer(typeof(Binding.BindingEntry), true)]
     public class BindingBehaviourBindingEntryPropertyDrawer : PropertyDrawer
     {
         SerializedProperty sourceProperty;
@@ -74,8 +74,8 @@ namespace LWJ.UnityEditor
                 bindingTypeProperty = property.FindPropertyRelative("bindingType");
             }
 
-            BindingBehaviour.BindingType bindingType = BindingBehaviour.BindingType.Binding;
-            bindingType = (BindingBehaviour.BindingType)bindingTypeProperty.intValue;
+            Binding.BindingType bindingType = Binding.BindingType.Binding;
+            bindingType = (Binding.BindingType)bindingTypeProperty.intValue;
 
 
             EditorGUI.BeginProperty(position, label, property);
@@ -86,7 +86,7 @@ namespace LWJ.UnityEditor
             using (new GUILayout.VerticalScope())
             {
 
-                if (bindingType == BindingBehaviour.BindingType.Binding)
+                if (bindingType == Binding.BindingType.Binding)
                 {
                     DrawSource(property);
 
@@ -137,7 +137,7 @@ namespace LWJ.UnityEditor
                 EditorGUILayout.PropertyField(stringFormatProperty);
                 switch (bindingType)
                 {
-                    case BindingBehaviour.BindingType.Binding:
+                    case Binding.BindingType.Binding:
                         {
                             EditorGUILayout.PropertyField(modeProperty);
                             BindingEditor.ValueConverterField(converterProperty);
@@ -149,7 +149,7 @@ namespace LWJ.UnityEditor
                             //EditorGUILayout.PropertyField(notifyOnTargetUpdatedProperty);
                         }
                         break;
-                    case BindingBehaviour.BindingType.MultiBinding:
+                    case Binding.BindingType.MultiBinding:
                         {
                             EditorGUILayout.PropertyField(modeProperty);
                             //EditorGUILayout.PropertyField(converterProperty);
@@ -168,7 +168,7 @@ namespace LWJ.UnityEditor
 
                         }
                         break;
-                    case BindingBehaviour.BindingType.PriorityBinding:
+                    case Binding.BindingType.PriorityBinding:
                         {
                         }
                         break;
@@ -181,7 +181,7 @@ namespace LWJ.UnityEditor
         public static void DrawTarget(SerializedProperty item)
         {
             var targetProperty = item.FindPropertyRelative("target");
-            GameObject targetGo = ((BindingBehaviour)item.serializedObject.targetObject).gameObject;
+            GameObject targetGo = ((Binding)item.serializedObject.targetObject).gameObject;
 
             // EditorGUILayout.PropertyField(targetProperty);
 
@@ -196,7 +196,7 @@ namespace LWJ.UnityEditor
             var sourceNameProperty = item.FindPropertyRelative("sourceName");
             var ancestorLevelProperty = item.FindPropertyRelative("ancestorLevel");
             var relativeProperty = item.FindPropertyRelative("relativeSource");
-            GameObject go = ((BindingBehaviour)item.serializedObject.targetObject).gameObject;
+            GameObject go = ((Binding)item.serializedObject.targetObject).gameObject;
 
             sourceProperty.objectReferenceValue = EditorGUIHelper.ComponentAndGameObjectPop(sourceProperty.displayName, go, sourceProperty.objectReferenceValue, true);
             EditorGUILayout.PropertyField(sourceTypeProperty);

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace LWJ.Data
 {
-    [Named("Boolean")]
+    [Converter("Boolean")]
     public class BooleanConverter : IValueConverter, IMultiValueConverter
     {
 

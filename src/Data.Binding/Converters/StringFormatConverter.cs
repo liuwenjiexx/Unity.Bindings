@@ -7,7 +7,7 @@ namespace LWJ.Data
     /// <summary>
     /// parameter is Format
     /// </summary>
-    [Named("StringFormat")]
+    [Converter("StringFormat")]
     public class StringFormatConverter : IMultiValueConverter, IValueConverter
     {
         public object Convert(object[] values, Type targetType, object parameter)

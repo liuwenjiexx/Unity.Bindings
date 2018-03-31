@@ -18,7 +18,8 @@ public class ArrayPropertyAttribute : PropertyAttribute
 
 namespace LWJ.Unity
 {
-    public class BindingBehaviour : MonoBehaviour
+
+    public class Binding : MonoBehaviour
     {
 
         [SerializeField]
@@ -33,7 +34,7 @@ namespace LWJ.Unity
         [SerializeField]
         public bool startedBinding;
 
-        static BindingBehaviour()
+        static Binding()
         {
             #region UnityEngine.UI
 
@@ -42,6 +43,9 @@ namespace LWJ.Unity
             BindingBase.SetDefaultMember(typeof(RawImage), "texture");
 
             #endregion
+
+            //BindingBase.AddValueConverter("Sprite", typeof(Texture2DConverter));
+            //BindingBase.AddValueConverter("Texture2D", typeof(Texture2DConverter));
 
         }
 
@@ -212,7 +216,7 @@ namespace LWJ.Unity
                 case BindingType.Binding:
                 default:
                     {
-                        Binding binding = new Binding()
+                        Data.Binding binding = new Data.Binding()
                         {
                             Source = ResolveSource(entry),
                             Mode = entry.mode,
@@ -323,7 +327,7 @@ namespace LWJ.Unity
 
         public static void Bind(GameObject target)
         {
-            foreach (var binding in target.GetComponentsInChildren<BindingBehaviour>())
+            foreach (var binding in target.GetComponentsInChildren<Binding>())
             {
                 binding.Bind();
             }
@@ -331,7 +335,7 @@ namespace LWJ.Unity
 
         public static void Unbind(GameObject target)
         {
-            foreach (var binding in target.GetComponentsInChildren<BindingBehaviour>())
+            foreach (var binding in target.GetComponentsInChildren<Binding>())
             {
                 binding.Unbind();
             }
@@ -386,7 +390,7 @@ namespace LWJ.Unity
         {
             return obj == null || ReferenceEquals(obj, null) || obj.Equals(null);
         }
-        
+
         protected object ResolveSource(BindingEntry entry)
         {
             object result;
@@ -737,9 +741,22 @@ namespace LWJ.Unity
 
             [SerializeField]
             public List<BindingEntry> children;
-            public List<BindingEntry> Children { get => children; }
+            public List<BindingEntry> Children
+            {
+                get
+                {
+                    if (children == null)
+                        children = new List<BindingEntry>();
+                    return children;
+                }
+            }
 
-
+            public BindingEntry AddBinding(BindingEntry entry)
+            {
+                if (!Children.Contains(entry))
+                    Children.Add(entry);
+                return this;
+            }
 
             public void OnBeforeSerialize()
             {

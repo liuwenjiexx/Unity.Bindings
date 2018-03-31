@@ -12,7 +12,7 @@ using LWJ.Data;
 namespace LWJ.UnityEditor
 {
 
-    [CustomEditor(typeof(BindingBehaviour))]
+    [CustomEditor(typeof(Unity.Binding))]
     public class BindingEditor : Editor
     {
 
@@ -74,7 +74,7 @@ namespace LWJ.UnityEditor
                 RemoveEntry(itemsProperty, toBeRemovedEntry);
             }
 
-            
+
             const float addButonWidth = 200f;
 
             using (new GUILayout.HorizontalScope())
@@ -106,7 +106,7 @@ namespace LWJ.UnityEditor
         static void ShowAddBindingMenu(SerializedProperty itemsProperty)
         {
             GenericMenu menu = new GenericMenu();
-            Type enumType = typeof(BindingBehaviour.BindingType);
+            Type enumType = typeof(Unity.Binding.BindingType);
             string[] names = Enum.GetNames(enumType);
             int[] values = (int[])Enum.GetValues(enumType);
             for (int i = 0; i < names.Length; ++i)
@@ -124,9 +124,9 @@ namespace LWJ.UnityEditor
                     }
                 }
 
-                if (itemsProperty.type == typeof(BindingBehaviour.ChildEntry).Name)
+                if (itemsProperty.type == typeof(Unity.Binding.ChildEntry).Name)
                 {
-                    if (values[i] != (int)BindingBehaviour.BindingType.Binding)
+                    if (values[i] != (int)Unity.Binding.BindingType.Binding)
                         active = false;
                 }
                 GUIContent content = new GUIContent(names[i]);
@@ -164,7 +164,7 @@ namespace LWJ.UnityEditor
             using (new EditorGUILayoutScopes.IndentLevel(0))
             using (new GUILayout.HorizontalScope())
             {
-              
+
                 Event evt = Event.current;
 
                 EditorArrayState ctrlState;
@@ -175,7 +175,7 @@ namespace LWJ.UnityEditor
 
                 using (new EditorGUILayout.VerticalScope("box"))
                 {
-                   
+
                     GUILayout.Label(label ?? GUIContent.none);
                     int removeIndex = -1;
                     using (new GUILayout.VerticalScope())
@@ -236,7 +236,7 @@ namespace LWJ.UnityEditor
                         arrayProperty.DeleteArrayElementAtIndex(removeIndex);
                     }
                 }
-                 
+
             }
         }
 
@@ -282,7 +282,7 @@ namespace LWJ.UnityEditor
                 EditorGUILayout.Space();
                 DrawArrayStyle2(new GUIContent("Bindings"),
                     itemsProperty,
-                    (itemProperty) => new GUIContent(((BindingBehaviour.BindingType)itemProperty.FindPropertyRelative("bindingType").intValue).ToStringOrEmpty())
+                    (itemProperty) => new GUIContent(((Unity.Binding.BindingType)itemProperty.FindPropertyRelative("bindingType").intValue).ToStringOrEmpty())
                     );
                 EditorGUILayout.Space();
             }
@@ -295,9 +295,9 @@ namespace LWJ.UnityEditor
                 if (GUILayout.Button(new GUIContent("Add"), GUILayout.MinWidth(addButonWidth)))
                 {
                     GenericMenu menu = new GenericMenu();
-                    Type enumType = typeof(BindingBehaviour.BindingType);
-                    string[] names = new string[] { BindingBehaviour.BindingType.Binding.ToString() };
-                    int[] values = new int[] { (int)BindingBehaviour.BindingType.Binding };
+                    Type enumType = typeof(Unity.Binding.BindingType);
+                    string[] names = new string[] { Unity.Binding.BindingType.Binding.ToString() };
+                    int[] values = new int[] { (int)Unity.Binding.BindingType.Binding };
 
                     GUIContent content = new GUIContent(names[0]);
 
@@ -337,6 +337,10 @@ namespace LWJ.UnityEditor
 
             using (new GUILayout.HorizontalScope())
             {
+                if (hasLabel)
+                    EditorGUILayout.PrefixLabel(new GUIContent(label));
+                property.stringValue = GUILayout.TextField(property.stringValue,GUILayout.ExpandWidth(true));
+
                 string converterName = property.stringValue;
 
                 GUIContent[] contents = new GUIContent[] { EditorGUIHelper.NullContent }.Concat(
@@ -345,10 +349,7 @@ namespace LWJ.UnityEditor
                 int oldIndex = contents.IndexOf(o => o.text == converterName);
 
                 int selectedIndex;
-                if (hasLabel)
-                    selectedIndex = EditorGUILayout.Popup(new GUIContent(label), oldIndex, contents, options);
-                else
-                    selectedIndex = EditorGUILayout.Popup(GUIContent.none, oldIndex, contents, options);
+                selectedIndex = EditorGUILayout.Popup(oldIndex, contents,GUILayout.MaxWidth(24));
                 if (selectedIndex != oldIndex)
                 {
                     if (selectedIndex == 0)

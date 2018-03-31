@@ -5,11 +5,9 @@ using System.Text;
 
 namespace LWJ.Data
 {
-
-    [Named("Divide")]
+    [Converter("Divide")]
     public class DivideConverter : IMultiValueConverter
     {
-
 
         public object Convert(object[] values, Type targetType, object parameter)
         {

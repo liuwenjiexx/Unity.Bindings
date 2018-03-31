@@ -37,7 +37,7 @@ namespace LWJ.UnityEditor
         }
     }
 
-    [CustomPropertyDrawer(typeof(BindingBehaviour.RelativeSourceEntry), true)]
+    [CustomPropertyDrawer(typeof(Unity.Binding.RelativeSourceEntry), true)]
     public class BindingBehaviourRelativeSourceEntryPropertyDrawer : PropertyDrawer
     {
 
