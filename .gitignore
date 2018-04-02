@@ -286,5 +286,5 @@ __pycache__/
 *.btm.cs
 *.odx.cs
 *.xsd.cs
-/test/Data.Binding.Unity.Tests/Assets/LWJ
+
 !/output/*

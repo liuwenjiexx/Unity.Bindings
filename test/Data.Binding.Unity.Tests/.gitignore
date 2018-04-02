@@ -2,5 +2,7 @@
 /Temp/
 /*.csproj
 /*.sln
-/Assets/LWJ/
 /ProjectSettings/ProjectVersion.txt
+!*.meta
+*.mdb
+*.dll.mdb.meta

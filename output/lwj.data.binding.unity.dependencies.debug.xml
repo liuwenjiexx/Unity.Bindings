@@ -14,7 +14,7 @@
         <before ext="dll">pdb2mdb LWJ.Data.Binding.Unity.dll</before>
       </item>
     </item>
-    <item to="Editor/Plugins">
+    <item to="Editor">
       <item from="LWJ.Data.Binding.UnityEditor" ext="dll,dll.mdb" >
         <before ext="dll">pdb2mdb LWJ.Data.Binding.UnityEditor.dll</before>
       </item>

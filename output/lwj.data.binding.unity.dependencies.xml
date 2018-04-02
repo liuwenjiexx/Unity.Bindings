@@ -11,7 +11,7 @@
       <item from="LWJ.Data.Binding.Unity"  ext="dll,dll.meta" >
       </item>
     </item>
-    <item to="Editor/Plugins">
+    <item to="Editor">
       <item from="LWJ.Data.Binding.UnityEditor"  ext="dll,dll.meta" >
       </item>
     </item>
