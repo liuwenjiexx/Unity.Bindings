@@ -51,8 +51,10 @@
     <Compile Include="Binding.cs" />
     <Compile Include="BindingDataContext.cs" />
     <Compile Include="BindingUnityEvent.cs" />
-    <Compile Include="Conveters\Texture2Converter.cs" />
+    <Compile Include="ComponentPopupAttribute.cs" />
+    <Compile Include="Conveters\Texture2DConverter.cs" />
     <Compile Include="Extensions\InternalExtensions.cs" />
+    <Compile Include="MemberPopupAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

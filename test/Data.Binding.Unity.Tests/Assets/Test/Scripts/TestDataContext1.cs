@@ -25,7 +25,11 @@ public class TestDataContext1 : MonoBehaviour
 
         if (inputField)
             inputField.onValueChanged.AddListener(OnTextChange);
-
+        UnityEngine.UI.Text text=null;
+        var val1 = text.text;
+        UnityEngine.UI.Slider slider=null;
+        var val2 = slider.value;
+        //slider.onValueChanged;
     }
      
 
@@ -69,52 +73,4 @@ public class TestDataContext1 : MonoBehaviour
  
 
 }
-
-public class TextureConverter : IValueConverter
-{
-    public object Convert(object value, Type targetType, object parameter)
-    {
-        if (value == null)
-            return null;
-
-        if (targetType.IsAssignableFrom(value.GetType()))
-            return value;
-
-
-        if (value is Texture2D)
-        {
-            Texture2D texture = (Texture2D)value;
-            if (targetType == typeof(Sprite))
-                return TextureToSprite(texture);
-
-        }
-        else if (value is Sprite)
-        {
-            Sprite sprite = (Sprite)value;
-            if (targetType == typeof(Texture2D))
-                return SpriteToTexture(sprite);
-        }
-        return null;
-    }
-
-
-
-    Sprite TextureToSprite(Texture2D texture)
-    {
-        if (texture == null)
-            return null;
-        Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
-        return sprite;
-    }
-    Texture2D SpriteToTexture(Sprite sprite)
-    {
-        if (sprite == null)
-            return null;
-        return sprite.texture;
-    }
-
-    public object ConvertBack(object value, Type targetType, object parameter)
-    {
-        return Convert(value, targetType, parameter);
-    }
-}
+ 
