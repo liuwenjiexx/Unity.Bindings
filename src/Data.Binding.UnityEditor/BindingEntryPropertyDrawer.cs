@@ -2,7 +2,7 @@
 using System;
 using UnityEditor;
 using UnityEngine;
-
+using LWJ.Unity;
 namespace LWJ.UnityEditor
 {
 
@@ -36,19 +36,19 @@ namespace LWJ.UnityEditor
             return base.GetPropertyHeight(property, label);
         }
 
-     
+
 
 
 
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
-        { 
-           // if (sourceTypeProperty == null)
+        {
+            // if (sourceTypeProperty == null)
             {
                 sourceProperty = property.FindPropertyRelative("source");
                 sourceTypeProperty = property.FindPropertyRelative("sourceType");
                 sourceNameProperty = property.FindPropertyRelative("sourceName");
-                ancestorLevelProperty = property.FindPropertyRelative("ancestorLevel");                
+                ancestorLevelProperty = property.FindPropertyRelative("ancestorLevel");
                 relativeProperty = property.FindPropertyRelative("relativeSource");
                 pathProperty = property.FindPropertyRelative("path");
                 targetProperty = property.FindPropertyRelative("target");
@@ -86,7 +86,8 @@ namespace LWJ.UnityEditor
                     Type sourceType = null;
                     if (sourceProperty.objectReferenceValue != null)
                         sourceType = sourceProperty.objectReferenceValue.GetType();
-                    pathProperty.stringValue = EditorGUIHelper.PropertyNamesField(pathProperty.displayName, sourceType, pathProperty.stringValue, true);
+
+                    EditorGUIHelper.MemberPopup(new GUIContent(pathProperty.displayName), sourceType, MemberPopupFlags.Field | MemberPopupFlags.Property, pathProperty);
                 }
 
 
@@ -120,14 +121,14 @@ namespace LWJ.UnityEditor
                 if (targetProperty.objectReferenceValue != null)
                     targetType = targetProperty.objectReferenceValue.GetType();
 
-                targetPathProperty.stringValue = EditorGUIHelper.PropertyNamesField(targetPathProperty.displayName, targetType, targetPathProperty.stringValue, true);
+                EditorGUIHelper.MemberPopup(new GUIContent(targetPathProperty.displayName), targetType, MemberPopupFlags.Field | MemberPopupFlags.Property, targetPathProperty);
 
                 EditorGUILayout.PropertyField(targetNullValueProperty);
 
                 EditorGUILayout.PropertyField(fallbackValueProperty);
 
                 EditorGUILayout.PropertyField(stringFormatProperty);
-                GUILayout.Label(bindingType.ToString()+","+ stringFormatProperty.stringValue);
+
                 switch (bindingType)
                 {
                     case Binding.BindingType.Binding:
@@ -174,11 +175,13 @@ namespace LWJ.UnityEditor
         public static void DrawTarget(SerializedProperty item)
         {
             var targetProperty = item.FindPropertyRelative("target");
-            GameObject targetGo = ((Binding)item.serializedObject.targetObject).gameObject;
+            //GameObject targetGo = ((Binding)item.serializedObject.targetObject).gameObject;
 
             // EditorGUILayout.PropertyField(targetProperty);
 
-            targetProperty.objectReferenceValue = EditorGUIHelper.ComponentAndGameObjectPop(targetProperty.displayName, targetGo, targetProperty.objectReferenceValue, true);
+            //targetProperty.objectReferenceValue = EditorGUIHelper.ComponentAndGameObjectPop(targetProperty.displayName, targetGo, targetProperty.objectReferenceValue, true);
+
+            EditorGUIHelper.ComponentPopup(new GUIContent(targetProperty.displayName), targetProperty);
 
         }
 
@@ -191,7 +194,9 @@ namespace LWJ.UnityEditor
             var relativeProperty = item.FindPropertyRelative("relativeSource");
             GameObject go = ((Binding)item.serializedObject.targetObject).gameObject;
 
-            sourceProperty.objectReferenceValue = EditorGUIHelper.ComponentAndGameObjectPop(sourceProperty.displayName, go, sourceProperty.objectReferenceValue, true);
+            //sourceProperty.objectReferenceValue = EditorGUIHelper.ComponentAndGameObjectPop(sourceProperty.displayName, go, sourceProperty.objectReferenceValue, true);
+
+            EditorGUIHelper.ComponentPopup(new GUIContent(sourceProperty.displayName), sourceProperty);
             EditorGUILayout.PropertyField(sourceTypeProperty);
             EditorGUILayout.PropertyField(sourceNameProperty);
             EditorGUILayout.PropertyField(ancestorLevelProperty);

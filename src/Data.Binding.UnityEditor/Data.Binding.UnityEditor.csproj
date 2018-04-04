@@ -48,11 +48,13 @@
   <ItemGroup>
     <Compile Include="BindingEntryPropertyDrawer.cs" />
     <Compile Include="BindingEditor.cs" />
+    <Compile Include="ComponentPopupDrawer.cs" />
     <Compile Include="EditorGUIHelper.cs" />
     <Compile Include="EditorGUILayoutScopes.cs" />
     <Compile Include="EditorGUIScopes.cs" />
     <Compile Include="Extensions\InternalExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="MemberPopupDrawer.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Data.Binding.Unity\Data.Binding.Unity.csproj">

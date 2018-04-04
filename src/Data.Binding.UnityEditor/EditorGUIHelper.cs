@@ -11,7 +11,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 using Object = UnityEngine.Object;
-
+using LWJ.Unity;
 
 namespace LWJ.UnityEditor
 {
@@ -21,7 +21,7 @@ namespace LWJ.UnityEditor
 
         static GUIStyle whiteTextureStyle;
         static Dictionary<Type, GUIContent[]> propertys;
-        static Dictionary<Type, GUIContent[]> writablePropertys;
+        static Dictionary<Type, GUIContent[]> type_members;
 
         private static Dictionary<string, GUIContent> contents;
 
@@ -147,7 +147,7 @@ namespace LWJ.UnityEditor
             {
                 return (from o in ((from o in t.GetProperties()
                                     orderby o.Name
-                                    select string.Format("{0}({1})", o.Name, o.PropertyType.Name))/*.Concat((from o in t.GetFields()
+                                    select string.Format("{0}", o.Name, o.PropertyType.Name))/*.Concat((from o in t.GetFields()
                                                             select o.Name))*/)
                         select new GUIContent(o)).ToArray();
             });
@@ -157,10 +157,10 @@ namespace LWJ.UnityEditor
             if (type == null)
                 return EmptyArray;
 
-            if (writablePropertys == null)
-                writablePropertys = new Dictionary<Type, GUIContent[]>();
+            if (type_members == null)
+                type_members = new Dictionary<Type, GUIContent[]>();
 
-            return writablePropertys.GetOrCreateValue(type, (t) =>
+            return type_members.GetOrCreateValue(type, (t) =>
             {
                 return (from o in ((from o in t.GetProperties()
                                     where o.CanWrite
@@ -171,206 +171,96 @@ namespace LWJ.UnityEditor
             });
         }
 
-        public static string PropertyNamesField(string label, Type type, string propertyName, bool canWrite, params GUILayoutOption[] options)
+        public static void MemberPopup(GUIContent label, Type type, MemberPopupFlags memberPopupFlags, SerializedProperty prop)
         {
-
-            return PropertyNamesField(true, label, type, propertyName, canWrite, options);
-        }
-        public static string PropertyNamesField(Type type, string propertyName, bool canWrite, params GUILayoutOption[] options)
-        {
-            return PropertyNamesField(false, null, type, propertyName, canWrite, options);
-        }
-        private static string PropertyNamesField(bool hasLabel, string label, Type type, string propertyName, bool canWrite, params GUILayoutOption[] options)
-        {
-
-            using (new GUILayout.HorizontalScope())
-            {
-                if (hasLabel)
-                    propertyName = EditorGUILayout.TextField(label, propertyName);
-                else
-                    propertyName = EditorGUILayout.TextField(propertyName);
-                GUIContent[] contents = GetPropertyContents(type);
-                int selectedIndex = -1;
-                int width = 30;
-
-                selectedIndex = EditorGUILayout.Popup(selectedIndex, contents, GUILayout.Width(width), GUILayout.MaxWidth(width),GUILayout.MinWidth(width), GUILayout.ExpandWidth(false));
-                if (selectedIndex != -1)
-                    propertyName = contents[selectedIndex].text;
-
-            }
-            return propertyName;
+            prop.stringValue = MemberPopup(label, type, memberPopupFlags, prop.stringValue);
         }
 
 
-
-
-        public static Object ComponentAndGameObjectPop(string label, GameObject go, Object value, bool allowSetObject, params GUILayoutOption[] options)
+        public static string MemberPopup(GUIContent label, Type type, MemberPopupFlags memberPopupFlags, string memberName)
         {
-            if (allowSetObject)
-            {
-                using (new GUILayout.HorizontalScope())
-                {
+            using (new GUILayout.VerticalScope()) { }
+            Rect rect = GUILayoutUtility.GetLastRect();
+            float height = EditorGUI.GetPropertyHeight(SerializedPropertyType.String, label);
+            rect = GUILayoutUtility.GetRect(0, rect.width, height, height);
 
-                    value = EditorGUILayout.ObjectField(label, value, typeof(Object), true);
-
-                    value = ComponentAndGameObjectPop(go, value, GUILayout.MaxWidth(120));
-
-                }
-            }
-            else
-            {
-                value = ComponentAndGameObjectPop(label, go, value, GUILayout.MaxWidth(120));
-            }
-            return value;
+            return MemberPopup(rect, label, type, memberPopupFlags, memberName);
         }
 
-        public static Object ComponentAndGameObjectPop(GameObject go, Object value, bool allowSetObject, params GUILayoutOption[] options)
+        public static void MemberPopup(Rect rect, GUIContent label, Type type, MemberPopupFlags memberPopupFlags, SerializedProperty prop)
         {
-            if (allowSetObject)
-            {
-                using (new GUILayout.HorizontalScope())
-                {
-
-                    value = EditorGUILayout.ObjectField(value, typeof(Object), true);
-
-                    value = ComponentAndGameObjectPop(go, value, GUILayout.MaxWidth(120));
-
-                }
-            }
-            else
-            {
-                value = ComponentAndGameObjectPop(go, value, GUILayout.MaxWidth(120));
-            }
-            return value;
+            prop.stringValue = MemberPopup(rect, label, type, memberPopupFlags, prop.stringValue);
         }
 
-
-        public static Object ComponentAndGameObjectPop(string label, GameObject go, Object value, params GUILayoutOption[] options)
+        public static string MemberPopup(Rect rect, GUIContent label, Type type, MemberPopupFlags memberPopupFlags, string memberName)
         {
-            return ComponentAndGameObjectPop(true, label, go, value, options);
-        }
-
-        public static Object ComponentAndGameObjectPop(GameObject go, Object value, params GUILayoutOption[] options)
-        {
-            return ComponentAndGameObjectPop(false, null, go, value, options);
-        }
-        private static Object ComponentAndGameObjectPop(bool hasLabel, string label, GameObject go1, Object value, params GUILayoutOption[] options)
-        {
+            int w = (int)(rect.width * 0.3f);
+            memberName = EditorGUI.TextField(new Rect(rect.x, rect.y, rect.width - w, EditorGUI.GetPropertyHeight(SerializedPropertyType.String, label)), label, memberName);
+            GUIContent[] contents = GetPropertyContents(type);
             int selectedIndex = -1;
-            Object[] values = null;
-            string[] displayNames = null;
 
-            GameObject go = null;
+            selectedIndex = EditorGUI.Popup(new Rect(rect.x + rect.width - w, rect.y, w, EditorGUI.GetPropertyHeight(SerializedPropertyType.String, label)), selectedIndex, contents);
+            if (selectedIndex != -1)
+                memberName = contents[selectedIndex].text;
 
-            if (value != null)
-            {
-                if (value is Component)
-                {
-                    go = ((Component)value).gameObject;
-                }
-                else
-                {
-                    go = value as GameObject;
-                }
-            }
-
-            if (go != null)
-            {
-                values = go.GetComponents<Component>().Union(new Object[] { go }).OrderBy(o => o.GetType().Name).ToArray();
-                displayNames = values.Select(o => o.GetType().Name).ToArray();
-                if (value != null)
-                {
-                    for (int i = 0; i < values.Length; i++)
-                    {
-                        if (values[i] == value)
-                        {
-                            selectedIndex = i;
-                            break;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                displayNames = new string[] { };
-
-            }
-            
-            int newIndex;
-            if (hasLabel)
-                newIndex = EditorGUILayout.Popup(label, selectedIndex, displayNames, options);
-            else
-                newIndex = EditorGUILayout.Popup(selectedIndex, displayNames, options);
-            
-            if (newIndex != selectedIndex)
-            {
-                value = values[newIndex];
-            }
-            return value;
-
-        }
-        public static Component ComponentPop(string label, GameObject go, Component value, bool allowSetObject, params GUILayoutOption[] options)
-        {
-            return ComponentPop(true, label, go, value, allowSetObject, options);
-        }
-        public static Component ComponentPop(GameObject go, Component value, bool allowSetObject, params GUILayoutOption[] options)
-        {
-            return ComponentPop(false, null, go, value, allowSetObject, options);
-        }
-        private static Component ComponentPop(bool hasLabel, string label, GameObject go, Component value, bool allowSetObject, params GUILayoutOption[] options)
-        {
-            if (allowSetObject)
-            {
-                using (new GUILayout.HorizontalScope())
-                {
-
-                    GameObject newGo = null;
-                    if (hasLabel)
-                        newGo = EditorGUILayout.ObjectField(label, go, typeof(GameObject), true) as GameObject;
-                    else
-                        newGo = EditorGUILayout.ObjectField(go, typeof(GameObject), true) as GameObject;
-                    if (newGo != go)
-                    {
-                        go = newGo;
-                        if (go != null)
-                            value = go.GetComponent<Component>();
-                        else
-                            value = null;
-                    }
-                    value = ComponentPop(go, value, GUILayout.MaxWidth(120));
-
-                }
-            }
-            else
-            {
-                if (hasLabel)
-                    value = ComponentPop(label, go, value, options);
-                else
-                    value = ComponentPop(go, value, options);
-            }
-            return value;
+            return memberName;
         }
 
-        public static Component ComponentPop(string label, GameObject go, Component value, params GUILayoutOption[] options)
+
+        public static void ComponentPopup(GUIContent label, SerializedProperty prop)
         {
-            return ComponentPop(true, label, go, value, options);
-        }
-        public static Component ComponentPop(GameObject go, Component value, params GUILayoutOption[] options)
-        {
-            return ComponentPop(false, null, go, value, options);
+            prop.objectReferenceValue = ComponentPopup(label, prop.objectReferenceValue);
         }
 
-        private static Component ComponentPop(bool hasLabel, string label, GameObject go, Component value, params GUILayoutOption[] options)
+        public static UnityEngine.Object ComponentPopup(GUIContent label, UnityEngine.Object obj)
         {
+
+            using (new GUILayout.VerticalScope()) { }
+            Rect rect = GUILayoutUtility.GetLastRect();
+            float height = EditorGUI.GetPropertyHeight(SerializedPropertyType.ObjectReference, label);
+            rect = GUILayoutUtility.GetRect(0, rect.width, height, height);
+            return ComponentPopup(rect, label, obj);
+        }
+
+        public static void ComponentPopup(Rect position, GUIContent label, SerializedProperty prop)
+        {
+
+            //position= EditorGUI.PrefixLabel(position, label);
+            //int w = (int)(position.width * 0.5);
+            prop.objectReferenceValue = ComponentPopup(position, label, prop.objectReferenceValue);
+        }
+
+        public static Component ComponentPopup(Rect rect, GUIContent label, UnityEngine.Object value)
+        {
+
+            int w = (int)(rect.width * 0.3);
+            value = EditorGUI.ObjectField(new Rect(rect.x, rect.y, rect.width - w, rect.height), label, value, typeof(Component), false);
+
+            rect = new Rect(rect.x + rect.width - w, rect.y, w, rect.height);
+
             int selectedIndex = -1;
             Component[] values = null;
             string[] displayNames = null;
 
-
-            if (go != null)
+            if (value)
             {
-                values = go.GetComponents<Component>();
-                displayNames = values.Select(o => o.GetType().Name).OrderBy(o => o).ToArray();
+                if (value is GameObject)
+                {
+                    values = ((GameObject)value).GetComponents<Component>();
+                }
+                else
+                {
+                    value = value as Component;
+                    if (value)
+                        values = ((Component)value).GetComponents<Component>();
+                    else
+                        values = new Component[0];
+                }
+                values = (from o in values
+                          orderby o.GetType().Name
+                          select o).ToArray();
+                displayNames = (from o in values
+                                select o.GetType().Name).ToArray();
                 selectedIndex = values.IndexOf(value);
             }
             else
@@ -380,17 +270,134 @@ namespace LWJ.UnityEditor
             }
 
             int newIndex;
-            if (hasLabel)
-                newIndex = EditorGUILayout.Popup(label, selectedIndex, displayNames, options);
-            else
-                newIndex = EditorGUILayout.Popup(selectedIndex, displayNames, options);
+
+
+            newIndex = EditorGUI.Popup(new Rect(rect.xMin, rect.y, rect.width, (int)EditorGUI.GetPropertyHeight(SerializedPropertyType.ObjectReference, GUIContent.none)), selectedIndex, displayNames);
+
             if (newIndex != selectedIndex)
             {
-                value = values[newIndex];
-
+                if (selectedIndex >= 0)
+                    value = values[newIndex];
             }
-            return value;
+
+            if (value)
+            {
+                if (!(value is Component) && values != null && values.Length > 0)
+                {
+                    value = values[0];
+                }
+            }
+            return value as Component;
         }
+
+
+        //public static Object ComponentAndGameObjectPop(string label, GameObject go, Object value, bool allowSetObject, params GUILayoutOption[] options)
+        //{
+        //    if (allowSetObject)
+        //    {
+        //        using (new GUILayout.HorizontalScope())
+        //        {
+
+        //            value = EditorGUILayout.ObjectField(label, value, typeof(Object), true);
+
+        //            value = ComponentAndGameObjectPop(go, value, GUILayout.MaxWidth(120));
+
+        //        }
+        //    }
+        //    else
+        //    {
+        //        value = ComponentAndGameObjectPop(label, go, value, GUILayout.MaxWidth(120));
+        //    }
+        //    return value;
+        //}
+
+        //public static Object ComponentAndGameObjectPop(GameObject go, Object value, bool allowSetObject, params GUILayoutOption[] options)
+        //{
+        //    if (allowSetObject)
+        //    {
+        //        using (new GUILayout.HorizontalScope())
+        //        {
+
+        //            value = EditorGUILayout.ObjectField(value, typeof(Object), true);
+
+        //            value = ComponentAndGameObjectPop(go, value, GUILayout.MaxWidth(120));
+
+        //        }
+        //    }
+        //    else
+        //    {
+        //        value = ComponentAndGameObjectPop(go, value, GUILayout.MaxWidth(120));
+        //    }
+        //    return value;
+        //}
+
+
+        //public static Object ComponentAndGameObjectPop(string label, GameObject go, Object value, params GUILayoutOption[] options)
+        //{
+        //    return ComponentAndGameObjectPop(true, label, go, value, options);
+        //}
+
+        //public static Object ComponentAndGameObjectPop(GameObject go, Object value, params GUILayoutOption[] options)
+        //{
+        //    return ComponentAndGameObjectPop(false, null, go, value, options);
+        //}
+        //private static Object ComponentAndGameObjectPop(bool hasLabel, string label, GameObject go1, Object value, params GUILayoutOption[] options)
+        //{
+        //    int selectedIndex = -1;
+        //    Object[] values = null;
+        //    string[] displayNames = null;
+
+        //    GameObject go = null;
+
+        //    if (value != null)
+        //    {
+        //        if (value is Component)
+        //        {
+        //            go = ((Component)value).gameObject;
+        //        }
+        //        else
+        //        {
+        //            go = value as GameObject;
+        //        }
+        //    }
+
+        //    if (go != null)
+        //    {
+        //        values = go.GetComponents<Component>().Union(new Object[] { go }).OrderBy(o => o.GetType().Name).ToArray();
+        //        displayNames = values.Select(o => o.GetType().Name).ToArray();
+        //        if (value != null)
+        //        {
+        //            for (int i = 0; i < values.Length; i++)
+        //            {
+        //                if (values[i] == value)
+        //                {
+        //                    selectedIndex = i;
+        //                    break;
+        //                }
+        //            }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        displayNames = new string[] { };
+
+        //    }
+
+        //    int newIndex;
+        //    if (hasLabel)
+        //        newIndex = EditorGUILayout.Popup(label, selectedIndex, displayNames, options);
+        //    else
+        //        newIndex = EditorGUILayout.Popup(selectedIndex, displayNames, options);
+
+        //    if (newIndex != selectedIndex)
+        //    {
+        //        value = values[newIndex];
+        //    }
+        //    return value;
+
+        //} 
+
+
 
 
         public class ContentNames
