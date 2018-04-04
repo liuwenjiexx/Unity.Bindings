@@ -1,29 +1,48 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using LWJ.Unity;
+using System;
 using UnityEditor;
-using LWJ.Unity;
 using UnityEngine;
 
 namespace LWJ.UnityEditor
 {
     [CustomPropertyDrawer(typeof(MemberPopupAttribute))]
-    public class MemberPopupDrawer : PropertyDrawer
+    internal class MemberPopupDrawer : PropertyDrawer
     {
 
         public override void OnGUI(Rect position, SerializedProperty prop, GUIContent label)
         {
             var attr = (MemberPopupAttribute)attribute;
-            EditorGUIHelper.MemberPopup(position, label, attr.TargetType, attr.MemberFlags, prop);
+            Type type = null;
+            if (attr.TargetType != null)
+            {
+                type = attr.TargetType;
+
+            }
+            else if (!string.IsNullOrEmpty(attr.TargetMember))
+            {
+
+                var spMember = prop.serializedObject.FindProperty(prop.propertyPath.Substring(0, prop.propertyPath.LastIndexOf('.')) + "." + attr.TargetMember);
+                if (spMember != null)
+                { 
+                    if (spMember.propertyType == SerializedPropertyType.ObjectReference)
+                    {
+                        if (spMember.objectReferenceValue)
+                            type = spMember.objectReferenceValue.GetType();
+                    }
+                }
+                else
+                {
+                    Debug.LogError("Not Member: " + attr.TargetMember + ", type: " + attr.TargetType);
+                }
+
+            }
+            EditorGUIHelper.MemberPopup(position, label, type, attr.MemberFlags, prop);
         }
 
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-
             float h = base.GetPropertyHeight(property, label);
-
             return h;
         }
 

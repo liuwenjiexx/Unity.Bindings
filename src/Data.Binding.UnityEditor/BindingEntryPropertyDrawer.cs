@@ -81,13 +81,7 @@ namespace LWJ.UnityEditor
                 if (bindingType == Binding.BindingType.Binding)
                 {
                     DrawSource(property);
-
-
-                    Type sourceType = null;
-                    if (sourceProperty.objectReferenceValue != null)
-                        sourceType = sourceProperty.objectReferenceValue.GetType();
-
-                    EditorGUIHelper.MemberPopup(new GUIContent(pathProperty.displayName), sourceType, MemberPopupFlags.Field | MemberPopupFlags.Property, pathProperty);
+                    EditorGUILayout.PropertyField(pathProperty);
                 }
 
 
@@ -116,17 +110,10 @@ namespace LWJ.UnityEditor
                 //    targetProperty.objectReferenceValue = targetGo;
 
                 //targetProperty.objectReferenceValue = EditorGUIHelper.ComponentAndGameObjectPop(targetProperty.displayName, targetProperty.objectReferenceValue);
-                DrawTarget(property);
-
-                if (targetProperty.objectReferenceValue != null)
-                    targetType = targetProperty.objectReferenceValue.GetType();
-
-                EditorGUIHelper.MemberPopup(new GUIContent(targetPathProperty.displayName), targetType, MemberPopupFlags.Field | MemberPopupFlags.Property, targetPathProperty);
-
+                EditorGUILayout.PropertyField(targetProperty);
+                EditorGUILayout.PropertyField(targetPathProperty);
                 EditorGUILayout.PropertyField(targetNullValueProperty);
-
                 EditorGUILayout.PropertyField(fallbackValueProperty);
-
                 EditorGUILayout.PropertyField(stringFormatProperty);
 
                 switch (bindingType)
@@ -172,18 +159,7 @@ namespace LWJ.UnityEditor
             EditorGUI.EndProperty();
         }
 
-        public static void DrawTarget(SerializedProperty item)
-        {
-            var targetProperty = item.FindPropertyRelative("target");
-            //GameObject targetGo = ((Binding)item.serializedObject.targetObject).gameObject;
 
-            // EditorGUILayout.PropertyField(targetProperty);
-
-            //targetProperty.objectReferenceValue = EditorGUIHelper.ComponentAndGameObjectPop(targetProperty.displayName, targetGo, targetProperty.objectReferenceValue, true);
-
-            EditorGUIHelper.ComponentPopup(new GUIContent(targetProperty.displayName), targetProperty);
-
-        }
 
         public static void DrawSource(SerializedProperty item)
         {
@@ -196,7 +172,8 @@ namespace LWJ.UnityEditor
 
             //sourceProperty.objectReferenceValue = EditorGUIHelper.ComponentAndGameObjectPop(sourceProperty.displayName, go, sourceProperty.objectReferenceValue, true);
 
-            EditorGUIHelper.ComponentPopup(new GUIContent(sourceProperty.displayName), sourceProperty);
+            //EditorGUIHelper.ComponentPopup(new GUIContent(sourceProperty.displayName), sourceProperty);
+            EditorGUILayout.PropertyField(sourceProperty);
             EditorGUILayout.PropertyField(sourceTypeProperty);
             EditorGUILayout.PropertyField(sourceNameProperty);
             EditorGUILayout.PropertyField(ancestorLevelProperty);

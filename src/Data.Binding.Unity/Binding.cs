@@ -723,13 +723,17 @@ namespace LWJ.Unity
         {
 
             public BindingType bindingType = BindingType.Binding;
+            [ComponentPopup]
             public Object target;
+            [MemberPopup("target", MemberPopupFlags.Field| MemberPopupFlags.Property)]
             public string targetPath;
             public string nullValue;
             public string stringFormat;
             public int delay;
             //public SourceType sourceType;
+            [ComponentPopup]
             public Object source;
+      
             [SerializeField]
             public string sourceName;
             [SerializeField]
@@ -739,6 +743,7 @@ namespace LWJ.Unity
 
             //public RelativeSourceEntry relativeSource;
             public FindNameEntry nameSource;
+            [MemberPopup("source", MemberPopupFlags.Field | MemberPopupFlags.Property)]
             public string path;
             public BindingMode mode;
             public string fallbackValue;

@@ -9,6 +9,11 @@ namespace LWJ.Unity
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
     public class MemberPopupAttribute : PropertyAttribute
     {
+        public MemberPopupAttribute(string targetMember, MemberPopupFlags memberFlags)
+        {
+            this.TargetMember = targetMember;
+            this.MemberFlags = memberFlags;
+        }
         public MemberPopupAttribute(Type targetType, MemberPopupFlags memberFlags)
         {
             this.TargetType = targetType;
@@ -16,6 +21,8 @@ namespace LWJ.Unity
         }
 
         public Type TargetType { get; set; }
+
+        public string TargetMember { get; set; }
 
         public MemberPopupFlags MemberFlags { get; set; }
     }

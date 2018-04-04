@@ -176,6 +176,17 @@ namespace LWJ.UnityEditor
             prop.stringValue = MemberPopup(label, type, memberPopupFlags, prop.stringValue);
         }
 
+        public static void MemberPopup(GUIContent label, string targetMember, MemberPopupFlags memberPopupFlags, SerializedProperty prop)
+        {
+            var spMember= prop.FindPropertyRelative(targetMember);
+            Type type = null;
+            if(spMember.propertyType== SerializedPropertyType.ObjectReference)
+            {
+                if (spMember.objectReferenceValue)
+                    type = spMember.objectReferenceValue.GetType();
+            }
+            MemberPopup(label, targetMember, memberPopupFlags, prop);
+        }
 
         public static string MemberPopup(GUIContent label, Type type, MemberPopupFlags memberPopupFlags, string memberName)
         {
@@ -198,7 +209,7 @@ namespace LWJ.UnityEditor
             memberName = EditorGUI.TextField(new Rect(rect.x, rect.y, rect.width - w, EditorGUI.GetPropertyHeight(SerializedPropertyType.String, label)), label, memberName);
             GUIContent[] contents = GetPropertyContents(type);
             int selectedIndex = -1;
-
+            selectedIndex = contents.IndexOf(o => o.text == memberName);
             selectedIndex = EditorGUI.Popup(new Rect(rect.x + rect.width - w, rect.y, w, EditorGUI.GetPropertyHeight(SerializedPropertyType.String, label)), selectedIndex, contents);
             if (selectedIndex != -1)
                 memberName = contents[selectedIndex].text;
@@ -206,8 +217,9 @@ namespace LWJ.UnityEditor
             return memberName;
         }
 
+         
 
-        public static void ComponentPopup(GUIContent label, SerializedProperty prop)
+            public static void ComponentPopup(GUIContent label, SerializedProperty prop)
         {
             prop.objectReferenceValue = ComponentPopup(label, prop.objectReferenceValue);
         }
@@ -224,9 +236,6 @@ namespace LWJ.UnityEditor
 
         public static void ComponentPopup(Rect position, GUIContent label, SerializedProperty prop)
         {
-
-            //position= EditorGUI.PrefixLabel(position, label);
-            //int w = (int)(position.width * 0.5);
             prop.objectReferenceValue = ComponentPopup(position, label, prop.objectReferenceValue);
         }
 
