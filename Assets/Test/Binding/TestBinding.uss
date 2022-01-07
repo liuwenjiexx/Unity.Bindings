@@ -1,0 +1,6 @@
+VisualElement {
+}
+
+.root_container > * {
+    flex-grow: 1;
+}

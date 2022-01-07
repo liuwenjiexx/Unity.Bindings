@@ -1,0 +1,16 @@
+{
+  "name": "unity.bindings",
+  "displayName": "Data binding",
+  "version": "0.0.1",
+  "unity": "2019.1",
+  "keywords": [
+    "bind",
+    "binding",
+    "bindings",
+    "data"
+  ],
+  "category": "Data",
+  "description": "Data binding",
+  "dependencies": {
+  }
+}
