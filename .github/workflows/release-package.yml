@@ -32,3 +32,4 @@ jobs:
       - run: npm publish --registry=${{ env.REGISTRY }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+ 
