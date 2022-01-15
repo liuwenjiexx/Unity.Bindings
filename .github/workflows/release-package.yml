@@ -27,7 +27,6 @@ jobs:
       - name: set work dir
         run: echo sss
       - name: package dir '${{ env.PACKAGE_DIR }}' 
-        working-directory: ${{ env.PACKAGE_DIR }}
       - run: pwd
       - run: npm publish
         env:
