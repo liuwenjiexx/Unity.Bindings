@@ -24,6 +24,7 @@ jobs:
         with:
           node-version: 12
           registry-url: https://npm.pkg.github.com/
+      - run: pwd
       - name: package dir '${{ env.PACKAGE_DIR }}' 
         run: cd ${{ env.PACKAGE_DIR }}
       - run: npm publish
