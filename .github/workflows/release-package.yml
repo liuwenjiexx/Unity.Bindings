@@ -16,7 +16,10 @@ jobs:
     permissions:
       packages: write
       contents: read
-    steps:
+    defaults:
+      run:
+        working-directory: ${{ env.PACKAGE_DIR }}
+    steps:      
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Log in to the Container registry
@@ -25,9 +28,7 @@ jobs:
           node-version: 12
           registry-url: ${{ env.REGISTRY }}
       - name: package dir '${{ env.PACKAGE_DIR }}' 
-        working-directory: ${{ env.PACKAGE_DIR }}
         run: pwd
-      - run: pwd
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
