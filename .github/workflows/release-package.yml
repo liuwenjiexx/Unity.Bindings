@@ -26,8 +26,8 @@ jobs:
           registry-url: ${{ env.REGISTRY }}
       - name: set work dir
         run: echo sss
-        working-directory: ${{ env.PACKAGE_DIR }}
       - name: package dir '${{ env.PACKAGE_DIR }}' 
+        working-directory: ${{ env.PACKAGE_DIR }}
       - run: pwd
       - run: npm publish
         env:
