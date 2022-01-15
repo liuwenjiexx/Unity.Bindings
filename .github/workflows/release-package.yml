@@ -1,10 +1,10 @@
 name: Publish github package
 
-#on:
-#  push:
-#    branches: ['master']
-#  pull_request:
-#    branches: ['master']
+on:
+  push:
+    branches: ['master']
+  pull_request:
+    branches: ['master']
     
 env:
   REGISTRY: https://npm.pkg.github.com/liuwenjiexx/
