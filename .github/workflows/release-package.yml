@@ -23,10 +23,10 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: 12
-          registry-url: https://npm.pkg.github.com/
+          registry-url: ${{ env.REGISTRY }}
       - run: pwd
       - name: package dir '${{ env.PACKAGE_DIR }}' 
-        run: cd ${{ env.PACKAGE_DIR }}
+      - run: cd ${{ env.PACKAGE_DIR }}
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
