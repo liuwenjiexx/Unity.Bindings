@@ -25,7 +25,7 @@ jobs:
           node-version: 12
           registry-url: ${{ env.REGISTRY }}
       - name: set work dir
-        run: cd .
+        run: echo sss
         working-directory: ${{ env.PACKAGE_DIR }}
       - name: package dir '${{ env.PACKAGE_DIR }}' 
       - run: pwd
