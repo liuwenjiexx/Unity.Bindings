@@ -27,6 +27,7 @@ jobs:
       - name: package dir '${{ env.PACKAGE_DIR }}' 
         working-directory: ${{ env.PACKAGE_DIR }}
         run: pwd
+      - run: pwd
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
