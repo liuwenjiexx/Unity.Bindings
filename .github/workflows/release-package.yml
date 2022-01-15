@@ -24,8 +24,8 @@ jobs:
         with:
           node-version: 12
           registry-url: ${{ env.REGISTRY }}
+      - working-directory: ${{ env.PACKAGE_DIR }}
       - name: package dir '${{ env.PACKAGE_DIR }}' 
-        run: cd ${{ env.PACKAGE_DIR }}
       - run: pwd
       - run: npm publish
         env:
