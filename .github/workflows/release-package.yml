@@ -7,7 +7,7 @@ on:
     branches: ['master']
     
 env:
-  REGISTRY: https://github.com/liuwenjiexx/unity.bindings
+  REGISTRY: https://github.com/liuwenjiexx/
   PACKAGE_DIR: Assets/Plugins/Unity.Bindings
   
 jobs:
@@ -29,7 +29,7 @@ jobs:
           registry-url: ${{ env.REGISTRY }}
       - name: package dir '${{ env.PACKAGE_DIR }}' 
         run: pwd
-      - run: npm set registry ${{ env.REGISTRY }}
+ #     - run: npm set registry ${{ env.REGISTRY }}
       - run: npm publish --registry=${{ env.REGISTRY }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
