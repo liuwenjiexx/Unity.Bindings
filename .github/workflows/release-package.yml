@@ -5,7 +5,11 @@ on:
     branches: ['master']
   pull_request:
     branches: ['master']
-
+    
+env:
+  REGISTRY: https://npm.pkg.github.com/
+  PACKAGE_DIR: Assets/Plugins/Unity.Bindings
+  
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -30,7 +34,7 @@ jobs:
           node-version: 12
           registry-url: https://npm.pkg.github.com/
       - name: Publish to NPM
-      - run: cd Assets/Plugins/Unity.Bindings
+      - run: cd ${{ env.PACKAGE_DIR }}
       - run: npm ci
       - run: npm publish
         env:
