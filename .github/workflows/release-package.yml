@@ -24,9 +24,9 @@ jobs:
         with:
           node-version: 12
           registry-url: ${{ env.REGISTRY }}
-      - run: pwd
       - name: package dir '${{ env.PACKAGE_DIR }}' 
       - run: cd ${{ env.PACKAGE_DIR }}
+      - run: pwd
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
