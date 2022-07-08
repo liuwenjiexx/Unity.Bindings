@@ -7,17 +7,14 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Linq;
 
-namespace UnityEngine.Bindings
+namespace Yanmonet.Bindings
 {
 
-    class Binding<TValue> : IBinding, IDisposable
+    class Binding : BindingBase
     {
-        private object target;
-        private INotifyValueChanged<TValue> targetAccessor;
-        internal INotifyValueChanged<TValue> TargetAccessor { get => targetAccessor; set => targetAccessor = value; }
 
-        protected object source;
-        private PropertyBinder sourceBinder;
+
+        private PropertyBinder binder;
         private string path;
         protected bool isSourceNotifyPropertyChanged;
         private bool isNullValue;
@@ -26,38 +23,31 @@ namespace UnityEngine.Bindings
         private object nullValue;
         private object fallbackValue;
 
-        private bool disposed;
 
-        private BindingMode mode = BindingMode.TwoWay;
-
-        public object Source
+        public Binding(object target, IAccessor targetAccessor)
+            : base(target, targetAccessor)
         {
-            get { return source; }
-            set
-            {
-                if (source != value)
-                {
-                    source = value;
-                    if (sourceBinder != null)
-                    {
-                        sourceBinder.Target = source;
-                        //UpdateSourceToTarget();
-                    }
-
-                }
-            }
         }
+
+        public Binding(object target, IAccessor targetAccessor, object source, string path)
+            : base(target, targetAccessor)
+        {
+            this.Source = source;
+            this.path = path;
+        }
+
+
+        protected override string PropertyName => binder.MemberName;
+
+     
+
         public string Path
         {
             get { return path; }
             set { path = value; }
         }
 
-        public BindingMode Mode
-        {
-            get { return mode; }
-            set { mode = value; }
-        }
+
         public bool IsNullValue { get => isNullValue; set => isNullValue = value; }
 
         public bool IsFallbackValue { get => isFallbackValue; set => isFallbackValue = value; }
@@ -75,100 +65,75 @@ namespace UnityEngine.Bindings
         public object FallbackValue { get => fallbackValue; set => fallbackValue = value; }
 
 
-        protected bool CanUpdateTargetToSource
-        {
-            get => mode != BindingMode.OneWay;
-        }
-
-        protected bool CanUpdateSourceToTarget
-        {
-            get => mode != BindingMode.OneWayToSource;
-        }
-
         private static Dictionary<Type, string> defaultMenbers;
 
-        public Binding(object target)
+
+        public override void Bind()
         {
-            this.target = target;
-            this.targetAccessor = target as INotifyValueChanged<TValue>;
-        }
+            if (IsBinding)
+                return;
 
-        public Binding(object target, object source, string path)
-        {
-            this.target = target;
-            this.targetAccessor = target as INotifyValueChanged<TValue>;
-            this.source = source;
-            this.path = path;
-        }
+            binder = PropertyBinder.Create(path);
+            binder.Target = Source;
 
-        public virtual void Bind()
-        {
-            Unbind();
-
-            IBindable bindable = target as IBindable;
-            if (bindable != null)
-            {
-                bindable.binding = this;
-            }
-
-            if (targetAccessor == null)
-                throw new Exception(string.Format("{0} Null", nameof(TargetAccessor)));
-
-            if (CanUpdateTargetToSource)
-            {
-                targetAccessor.RegisterValueChangedCallback(OnTargetValueChanged);
-            }
-             
-            sourceBinder = PropertyBinder.Create(path);
-            sourceBinder.Target = source;
+            base.Bind();
 
             if (CanUpdateSourceToTarget)
-            {
-                sourceBinder.TargetUpdatedCallback = UpdateSourceToTarget;
+            { 
+                if (!SourceSupportNotify && binder.SupportNotify)
+                {
+                    binder.TargetUpdatedCallback = () =>
+                    {
+                        if (CanUpdateSourceToTarget)
+                            UpdateSourceToTarget();
+                    };
+                    SourceSupportNotify = true;
+                }
             }
 
-            if (mode == BindingMode.OneWayToSource)
-                UpdateTargetToSource();
+
+
+            if (Mode == BindingMode.OneWayToSource)
+            {
+                if (CanUpdateTargetToSource)
+                    UpdateTargetToSource();
+            }
             else
-                UpdateSourceToTarget();
+            {
+                if (CanUpdateSourceToTarget)
+                    UpdateSourceToTarget();
+            }
         }
 
 
-        public virtual void Unbind()
+        public override void Unbind()
         {
             isSourceNotifyPropertyChanged = false;
 
-            IBindable bindable = target as IBindable;
-            if (bindable != null)
-            {
-                if (bindable.binding == this)
-                    bindable.binding = null;
-            }
 
-            if (targetAccessor != null)
+            if (binder != null)
             {
-                targetAccessor.UnregisterValueChangedCallback(OnTargetValueChanged);
-            }
+                if (SourcePropertyChanged != null)
+                {
+                    SourcePropertyChanged(OnSourcePropertyChanged, false);
+                }
+                binder.TargetUpdatedCallback = null;
 
-            if (sourceBinder != null)
-            {
-                sourceBinder.Dispose();
-                sourceBinder = null;
+                binder.Dispose();
+                binder = null;
             }
+            base.Unbind();
         }
 
-        protected virtual void UpdateSourceToTarget()
+        protected override void UpdateSourceToTarget()
         {
-            if (mode == BindingMode.OneWayToSource)
-                return;
-
 
             object value;
 
             IsNullValue = false;
             IsFallbackValue = false;
 
-            if (sourceBinder.TryGetValue(out value))
+            if (binder.TryGetValue(out value))
             {
                 if (value != null)
                 {
@@ -190,31 +155,31 @@ namespace UnityEngine.Bindings
                 IsFallbackValue = true;
             }
 
-            if (!object.Equals(targetAccessor.value, value))
+            object targetValue = GetTargetValue();
+            if (!object.Equals(targetValue, value))
             {
-                targetAccessor.value = (TValue)value;
+                Debug.Log("set target value:" + value);
+                SetTargetValue(value);
             }
 
         }
 
 
-        protected virtual void UpdateTargetToSource()
-        {
-            if (!(mode == BindingMode.TwoWay || mode == BindingMode.OneWayToSource))
-                return;
 
-            if (!sourceBinder.CanSetValue())
+        protected override void UpdateTargetToSource()
+        {
+            if (!binder.CanSetValue)
                 return;
 
             object value;
 
-            value = targetAccessor.value;
-
+            value = GetTargetValue();
             //if (converter != null)
             //    value = converter.ConvertBack(value, sourceBinder.GetValueType(), converterParameter);
 
-            if (sourceBinder.TrySetValue(value))
+            if (binder.TrySetValue(value))
             {
+                Debug.Log("set source value:" + value);
                 //if (enabledSourceUpdated)
                 //{
                 //    var sourceUpdated = SourceUpdated;
@@ -228,33 +193,6 @@ namespace UnityEngine.Bindings
             }
         }
 
-
-        public virtual void PreUpdate()
-        {
-
-        }
-
-        public virtual void Release()
-        {
-            if (disposed)
-                return;
-            Unbind();
-        }
-
-        public virtual void Update()
-        {
-            if (disposed)
-                return;
-            UpdateSourceToTarget();
-        }
-
-        public virtual void Dispose()
-        {
-            if (disposed)
-                return;
-            Unbind();
-            disposed = true;
-        }
         public static string GetDefaultMember(Type type)
         {
             string name;
@@ -280,23 +218,8 @@ namespace UnityEngine.Bindings
         }
 
 
-
-        protected virtual void OnTargetValueChanged(ChangeEvent<TValue> e)
-        {
-            UpdateTargetToSource();
-        }
-
-
-        protected virtual TValue GetSourceValue() { throw new NotImplementedException(); }
-
-        protected virtual void SetSourceValue(TValue value) { throw new NotImplementedException(); }
-
-        ~Binding()
-        {
-            Dispose();
-        }
-
     }
+
 
 
 }

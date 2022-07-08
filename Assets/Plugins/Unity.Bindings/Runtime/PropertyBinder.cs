@@ -6,7 +6,7 @@ using System.ComponentModel;
 using System.Reflection;
 using UnityEngine;
 
-namespace UnityEngine.Bindings
+namespace Yanmonet.Bindings
 {
 
     internal class PropertyBinder : IDisposable
@@ -15,9 +15,10 @@ namespace UnityEngine.Bindings
         private Type targetType;
         private string memberName;
         public Action TargetUpdatedCallback;
+        public SetPropertyChangedDelegate targetPropertyChanged;
 
         private AccessMemberType accessMemberType;
-        private IMemberAccess access;
+        private IAccessor accessor;
         private Type memberType;
         private PropertyBinder next;
         private PropertyBinder first;
@@ -142,16 +143,28 @@ namespace UnityEngine.Bindings
 
         //public bool IsIndexer { get => isIndexer; }
 
-        public bool CanSetValue()
+        public bool CanSetValue
         {
-            if (last != this)
-                return last.CanSetValue();
-            if (target == null || access == null)
-                return false;
-            return true;
+            get
+            {
+                if (last != this)
+                    return last.CanSetValue;
+                if (target == null || accessor == null)
+                    return false;
+                return true;
+            }
         }
 
+        public PropertyBinder Last
+        {
+            get => last;
+        }
 
+        public string SelfMemberName => memberName;
+
+        public string MemberName => Last.memberName;
+        bool supportNotify;
+        public bool SupportNotify => Last.supportNotify;
 
         private bool SetTarget(object value, Flags prevFlags = Flags.None)
         {
@@ -161,7 +174,7 @@ namespace UnityEngine.Bindings
             }
             ReleaseListenerChanged();
             target = value;
-
+            supportNotify = false;
             if (target != null)
             {
                 Type oldTargetType = targetType;
@@ -171,7 +184,7 @@ namespace UnityEngine.Bindings
                 {
                     accessMemberType = AccessMemberType.None;
                     memberType = null;
-                    access = null;
+                    accessor = null;
                     flags = Flags.None;
                     if (!targetType.IsValueType)
                     {
@@ -185,7 +198,7 @@ namespace UnityEngine.Bindings
                     {
                         accessMemberType = AccessMemberType.None;
                         memberType = targetType;
-                        access = new SelfAccess();
+                        accessor = new SelfAccessor();
                         flags &= ~Flags.AllowListenerMember;
                     }
                     else if (!isIndexer)
@@ -194,7 +207,7 @@ namespace UnityEngine.Bindings
 
                         if (property != null)
                         {
-                            access = new PropertyAccess(property);
+                            accessor = property.GetAccessor(); ;
                             accessMemberType = AccessMemberType.Member;
                             memberType = property.PropertyType;
                         }
@@ -203,7 +216,7 @@ namespace UnityEngine.Bindings
                             var field = targetType.GetField(memberName);
                             if (field != null)
                             {
-                                access = new FieldAccess(field);
+                                accessor = field.GetAccessor();
                                 accessMemberType = AccessMemberType.Member;
                                 memberType = field.FieldType;
                             }
@@ -219,7 +232,7 @@ namespace UnityEngine.Bindings
                         {
                             accessMemberType = AccessMemberType.Collection;
                             memberType = targetType.GetElementType();
-                            access = new ArrayAccess() { index = index };
+                            accessor = Accessor.Array(index);
                         }
                         else if (typeof(IList).IsAssignableFrom(targetType))
                         {
@@ -228,19 +241,19 @@ namespace UnityEngine.Bindings
                                 memberType = targetType.GetGenericArguments()[0];
                             else
                                 memberType = typeof(object);
-                            access = new ListAccess() { index = index };
+                            accessor = Accessor.List(index);
                         }
                         else if (typeof(IEnumerable).IsAssignableFrom(targetType))
                         {
                             accessMemberType = AccessMemberType.Collection;
                             memberType = typeof(object);
-                            access = new IEnumerableAccess() { index = index };
+                            accessor = Accessor.Enumerable(index);
                         }
                         else if (typeof(IEnumerator).IsAssignableFrom(targetType))
                         {
                             accessMemberType = AccessMemberType.Collection;
                             memberType = typeof(object);
-                            access = new IEnumeratorAccess() { index = index };
+                            accessor = Accessor.Enumerable(index);
                         }
                     }
 
@@ -253,7 +266,7 @@ namespace UnityEngine.Bindings
                 flags = Flags.None;
                 accessMemberType = AccessMemberType.None;
                 targetType = null;
-                access = null;
+                accessor = null;
             }
 
 
@@ -265,23 +278,36 @@ namespace UnityEngine.Bindings
 
         void ListenerChanged()
         {
+            supportNotify = false;
+
             if (((flags & Flags.ListenerMember) != 0) || memberName == null || ((flags & Flags.AllowListenerMember) == 0))
                 return;
 
-            if (accessMemberType == AccessMemberType.Member)
+            if (targetPropertyChanged != null)
             {
-                if (target is INotifyPropertyChanged)
-                {
-                    ((INotifyPropertyChanged)target).PropertyChanged += Target_PropertyChanged;
-                    flags |= Flags.ListenerMember;
-                }
+                targetPropertyChanged(Target_PropertyChanged, true);
+                flags |= Flags.ListenerMember;
+                supportNotify = true;
             }
-            else if (accessMemberType == AccessMemberType.Collection)
+            else if (target != null)
             {
-                if (target is INotifyCollectionChanged)
+                if (accessMemberType == AccessMemberType.Member)
                 {
-                    ((INotifyCollectionChanged)target).CollectionChanged += Target_CollectionChanged;
-                    flags |= Flags.ListenerMember;
+                    if (target is INotifyPropertyChanged)
+                    {
+                        ((INotifyPropertyChanged)target).PropertyChanged += Target_PropertyChanged;
+                        flags |= Flags.ListenerMember;
+                        supportNotify = true;
+                    }
+                }
+                else if (accessMemberType == AccessMemberType.Collection)
+                {
+                    if (target is INotifyCollectionChanged)
+                    {
+                        ((INotifyCollectionChanged)target).CollectionChanged += Target_CollectionChanged;
+                        flags |= Flags.ListenerMember;
+                        supportNotify = true;
+                    }
                 }
             }
         }
@@ -292,11 +318,15 @@ namespace UnityEngine.Bindings
         {
             if ((flags & Flags.ListenerMember) == 0)
                 return;
-            if (target != null)
+            supportNotify = false;
+            if (targetPropertyChanged != null)
+            {
+                targetPropertyChanged(Target_PropertyChanged, false);
+            }
+            else if (target != null)
             {
                 if (accessMemberType == AccessMemberType.Member)
                 {
-
                     if (target is INotifyPropertyChanged)
                     {
                         ((INotifyPropertyChanged)target).PropertyChanged -= Target_PropertyChanged;
@@ -374,18 +404,8 @@ namespace UnityEngine.Bindings
                     return;
             }
 
-
-            if (first == this)
-            {
-                if (TargetUpdatedCallback != null)
-                    TargetUpdatedCallback();
-            }
-            else
-            {
-                if (first.TargetUpdatedCallback != null)
-                    first.TargetUpdatedCallback();
-            }
-
+            if (first.TargetUpdatedCallback != null)
+                first.TargetUpdatedCallback();
         }
 
 
@@ -406,24 +426,34 @@ namespace UnityEngine.Bindings
 
         private bool TrySetMemberValue(object value)
         {
-            if (target == null || access == null)
+            if (target == null || accessor == null)
                 return false;
             if (value == null)
             {
                 value = GetDefaultValue(memberType);
             }
 
-            return access.SetValue(target, value);
+            object oldValue;
+            accessor.GetValue(target, out oldValue);
+            if (!object.Equals(oldValue, value))
+            {
+                if (accessor.CanSetValue(target))
+                {
+                    accessor.SetValue(target, value);
+                    return true;
+                }
+            }
+            return false;
         }
 
         private bool TryGetMemberValue(out object value)
         {
-            if (access == null || target == null)
+            if (accessor == null || target == null)
             {
                 value = null;
                 return false;
             }
-            return access.GetValue(target, out value);
+            return accessor.GetValue(target, out value);
         }
 
         public Type GetValueType()
@@ -555,207 +585,6 @@ namespace UnityEngine.Bindings
             Dispose();
         }
 
-        #region IMemberAccess
-
-        interface IMemberAccess
-        {
-            bool GetValue(object target, out object value);
-            bool SetValue(object target, object value);
-        }
-
-        class FieldAccess : IMemberAccess
-        {
-            public FieldInfo field;
-            public FieldAccess(FieldInfo field)
-            {
-                this.field = field;
-            }
-
-            public bool GetValue(object target, out object value)
-            {
-                value = field.GetValue(target);
-                return true;
-            }
-
-            public bool SetValue(object target, object value)
-            {
-                if (field.IsInitOnly)
-                    return false;
-                field.SetValue(target, value);
-                return true;
-            }
-        }
-
-        class PropertyAccess : IMemberAccess
-        {
-            MethodInfo getter;
-            MethodInfo setter;
-            public PropertyAccess(PropertyInfo property)
-            {
-                getter = property.GetGetMethod(false);
-                setter = property.GetSetMethod(false);
-            }
-            public bool GetValue(object target, out object value)
-            {
-                if (getter == null)
-                {
-                    value = null;
-                    return false;
-                }
-                value = getter.Invoke(target, null);
-                return true;
-            }
-
-            public bool SetValue(object target, object value)
-            {
-                if (setter == null)
-                    return false;
-                setter.Invoke(target, new object[] { value });
-                return true;
-            }
-        }
-
-
-        class ArrayAccess : IMemberAccess
-        {
-
-            public int index;
-            public bool GetValue(object target, out object value)
-            {
-                Array array = (Array)target;
-                if (index >= 0 && index < array.Length)
-                {
-                    value = array.GetValue(index);
-                    return true;
-                }
-                value = null;
-                return false;
-            }
-
-            public bool SetValue(object target, object value)
-            {
-                Array array = (Array)target;
-                if (index >= 0 && index < array.Length)
-                {
-                    array.SetValue(value, index);
-                    return true;
-                }
-                return false;
-            }
-        }
-
-        class CollectionAccess : IEnumeratorAccess
-        {
-
-            public override bool GetValue(object target, out object value)
-            {
-                ICollection array = (ICollection)target;
-                if (index < 0 || index >= array.Count)
-                {
-                    value = null;
-                    return false;
-                }
-                return GetValue(array.GetEnumerator(), out value);
-            }
-
-        }
-
-        class ListAccess : IMemberAccess
-        {
-
-            public int index;
-            public bool GetValue(object target, out object value)
-            {
-                IList list = (IList)target;
-                if (index >= 0 && index < list.Count)
-                {
-                    value = list[index];
-                    return true;
-                }
-                value = null;
-                return false;
-            }
-
-            public bool SetValue(object target, object value)
-            {
-                IList list = (IList)target;
-                if (index >= 0 && index < list.Count)
-                {
-                    list[index] = value;
-                    return true;
-                }
-                return false;
-            }
-        }
-
-        class IEnumerableAccess : IEnumeratorAccess
-        {
-            public override bool GetValue(object target, out object value)
-            {
-                if (index < 0)
-                {
-                    value = null;
-                    return false;
-                }
-                IEnumerable items = (IEnumerable)target;
-                return base.GetValue(items.GetEnumerator(), out value);
-            }
-
-        }
-
-        class IEnumeratorAccess : IMemberAccess
-        {
-            public int index;
-            public virtual bool GetValue(object target, out object value)
-            {
-                if (index < 0)
-                {
-                    value = null;
-                    return false;
-                }
-                return GetValue((IEnumerator)target, out value);
-            }
-
-            public bool GetValue(IEnumerator it, out object value)
-            {
-                int n = 0;
-                value = null;
-                bool hasValue = false;
-                while (it.MoveNext())
-                {
-                    if (n == index)
-                    {
-                        hasValue = true;
-                        value = it.Current;
-                        break;
-                    }
-                    n++;
-                }
-
-                return hasValue;
-            }
-
-            public virtual bool SetValue(object target, object value)
-            {
-                return false;
-            }
-        }
-
-        class SelfAccess : IMemberAccess
-        {
-            public bool GetValue(object target, out object value)
-            {
-                value = target;
-                return true;
-            }
-
-            public bool SetValue(object target, object value)
-            {
-                return false;
-            }
-        }
-
-        #endregion
         public static object GetDefaultValue(Type type)
         {
             if (type == null) throw new NullReferenceException();

@@ -2,9 +2,121 @@
 
 数据绑定
 
-
-
 ## 绑定
+
+### 路径
+
+**绑定**
+
+```c#
+textField.BindPath<string>(data, nameof(PropertyName));
+textField.BindPath<string>(data, "PropertyName");
+textField.BindPath<string>(data, "PropertyName1.PropertyName2");
+```
+
+对象分隔符 `.`，`data` 数据实现 `INotifyPropertyChanged` 接口提高性能
+
+### 属性
+
+对任意属性进行绑定
+
+#### 目标属性
+
+绑定 `Label.text` 属性
+
+```c#
+label.BindProperty<Label, TestData, string>(targetPropertySelector: o => o.text,
+                                            source: data, 
+                                            propertySelector: o => o.Value);
+```
+
+- **targetPropertySelector**
+
+  目标属性选择器，`lambda` 表达式格式，选择 `Label.text` 属性
+
+- **propertySelector**
+
+  源属性选择器，选择 `TestData.Value` 属性
+
+#### 静态属性
+
+```c#
+static string staticProperty;
+static string StaticProperty
+{
+    get => staticProperty;
+    set => StaticPropertyChanged.Invoke(null, nameof(StaticProperty), ref staticProperty, value);
+}
+
+static event PropertyChangedEventHandler StaticPropertyChanged;
+
+var options = new BindingOptions()
+{
+    SourcePropertyChanged = (handler, b) =>
+    {
+        if (b)
+            StaticPropertyChanged += handler;
+        else
+            StaticPropertyChanged -= handler;
+    }
+};
+textField.BindProperty(propertySelector: () => StaticProperty, options);
+```
+
+- **propertySelector**
+
+  源属性选择器，选择了 `StaticProperty` 静态属性
+
+- **SourcePropertyChanged**
+
+  定制源属性通知，事件类型为 `PropertyChangedEventHandler`
+
+## 解绑
+
+**绑定**
+
+```c#
+binding.Bind();
+```
+
+扩展方法 `BindPath`，`BindProperty` 立即调用 `Bind` 方法，不用手动调用
+
+**解绑**
+
+```c#
+binding.Unbind();
+```
+
+` binding.IsBinding` 判断是否绑定
+
+**样例**
+
+```c#
+var binding = textField.BindPath<string>(data, "Value");
+binding.Unbind();
+```
+
+
+
+### VisualElement
+
+**绑定**
+
+```c#
+root.BindAll();
+```
+
+所有子节点调用 `Bind` 方法
+
+**解绑**
+
+```c#
+root.UnbindAll();
+```
+
+所有子节点调用 `Unbind` 方法
+
+
 
 **绑定方法**
 
@@ -75,27 +187,4 @@ label.Bind(new Accessor<string>(() => label.text, (v) => label.text = v), this, 
 
 
 
-
-## 数据源
-
-为了更好的性能，实现 `INotifyPropertyChanged` 属性值改变通知接口
-
-```c#
-public class MyData : INotifyPropertyChanged
-{
-    public string Text { 
-        get => text; 
-        set => SetProperty(nameof(Text), ref text, value); 
-    }
-    
-    protected void SetProperty<T>(string propertyName, ref T field, T newValue)
-    {
-        if (!object.Equals(field, newValue))
-        {
-            field = newValue;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-    }
-}
-```
 
