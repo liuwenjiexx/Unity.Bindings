@@ -116,13 +116,13 @@ namespace Yanmonet.Bindings
 
         public static IAccessor<TValue> Member<TValue>(MemberInfo propertyOrField)
         {
-      
+
             return (IAccessor<TValue>)Member(propertyOrField);
         }
 
         public static IAccessor<TValue> Member<TTarget, TValue>(Expression<Func<TTarget, TValue>> propertySelector)
         {
-            MemberInfo member = propertySelector.FindMember();
+            MemberInfo member = BindingUtility.FindMember(propertySelector);
             if (member == null)
                 throw new ArgumentException(nameof(propertySelector));
             return Member<TValue>(member);
@@ -130,7 +130,7 @@ namespace Yanmonet.Bindings
 
         public static IAccessor<TValue> Member<TValue>(Expression<Func<TValue>> propertySelector)
         {
-            MemberInfo member = propertySelector.FindMember();
+            MemberInfo member = BindingUtility.FindMember(propertySelector);
             if (member == null)
                 throw new ArgumentException(nameof(propertySelector));
             return Member<TValue>(member);

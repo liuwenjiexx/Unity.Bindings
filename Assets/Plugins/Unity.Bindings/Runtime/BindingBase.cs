@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq.Expressions;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -15,8 +16,6 @@ namespace Yanmonet.Bindings
         private IAccessor targetAccessor;
         private object source;
 
-        private static MethodInfo registerValueChangedCallbackMethod;
-        private static MethodInfo unregisterValueChangedCallbackMethod;
 
         public BindingBase(object target, IAccessor targetAccessor)
         {
@@ -111,12 +110,7 @@ namespace Yanmonet.Bindings
                     var notifyType = Target.GetType().FindGenericTypeDefinition(typeof(INotifyValueChanged<>));
                     if (notifyType != null)
                     {
-                        if (registerValueChangedCallbackMethod == null)
-                        {
-                            registerValueChangedCallbackMethod = typeof(INotifyValueChangedExtensions).GetMethod("RegisterValueChangedCallback");
-                        }
-                        registerValueChangedCallbackMethod.MakeGenericMethod(notifyType.GetGenericArguments()[0])
-                            .Invoke(null, new object[] { Target, new EventCallback<IChangeEvent>(OnTargetValueChanged) });
+                        BindingUtility.RegisterValueChangedCallback(notifyType.GetGenericArguments()[0], Target, OnTargetValueChanged);
                         TargetSupportNotify = true;
                     }
                 }
@@ -139,6 +133,8 @@ namespace Yanmonet.Bindings
             }
         }
 
+
+
         public virtual void Unbind()
         {
             if (!isBinding)
@@ -154,12 +150,7 @@ namespace Yanmonet.Bindings
                 var notifyType = Target.GetType().FindGenericTypeDefinition(typeof(INotifyValueChanged<>));
                 if (notifyType != null)
                 {
-                    if (unregisterValueChangedCallbackMethod == null)
-                    {
-                        unregisterValueChangedCallbackMethod = typeof(INotifyValueChangedExtensions).GetMethod("UnregisterValueChangedCallback");
-                    }
-                    unregisterValueChangedCallbackMethod.MakeGenericMethod(notifyType.GetGenericArguments()[0])
-                        .Invoke(null, new object[] { Target, new EventCallback<IChangeEvent>(OnTargetValueChanged) });
+                    BindingUtility.UnregisterValueChangedCallback(notifyType.GetGenericArguments()[0], Target, OnTargetValueChanged);
                 }
 
             }

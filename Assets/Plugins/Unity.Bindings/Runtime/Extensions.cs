@@ -79,7 +79,7 @@ namespace Yanmonet.Bindings
 
         #endregion
 
-        #region Binding Custom Property
+        #region Binding Property
 
         /// <summary>
         /// 绑定属性
@@ -106,7 +106,7 @@ namespace Yanmonet.Bindings
             if (source == null) throw new ArgumentNullException(nameof(source));
 
             var targetAccessor = Accessor.Member(targetPropertySelector);
-            var member = propertySelector.FindMember();
+            var member = BindingUtility.FindMember(propertySelector);
             string propertyName = member.Name;
             var accessor = Accessor.Member<TValue>(member);
             return BindProperty(target, targetAccessor, source, propertyName, accessor, options);
@@ -160,7 +160,7 @@ namespace Yanmonet.Bindings
         {
             if (target == null) throw new ArgumentNullException(nameof(target));
             if (source == null) throw new ArgumentNullException(nameof(source));
-            var member = propertySelector.FindMember();
+            var member = BindingUtility.FindMember(propertySelector);
             string propertyName = member.Name;
             var accessor = Accessor.Member<TValue>(member);
             return BindProperty(target, source, propertyName, accessor, options);
@@ -194,7 +194,7 @@ namespace Yanmonet.Bindings
             var notify = target as INotifyValueChanged<TValue>;
             if (notify == null)
                 throw new ArgumentException("Not implemented INotifyValueChanged<T>", nameof(target));
-            var member = propertySelector.FindMember();
+            var member = BindingUtility.FindMember(propertySelector);
             string propertyName = member.Name;
             IAccessor<TValue> targetAccessor;
             if (options != null)
@@ -250,32 +250,6 @@ namespace Yanmonet.Bindings
             });
         }
 
-        internal static MemberInfo FindMember<TTarget, TValue>(this Expression<Func<TTarget, TValue>> selector)
-        {
-            MemberExpression memberExpr = null;
-
-            if (selector.Body.NodeType == ExpressionType.MemberAccess)
-            {
-                memberExpr = selector.Body as MemberExpression;
-            }
-            if (memberExpr != null)
-                return memberExpr.Member;
-            return null;
-        }
-
-        internal static MemberInfo FindMember<TValue>(this Expression<Func<TValue>> selector)
-        {
-            MemberExpression memberExpr = null;
-
-            if (selector.Body.NodeType == ExpressionType.MemberAccess)
-            {
-                memberExpr = selector.Body as MemberExpression;
-            }
-            if (memberExpr != null)
-                return memberExpr.Member;
-            return null;
-        }
-
         internal static IAccessor GetAccessor(this PropertyInfo property)
         {
             return Accessor.Member(property);
@@ -316,6 +290,8 @@ namespace Yanmonet.Bindings
             }
             return result;
         }
+
+        #region PropertyChangedEventHandler
 
         public static void Invoke(this PropertyChangedEventHandler propertyChanged, object sender, string propertyName)
         {
@@ -367,6 +343,7 @@ namespace Yanmonet.Bindings
             }
         }
 
+        #endregion
     }
 
 
