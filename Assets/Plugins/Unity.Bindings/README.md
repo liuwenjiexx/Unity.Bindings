@@ -114,7 +114,7 @@ binding.Unbind();
 var binding = textField.BindPath<string>(data, "Value");
 binding.Unbind();
 
-//再次绑定
+//绑定
 binding.Bind();
 ```
 
