@@ -28,7 +28,7 @@ namespace Yanmonet.Bindings
 
         protected virtual TValue GetSourceValue()
         {
-            accessor.GetValue(Source, out var value);
+            var value = accessor.GetValue(Source);
             return value;
         }
 
@@ -72,9 +72,9 @@ namespace Yanmonet.Bindings
         public override void Unbind()
         {
 
-            if (SourcePropertyChanged != null)
+            if (SourceNotify != null)
             {
-                SourcePropertyChanged(OnSourcePropertyChanged, false);
+                SourceNotify(OnSourcePropertyChanged, false);
             }
             else if (Source != null)
             {

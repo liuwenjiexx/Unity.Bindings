@@ -23,7 +23,7 @@ namespace Yanmonet.Bindings
             Array array = target as Array;
             if (array != null && index < array.Length)
                 return true;
-     
+
             return false;
         }
 
@@ -32,30 +32,24 @@ namespace Yanmonet.Bindings
             return CanGetValue(target);
         }
 
-        public bool GetValue(object target, out object value)
+        public object GetValue(object target)
         {
-            if (!CanGetValue(target))
-                throw new AccessViolationException();
             Array array = target as Array;
-            if (array != null)
+            if (array != null && index >= 0 && index < array.Length)
             {
-                value = array.GetValue(index);
-                return true;
+                return array.GetValue(index);
             }
-      
-            value = null;
-            return true;
+            throw new AccessViolationException();
         }
 
         public void SetValue(object target, object value)
         {
-            if (!CanSetValue(target))
-                throw new AccessViolationException();
             Array array = (Array)target;
-            if (array != null)
+            if (array != null && index >= 0 && index < array.Length)
             {
                 array.SetValue(value, index);
-            } 
+            }
+            throw new AccessViolationException();
         }
     }
 

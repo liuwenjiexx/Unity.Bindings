@@ -80,6 +80,23 @@ public class TestBindingPath : EditorWindow
         });
         rootVisualElement.Add(fld);
 
+
+        VisualElement h;
+        h = new VisualElement();
+        h.style.flexDirection = FlexDirection.Row;
+        h.Add(new Label() { text = "Target Selector" });
+
+        var fldTargetSelector = new Label();
+        fldTargetSelector.BindPath<Label, string>(o => o.text, data, nameof(TestData.Value));
+        fldTargetSelector.RegisterValueChangedCallback(e =>
+        {
+            Debug.Log($"Target Selector: {e.newValue}");
+            e.StopPropagation();
+        });
+        h.Add(fldTargetSelector);
+        rootVisualElement.Add(h);
+
+
         rootVisualElement.RegisterCallback<ChangeEvent<string>>(e =>
         {
             Debug.Log($"{e.target} change " + e.newValue);

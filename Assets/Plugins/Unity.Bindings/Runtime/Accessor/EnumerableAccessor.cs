@@ -53,7 +53,7 @@ namespace Yanmonet.Bindings
             return false;
         }
 
-        public bool GetValue(object target, out object value)
+        public object GetValue(object target)
         {
             IEnumerator it = null;
             var enumerable = target as IEnumerable;
@@ -68,11 +68,10 @@ namespace Yanmonet.Bindings
 
             if (it != null)
             {
-                if (GetValue(it, index, out value))
-                    return true;
+                if (GetEnumeratorItem(it, index, out var value))
+                    return value;
             }
             throw new AccessViolationException();
-            return true;
         }
 
         public void SetValue(object target, object value)
@@ -80,7 +79,7 @@ namespace Yanmonet.Bindings
             throw new AccessViolationException();
         }
 
-        public bool GetValue(IEnumerator it, int index, out object value)
+        public bool GetEnumeratorItem(IEnumerator it, int index, out object value)
         {
             int n = 0;
             value = null;

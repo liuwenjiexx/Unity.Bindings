@@ -5,34 +5,32 @@ using UnityEngine.UIElements;
 
 namespace Yanmonet.Bindings
 {
-    class NotifyValueChangedAccessor<TValue> : IAccessor<TValue>
+    class INotifyValueChangedAccessor<TValue> : IAccessor<TValue>
     {
 
         private bool withoutNotify;
 
 
-        private NotifyValueChangedAccessor(bool withoutNotify)
+        private INotifyValueChangedAccessor(bool withoutNotify)
         {
             this.withoutNotify = withoutNotify;
         }
 
-        public static readonly NotifyValueChangedAccessor<TValue> instance = new NotifyValueChangedAccessor<TValue>(false);
+        public static readonly INotifyValueChangedAccessor<TValue> instance = new INotifyValueChangedAccessor<TValue>(false);
 
-        public static readonly NotifyValueChangedAccessor<TValue> instanceWithoutNotify = new NotifyValueChangedAccessor<TValue>(true);
+        public static readonly INotifyValueChangedAccessor<TValue> instanceWithoutNotify = new INotifyValueChangedAccessor<TValue>(true);
 
         public bool CanGetValue(object target) => true;
 
         public bool CanSetValue(object target) => true;
 
-        public bool GetValue(object target, out TValue value)
+        TValue IAccessor<TValue>.GetValue(object target)
         {
-            value = ((INotifyValueChanged<TValue>)target).value;
-            return true;
+            return ((INotifyValueChanged<TValue>)target).value;
         }
-        public bool GetValue(object target, out object value)
+        public object GetValue(object target)
         {
-            value = ((INotifyValueChanged<TValue>)target).value;
-            return true;
+            return ((INotifyValueChanged<TValue>)target).value;
         }
 
         public void SetValue(object target, TValue value)

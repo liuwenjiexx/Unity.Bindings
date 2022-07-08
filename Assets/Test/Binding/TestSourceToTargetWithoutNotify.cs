@@ -22,16 +22,16 @@ public class TestSourceToTargetWithoutNotify : EditorWindow
 
         rootVisualElement.Add(new IMGUIContainer(() =>
         {
-            data.Value = EditorGUILayout.TextField("Source Value", data.Value);
+            data.Value = EditorGUILayout.TextField("Source", data.Value);
         }));
 
 
         BindingOptions options = new BindingOptions()
         {
-            SourceToTargetWithoutNotify = true,
+            SourceToTargetNotifyEnabled = false,
         };
         var fldProperty = new TextField();
-        fldProperty.label = "Value";
+        fldProperty.label = "Target";
         fldProperty.BindProperty(data, o => o.Value, options);
         fldProperty.RegisterValueChangedCallback(e =>
         {

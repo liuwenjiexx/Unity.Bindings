@@ -31,6 +31,7 @@ namespace Yanmonet.Bindings
 
             return binding;
         }
+
         /// <summary>
         /// 绑定属性路径, <paramref name="target"/> 为 <see cref="INotifyValueChanged{T}"/>
         /// </summary>
@@ -40,24 +41,30 @@ namespace Yanmonet.Bindings
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (path == null) throw new ArgumentNullException(nameof(path));
 
-            var notify = target as INotifyValueChanged<TValue>;
-            if (notify == null)
-                throw new ArgumentException("target not INotifyValueChanged", nameof(target));
+            var targetNotifyValue = target as INotifyValueChanged<TValue>;
+            if (targetNotifyValue == null)
+                throw new ArgumentException("Not implemented INotifyValueChanged<T>", nameof(target));
+
 
             IAccessor<TValue> targetAccessor;
+
             if (options != null)
             {
-                if (options.SourceToTargetWithoutNotify.HasValue && options.SourceToTargetWithoutNotify.Value)
-                    targetAccessor = NotifyValueChangedAccessor<TValue>.instanceWithoutNotify;
+                if (options != null && options.SourceToTargetNotifyEnabled.HasValue && !options.SourceToTargetNotifyEnabled.Value)
+                    targetAccessor = INotifyValueChangedAccessor<TValue>.instanceWithoutNotify;
                 else
-                    targetAccessor = NotifyValueChangedAccessor<TValue>.instance;
+                    targetAccessor = INotifyValueChangedAccessor<TValue>.instance;
             }
             else
             {
-                targetAccessor = NotifyValueChangedAccessor<TValue>.instance;
+                targetAccessor = INotifyValueChangedAccessor<TValue>.instance;
             }
 
-            return BindPath(target, targetAccessor, source, path, options);
+            Binding binding = new Binding(target, targetAccessor, source, path);
+            binding.ApplyOptions(options);
+            binding.TargetNotifyValueChangedEnabled = true;
+            binding.Bind();
+            return binding;
         }
 
         /// <summary>
@@ -85,7 +92,7 @@ namespace Yanmonet.Bindings
             if (accessor == null) throw new ArgumentNullException(nameof(accessor));
 
             var binding = new PropertyBinding<TValue>(target, targetAccessor, source, propertyName, accessor);
-             
+
             binding.ApplyOptions(options);
             binding.Bind();
 
@@ -122,23 +129,28 @@ namespace Yanmonet.Bindings
         {
             if (target == null) throw new ArgumentNullException(nameof(target));
             if (source == null) throw new ArgumentNullException(nameof(source));
-            var notify = target as INotifyValueChanged<TValue>;
-            if (notify == null)
-                throw new Exception("target not INotifyValueChanged");
- 
+            var targetNotifyValue = target as INotifyValueChanged<TValue>;
+            if (targetNotifyValue == null)
+                throw new ArgumentException("Not implemented INotifyValueChanged<T>", nameof(target));
+
             IAccessor<TValue> targetAccessor;
             if (options != null)
             {
-                if (options.SourceToTargetWithoutNotify.HasValue && options.SourceToTargetWithoutNotify.Value)
-                    targetAccessor = NotifyValueChangedAccessor<TValue>.instanceWithoutNotify;
+                if (options.SourceToTargetNotifyEnabled.HasValue && !options.SourceToTargetNotifyEnabled.Value)
+                    targetAccessor = INotifyValueChangedAccessor<TValue>.instanceWithoutNotify;
                 else
-                    targetAccessor = NotifyValueChangedAccessor<TValue>.instance;
+                    targetAccessor = INotifyValueChangedAccessor<TValue>.instance;
             }
             else
             {
-                targetAccessor = NotifyValueChangedAccessor<TValue>.instance;
+                targetAccessor = INotifyValueChangedAccessor<TValue>.instance;
             }
-            return BindProperty(target, targetAccessor, source, propertyName, accessor, options);
+
+            var binding = new PropertyBinding<TValue>(target, targetAccessor, source, propertyName, accessor);
+            binding.ApplyOptions(options);
+            binding.TargetNotifyValueChangedEnabled = true;
+            binding.Bind();
+            return binding;
         }
 
         /// <summary>
@@ -181,28 +193,32 @@ namespace Yanmonet.Bindings
 
             var notify = target as INotifyValueChanged<TValue>;
             if (notify == null)
-                throw new Exception("target not INotifyValueChanged");
+                throw new ArgumentException("Not implemented INotifyValueChanged<T>", nameof(target));
             var member = propertySelector.FindMember();
             string propertyName = member.Name;
             IAccessor<TValue> targetAccessor;
             if (options != null)
             {
-                if (options.SourceToTargetWithoutNotify.HasValue && options.SourceToTargetWithoutNotify.Value)
-                    targetAccessor = NotifyValueChangedAccessor<TValue>.instanceWithoutNotify;
+                if (options.SourceToTargetNotifyEnabled.HasValue && !options.SourceToTargetNotifyEnabled.Value)
+                    targetAccessor = INotifyValueChangedAccessor<TValue>.instanceWithoutNotify;
                 else
-                    targetAccessor = NotifyValueChangedAccessor<TValue>.instance;
+                    targetAccessor = INotifyValueChangedAccessor<TValue>.instance;
             }
             else
             {
-                targetAccessor = NotifyValueChangedAccessor<TValue>.instance;
+                targetAccessor = INotifyValueChangedAccessor<TValue>.instance;
             }
             var accessor = Accessor.Member<TValue>(member);
 
-            return BindProperty(target, targetAccessor, propertyName, accessor, options);
-        } 
+            var binding = new PropertyBinding<TValue>(target, targetAccessor, null, propertyName, accessor);
+            binding.ApplyOptions(options);
+            binding.TargetNotifyValueChangedEnabled = true;
+            binding.Bind();
+            return binding;
+        }
 
         #endregion
-         
+
 
         public static void BindAll(this VisualElement root)
         {
@@ -352,4 +368,6 @@ namespace Yanmonet.Bindings
         }
 
     }
+
+
 }

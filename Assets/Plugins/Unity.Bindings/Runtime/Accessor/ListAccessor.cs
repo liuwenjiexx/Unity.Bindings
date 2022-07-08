@@ -33,31 +33,24 @@ namespace Yanmonet.Bindings
             return CanGetValue(target);
         }
 
-        public bool GetValue(object target, out object value)
+        public object GetValue(object target)
         {
-            if (!CanGetValue(target))
-                throw new AccessViolationException();
-
             IList list = target as IList;
             if (list != null && index < list.Count)
             {
-                value = list[index];
-                return true;
+                return list[index];
             }
-            value = null;
-            return true;
+            throw new AccessViolationException();
         }
 
         public void SetValue(object target, object value)
         {
-            if (!CanSetValue(target))
-                throw new AccessViolationException();
-
             IList list = target as IList;
             if (list != null && index < list.Count)
             {
                 list[index] = value;
             }
+            throw new AccessViolationException();
         }
     }
 

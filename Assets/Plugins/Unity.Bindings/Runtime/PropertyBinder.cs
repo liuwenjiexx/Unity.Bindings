@@ -15,7 +15,7 @@ namespace Yanmonet.Bindings
         private Type targetType;
         private string memberName;
         public Action TargetUpdatedCallback;
-        public SetPropertyChangedDelegate targetPropertyChanged;
+        public BindingNotifyDelegate targetPropertyChanged;
 
         private AccessMemberType accessMemberType;
         private IAccessor accessor;
@@ -434,7 +434,7 @@ namespace Yanmonet.Bindings
             }
 
             object oldValue;
-            accessor.GetValue(target, out oldValue);
+            oldValue = accessor.GetValue(target);
             if (!object.Equals(oldValue, value))
             {
                 if (accessor.CanSetValue(target))
@@ -453,7 +453,13 @@ namespace Yanmonet.Bindings
                 value = null;
                 return false;
             }
-            return accessor.GetValue(target, out value);
+            if (accessor.CanGetValue(target))
+            {
+                value = accessor.GetValue(target);
+                return true;
+            }
+            value = null;
+            return false;
         }
 
         public Type GetValueType()

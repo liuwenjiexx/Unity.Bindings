@@ -37,7 +37,7 @@ namespace Yanmonet.Bindings
 
         public string TargetPropertyName { get; set; }
 
-        public bool TargetNotifyValueChangedEnabled { get; set; } = true;
+        public bool TargetNotifyValueChangedEnabled { get; set; }
 
         public object Source
         {
@@ -67,9 +67,9 @@ namespace Yanmonet.Bindings
             get => Mode != BindingMode.OneWayToSource;
         }
 
-        public SetPropertyChangedDelegate TargetPropertyChanged { get; set; }
+        public BindingNotifyDelegate TargetNotify { get; set; }
 
-        public SetPropertyChangedDelegate SourcePropertyChanged { get; set; }
+        public BindingNotifyDelegate SourceNotify { get; set; }
 
         public void ApplyOptions(BindingOptions options)
         {
@@ -77,10 +77,10 @@ namespace Yanmonet.Bindings
                 return;
             if (options.Mode.HasValue)
                 Mode = options.Mode.Value;
-            if (options.TargetPropertyChanged != null)
-                TargetPropertyChanged = options.TargetPropertyChanged;
-            if (options.SourcePropertyChanged != null)
-                SourcePropertyChanged = options.SourcePropertyChanged;
+            if (options.TargetNotify != null)
+                TargetNotify = options.TargetNotify;
+            if (options.SourceNotify != null)
+                SourceNotify = options.SourceNotify;
             if (options.TargetNotifyValueChangedEnabled.HasValue)
                 TargetNotifyValueChangedEnabled = options.TargetNotifyValueChangedEnabled.Value;
         }
@@ -100,9 +100,9 @@ namespace Yanmonet.Bindings
 
             if (CanUpdateTargetToSource)
             {
-                if (!TargetSupportNotify && TargetPropertyChanged != null)
+                if (!TargetSupportNotify && TargetNotify != null)
                 {
-                    TargetPropertyChanged(OnTargetPropertyChanged, true);
+                    TargetNotify(OnTargetPropertyChanged, true);
                     TargetSupportNotify = true;
                 }
 
@@ -125,9 +125,9 @@ namespace Yanmonet.Bindings
 
             if (CanUpdateSourceToTarget)
             {
-                if (!SourceSupportNotify && SourcePropertyChanged != null)
+                if (!SourceSupportNotify && SourceNotify != null)
                 {
-                    SourcePropertyChanged(OnSourcePropertyChanged, true);
+                    SourceNotify(OnSourcePropertyChanged, true);
                     SourceSupportNotify = true;
                 }
             }
@@ -145,9 +145,9 @@ namespace Yanmonet.Bindings
                 return;
             isBinding = false;
 
-            if (TargetPropertyChanged != null)
+            if (TargetNotify != null)
             {
-                TargetPropertyChanged(OnTargetPropertyChanged, false);
+                TargetNotify(OnTargetPropertyChanged, false);
             }
             else
             {
@@ -167,7 +167,7 @@ namespace Yanmonet.Bindings
 
         protected virtual object GetTargetValue()
         {
-            targetAccessor.GetValue(Target, out var value);
+            var value = targetAccessor.GetValue(Target);
             return value;
         }
 
@@ -240,6 +240,6 @@ namespace Yanmonet.Bindings
 
     }
 
-    public delegate void SetPropertyChangedDelegate(PropertyChangedEventHandler handler, bool add);
+    public delegate void BindingNotifyDelegate(PropertyChangedEventHandler handler, bool add);
 
 }

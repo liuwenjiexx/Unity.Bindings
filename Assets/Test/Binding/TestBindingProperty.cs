@@ -77,7 +77,7 @@ public class TestBindingProperty : EditorWindow
 
         var fldCustom = new TextField();
         fldCustom.label = "Custom MemberAccessor";
-        fldCustom.BindProperty(data, nameof(TestData.Value), new MemberAccessor<TestData, string>((o) => o.Value, (o, val) => o.Value = val));
+        fldCustom.BindProperty(data, nameof(TestData.Value), new Accessor<TestData, string>((o) => o.Value, (o, val) => o.Value = val));
         fldCustom.RegisterValueChangedCallback(e =>
         {
             Debug.Log($"Custom MemberAccessor: {e.newValue}");
@@ -120,7 +120,7 @@ public class TestBindingProperty : EditorWindow
 
         var options = new BindingOptions()
         {
-            SourcePropertyChanged = (handler, b) =>
+            SourceNotify = (handler, b) =>
             {
                 if (b)
                     StaticPropertyChanged += handler;

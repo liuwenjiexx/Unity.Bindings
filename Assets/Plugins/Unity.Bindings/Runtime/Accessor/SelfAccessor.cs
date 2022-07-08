@@ -11,10 +11,9 @@ namespace Yanmonet.Bindings
 
         public bool CanSetValue(object target) => false;
 
-        public bool GetValue(object target, out object value)
+        public object GetValue(object target)
         {
-            value = target;
-            return true;
+            return target;
         }
 
         public void SetValue(object target, object value)

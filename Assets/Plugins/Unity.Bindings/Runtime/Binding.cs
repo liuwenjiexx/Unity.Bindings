@@ -113,9 +113,9 @@ namespace Yanmonet.Bindings
 
             if (binder != null)
             {
-                if (SourcePropertyChanged != null)
+                if (SourceNotify != null)
                 {
-                    SourcePropertyChanged(OnSourcePropertyChanged, false);
+                    SourceNotify(OnSourcePropertyChanged, false);
                 }
                 binder.TargetUpdatedCallback = null;
 

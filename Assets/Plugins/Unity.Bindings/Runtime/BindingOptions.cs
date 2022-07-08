@@ -9,16 +9,16 @@ namespace Yanmonet.Bindings
         /// </summary>
         public BindingMode? Mode { get; set; }
 
-        public SetPropertyChangedDelegate TargetPropertyChanged { get; set; }
+        public BindingNotifyDelegate TargetNotify { get; set; }
 
         public bool? TargetNotifyValueChangedEnabled { get; set; }
 
         /// <summary>
-        /// 源到目标不触发事件，如：<see cref="ChangeEvent{T}"/>
+        /// 源到目标是否触发事件，如：<see cref="ChangeEvent{T}"/>
         /// </summary>
-        public bool? SourceToTargetWithoutNotify { get; set; }
+        public bool? SourceToTargetNotifyEnabled { get; set; }
 
-        public SetPropertyChangedDelegate SourcePropertyChanged { get; set; }
+        public BindingNotifyDelegate SourceNotify { get; set; }
 
 
 

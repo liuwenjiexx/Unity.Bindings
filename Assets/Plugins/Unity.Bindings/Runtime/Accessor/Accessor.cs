@@ -14,7 +14,8 @@ namespace Yanmonet.Bindings
         private Func<object, object> getter;
         private Action<object, object> setter;
 
-        private static Dictionary<MemberInfo, IAccessor> cachedAccessors;
+        private static Dictionary<MemberInfo, IAccessor> cachedMemberAccessors;
+        static SelfAccessor selfAccessor;
 
         public Accessor(Func<object, object> getter, Action<object, object> setter)
         {
@@ -26,24 +27,19 @@ namespace Yanmonet.Bindings
 
         public bool CanSetValue(object target) => setter != null;
 
-        public virtual bool GetValue(object target, out object value)
+        public virtual object GetValue(object target)
         {
             if (getter == null)
-                throw new MemberAccessException();
-            if (getter == null)
-            {
-                value = null;
-                return false;
-            }
-            value = getter(target);
-            return true;
+                throw new AccessViolationException();
+
+            return getter(target);
         }
 
 
         public virtual void SetValue(object target, object value)
         {
             if (setter == null)
-                throw new MemberAccessException();
+                throw new AccessViolationException();
             setter(target, value);
         }
 
@@ -55,10 +51,10 @@ namespace Yanmonet.Bindings
             if (propertyOrField == null)
                 throw new ArgumentNullException(nameof(propertyOrField));
 
-            if (cachedAccessors == null)
-                cachedAccessors = new Dictionary<MemberInfo, IAccessor>();
+            if (cachedMemberAccessors == null)
+                cachedMemberAccessors = new Dictionary<MemberInfo, IAccessor>();
 
-            if (!cachedAccessors.TryGetValue(propertyOrField, out accessor))
+            if (!cachedMemberAccessors.TryGetValue(propertyOrField, out accessor))
             {
 
                 ParameterExpression targetExpr = null;
@@ -111,8 +107,8 @@ namespace Yanmonet.Bindings
                 getter = Expression.Lambda(typeof(Func<,>).MakeGenericType(targetType, valueType), memberExpr, targetExpr)
                     .Compile();
 
-                accessor = (IAccessor)Activator.CreateInstance(typeof(MemberAccessor<,>).MakeGenericType(targetType, valueType), getter, setter);
-                cachedAccessors[propertyOrField] = accessor;
+                accessor = (IAccessor)Activator.CreateInstance(typeof(Accessor<,>).MakeGenericType(targetType, valueType), getter, setter);
+                cachedMemberAccessors[propertyOrField] = accessor;
             }
 
             return accessor;
@@ -120,6 +116,7 @@ namespace Yanmonet.Bindings
 
         public static IAccessor<TValue> Member<TValue>(MemberInfo propertyOrField)
         {
+      
             return (IAccessor<TValue>)Member(propertyOrField);
         }
 
@@ -153,15 +150,22 @@ namespace Yanmonet.Bindings
         {
             return new EnumerableAccessor(index);
         }
+
+        public static IAccessor Self()
+        {
+            if (selfAccessor == null)
+                selfAccessor = new SelfAccessor();
+            return selfAccessor;
+        }
     }
 
 
-    public class MemberAccessor<TTarget, TValue> : IAccessor<TValue>
+    public class Accessor<TTarget, TValue> : IAccessor<TValue>
     {
         private Func<TTarget, TValue> getter;
         private Action<TTarget, TValue> setter;
 
-        public MemberAccessor(Func<TTarget, TValue> getter, Action<TTarget, TValue> setter)
+        public Accessor(Func<TTarget, TValue> getter, Action<TTarget, TValue> setter)
         {
             this.getter = getter;
             this.setter = setter;
@@ -171,26 +175,23 @@ namespace Yanmonet.Bindings
 
         public bool CanSetValue(object target) => setter != null;
 
-        public bool GetValue(object target, out object value)
+        public object GetValue(object target)
         {
             if (getter == null)
             {
-                value = default;
-                return false;
+                throw new AccessViolationException();
             }
-            value = getter((TTarget)target);
-            return true;
+
+            return getter((TTarget)target);
         }
 
-        public bool GetValue(object target, out TValue value)
+        TValue IAccessor<TValue>.GetValue(object target)
         {
             if (getter == null)
             {
-                value = default;
-                return false;
+                throw new AccessViolationException();
             }
-            value = getter((TTarget)target);
-            return true;
+            return getter((TTarget)target);
         }
 
         public void SetValue(object target, TValue value)
@@ -202,6 +203,8 @@ namespace Yanmonet.Bindings
 
         public void SetValue(object target, object value)
         {
+            if (setter == null)
+                throw new MemberAccessException();
             SetValue((TTarget)target, (TValue)value);
         }
 

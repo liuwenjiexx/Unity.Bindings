@@ -1,99 +1,121 @@
-# Data binding
+# Binding
 
 数据绑定
 
+| 特性                   | 支持 |
+| ---------------------- | ---- |
+| 路径                   | ✔    |
+| 静态属性               | ✔    |
+| 双向 TwoWay            | ✔    |
+| INotifyPropertyChanged | ✔    |
+| INotifyValueChanged    | ✔    |
+| UIElements             | ✔    |
+
+
+
 ## 绑定
 
-### 路径
-
-**绑定**
+### 绑定路径
 
 ```c#
-textField.BindPath<string>(data, nameof(PropertyName));
-textField.BindPath<string>(data, "PropertyName");
-textField.BindPath<string>(data, "PropertyName1.PropertyName2");
+BindingBase BindPath<TValue>(this object target, object source, string path)
 ```
 
-对象分隔符 `.`，`data` 数据实现 `INotifyPropertyChanged` 接口提高性能
+- **target**
 
-### 属性
+  目标对象，默认绑定 `INotifyValueChanged.value` 属性
 
-对任意属性进行绑定
+- **source**
 
-#### 目标属性
+  源对象
 
-绑定 `Label.text` 属性
+- **path**
+
+  源对象的属性，多个属性用 `.` 分隔
+
+**样例**
 
 ```c#
-label.BindProperty<Label, TestData, string>(targetPropertySelector: o => o.text,
-                                            source: data, 
-                                            propertySelector: o => o.Value);
+textField.BindPath<string>(data, nameof(TestData.Value));
+textField.BindPath<string>(data, "Value");
+textField.BindPath<string>(data, "Data2.Value");
+```
+
+`TestData` 为 [样例数据](#样例数据)
+
+**VisualElement**
+
+可以绑定实现了 `IBindable` 接口的 `VisualElement` 对象，同时实现  `INotifyValueChanged` 支持绑定 `value` 属性
+
+如：TextField，FloatField，IntegerField，EnumField 等， [支持 IBindable 默认绑定完整列表](https://docs.unity3d.com/Manual/UIE-Binding.html)
+
+### 目标属性
+
+```c#
+BindingBase BindPath<TTarget, TValue>(this object target, Expression<Func<TTarget, TValue>> targetPropertySelector, object source, string path)
 ```
 
 - **targetPropertySelector**
 
-  目标属性选择器，`lambda` 表达式格式，选择 `Label.text` 属性
+  目标属性 `lambda` 选择器
 
-- **propertySelector**
-
-  源属性选择器，选择 `TestData.Value` 属性
-
-#### 静态属性
+**样例**
 
 ```c#
-static string staticProperty;
-static string StaticProperty
-{
-    get => staticProperty;
-    set => StaticPropertyChanged.Invoke(null, nameof(StaticProperty), ref staticProperty, value);
-}
+label.BindPath<Label, string>(o => o.text, data, "Value");
+```
 
-static event PropertyChangedEventHandler StaticPropertyChanged;
 
-var options = new BindingOptions()
-{
-    SourcePropertyChanged = (handler, b) =>
-    {
-        if (b)
-            StaticPropertyChanged += handler;
-        else
-            StaticPropertyChanged -= handler;
-    }
-};
-textField.BindProperty(propertySelector: () => StaticProperty, options);
+
+### 源属性
+
+```c#
+BindingBase BindProperty<TSource, TValue>(this object target, TSource source, Expression<Func<TSource, TValue>> propertySelector)
 ```
 
 - **propertySelector**
 
-  源属性选择器，选择了 `StaticProperty` 静态属性
+  源属性 `lambda` 选择器
 
-- **SourcePropertyChanged**
+**样例**
 
-  定制源属性通知，事件类型为 `PropertyChangedEventHandler`
+```c#
+textField.BindProperty(data, o => o.Value);
+```
+
+
+
+同时指定目标和源属性
+
+```c#
+BindingBase BindProperty<TTarget, TSource, TValue>(this object target, Expression<Func<TTarget, TValue>> targetPropertySelector, TSource source, Expression<Func<TSource, TValue>> propertySelector)
+```
+
+**样例**
+
+```c#
+label.BindProperty<Label, TestData, string>(o => o.text, data, o => o.Value);
+```
+
+
 
 ## 解绑
 
-**绑定**
-
 ```c#
 binding.Bind();
-```
-
-扩展方法 `BindPath`，`BindProperty` 立即调用 `Bind` 方法，不用手动调用
-
-**解绑**
-
-```c#
 binding.Unbind();
 ```
 
-` binding.IsBinding` 判断是否绑定
+` binding.IsBinding` 判断是否绑定，使用扩展方法 `BindPath`，`BindProperty` 会立即调用 `Bind` 方法
 
 **样例**
 
 ```c#
 var binding = textField.BindPath<string>(data, "Value");
 binding.Unbind();
+
+//再次绑定
+binding.Bind();
 ```
 
 
@@ -106,7 +128,7 @@ binding.Unbind();
 root.BindAll();
 ```
 
-所有子节点调用 `Bind` 方法
+所有子节点调用 `binding.Bind` 方法
 
 **解绑**
 
@@ -114,77 +136,132 @@ root.BindAll();
 root.UnbindAll();
 ```
 
-所有子节点调用 `Unbind` 方法
+所有子节点调用 `binding.Unbind` 方法
 
+## 定制通知
 
+- **TargetNotify**
 
-**绑定方法**
+  定制目标通知
 
-```c#
-IDisposable Bind<TValue>(this VisualElement target, object source, string path)
-```
+- **SourceNotify**
 
-**样例**
+  定制源属性通知，事件类型为 `PropertyChangedEventHandler`
 
-支持实现了 `IBindable` 接口的目标对象，同时实现  `INotifyValueChanged` 支持绑定 `value` 属性
-
-如：TextField，FloatField，IntegerField，EnumField 等， [支持 IBindable 默认绑定完整列表](https://docs.unity3d.com/Manual/UIE-Binding.html)
-
-```
-textField.Bind<string>(data, "Text");
-```
-
-
-
-**绑定方法**
+### 绑定静态属性
 
 ```c#
-IDisposable Bind<TValue>(this VisualElement target, INotifyValueChanged<TValue> targetAccessor, object source, string path)
+//静态属性
+static string staticProperty;
+static string StaticProperty
+{
+    get => staticProperty;
+    set => StaticPropertyChanged.Invoke(null, nameof(StaticProperty), ref staticProperty, value);
+}
+
+//静态属性通知
+static event PropertyChangedEventHandler StaticPropertyChanged;
+
+var options = new BindingOptions()
+{
+    //定制属性通知
+    SourceNotify = (handler, add) =>
+    {
+        if (add)
+            StaticPropertyChanged += handler;
+        else
+            StaticPropertyChanged -= handler;
+    }
+};
+
+textField.BindProperty(() => StaticProperty, options);
 ```
 
-**样例**
 
-`Label` 没有实现 `INotifyValueChanged` 需要实现 `targetAccessor` 绑定目标属性访问器
+
+## 定制访问器
+
+**访问器接口**
 
 ```c#
-label.Bind(new Accessor<string>(() => label.text, (v) => label.text = v;), data, "Text");
+public interface IAccessor
+{
+    bool CanGetValue(object target);
+    bool CanSetValue(object target);
+    object GetValue(object target);
+    void SetValue(object target, object value);
+}
 ```
 
+**Accessor 提供的访问器**
 
-
-### 属性访问器 Accessor
-
-**绑定方法**
+- 属性或字段
 
 ```c#
-IDisposable Bind<TValue>(this VisualElement target, object source, string propertyName, INotifyValueChanged<TValue> accessor)
+IAccessor Member(MemberInfo propertyOrField)
+IAccessor<TValue> Member<TValue>(Expression<Func<TValue>> propertySelector)
 ```
 
-数据源或目标对象未实现 `INotifyPropertyChanged` 时，需要每帧检查值实现值绑定
+支持 `lambda` 属性选择器
 
-**样例**
+- 数组 `T[]`
 
 ```c#
-textField.Bind(data, "Text", new Accessor<string>(() => Text, (val) => Text = val));
+IAccessor Array(int index)
 ```
 
-
-
-**绑定方法**
+- 列表 `IList`
 
 ```c#
-IDisposable Bind<TValue>(this VisualElement target, INotifyValueChanged<TValue> targetAccessor, object source, string propertyName, INotifyValueChanged<TValue> accessor)
+IAccessor List(int index)
 ```
 
-目标属性和数据源定制属性访问器
-
-**样例**
+- 枚举器 `IEnumerable`
 
 ```c#
-label.Bind(new Accessor<string>(() => label.text, (v) => label.text = v), this, "Text", new Accessor<string>(() => Text, (val) => Text = val));
+IAccessor Enumerable(int index)
 ```
 
+枚举器只支持获取，不能写入
 
 
 
+## 样例数据
+
+```c#
+[Serializable]
+public class TestData : INotifyPropertyChanged
+{
+    private string value;
+    public string Value
+    {
+        get => value;
+        set => PropertyChanged.Invoke(this, nameof(Value), ref this.value, value);
+    }
+
+    private TestData2 data2;
+    public TestData2 Data2
+    {
+        get => data2;
+        set => PropertyChanged.Invoke(this, nameof(Data2), ref data2, value);
+    }
+
+    public event PropertyChangedEventHandler PropertyChanged;
+}
+
+
+[Serializable]
+public class TestData2 : INotifyPropertyChanged
+{
+    [SerializeField]
+    private string value;
+    public string Value
+    {
+        get => value;
+        set => PropertyChanged.Invoke(this, nameof(Value), ref this.value, value);
+    }
+
+    public event PropertyChangedEventHandler PropertyChanged;
+}
+```
 
