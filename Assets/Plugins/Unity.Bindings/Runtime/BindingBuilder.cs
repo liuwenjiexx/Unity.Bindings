@@ -105,8 +105,12 @@ namespace Yanmonet.Bindings
             accessor = Accessor.Member(member);
             return From(accessor);
         }
-
-        public BindingBuilder<TTarget, TSource> Property(string propertyName)
+        public BindingBuilder<TTarget, TSource> TargetPropertyName(string targetPropertyName)
+        {
+            this.targetPropertyName = targetPropertyName;
+            return this;
+        }
+        public BindingBuilder<TTarget, TSource> PropertyName(string propertyName)
         {
             this.propertyName = propertyName;
             return this;

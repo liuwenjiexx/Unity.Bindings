@@ -32,7 +32,7 @@ namespace Yanmonet.Bindings
         /// <summary>
         /// 绑定属性路径
         /// </summary> 
-        public static BindingBase Bind(this object target, IAccessor targetAccessor, string targetPropertyName, object source, string path, BindingMode mode = BindingMode.OneWay)
+        private static BindingBase Bind(this object target, IAccessor targetAccessor, string targetPropertyName, object source, string path, BindingMode mode = BindingMode.OneWay)
         {
             if (target == null) throw new ArgumentNullException(nameof(target));
             if (targetAccessor == null) throw new ArgumentNullException(nameof(targetAccessor));
@@ -67,7 +67,7 @@ namespace Yanmonet.Bindings
         /// <summary>
         /// 绑定属性
         /// </summary>
-        public static BindingBase Bind<TSource, TValue>(this object target, IAccessor<TValue> targetAccessor, string targetPropertyName, TSource source, IAccessor<TValue> accessor, string propertyName, BindingMode mode = BindingMode.OneWay)
+        private static BindingBase Bind<TSource, TValue>(this object target, IAccessor<TValue> targetAccessor, string targetPropertyName, TSource source, IAccessor<TValue> accessor, string propertyName, BindingMode mode = BindingMode.OneWay)
         {
             if (target == null) throw new ArgumentNullException(nameof(target));
             if (targetAccessor == null) throw new ArgumentNullException(nameof(targetAccessor));
@@ -96,7 +96,7 @@ namespace Yanmonet.Bindings
             return Bind(target, targetAccessor, targetAccessor.MemberInfo.Name, source, accessor, accessor.MemberInfo.Name, mode);
         }
 
-        public static BindingBase Bind<TTarget, TSource, TValue>(this object target, Expression<Func<TTarget, TValue>> targetPropertySelector, TSource source, IAccessor<TValue> accessor, string propertyName, BindingMode mode = BindingMode.OneWay)
+        private static BindingBase Bind<TTarget, TSource, TValue>(this object target, Expression<Func<TTarget, TValue>> targetPropertySelector, TSource source, IAccessor<TValue> accessor, string propertyName, BindingMode mode = BindingMode.OneWay)
         {
             if (targetPropertySelector == null) throw new ArgumentNullException(nameof(targetPropertySelector));
 
@@ -150,7 +150,7 @@ namespace Yanmonet.Bindings
         /// <summary>
         /// <paramref name="target"/> 绑定到 <see cref="INotifyValueChanged{T}.value"/> 属性
         /// </summary>
-        public static BindingBase Bind<TSource, TValue>(this INotifyValueChanged<TValue> target, TSource source, IAccessor<TValue> accessor, string propertyName, BindingMode mode = BindingMode.TwoWay)
+        private static BindingBase Bind<TSource, TValue>(this INotifyValueChanged<TValue> target, TSource source, IAccessor<TValue> accessor, string propertyName, BindingMode mode = BindingMode.TwoWay)
         {
             if (target == null) throw new ArgumentNullException(nameof(target));
             if (source == null) throw new ArgumentNullException(nameof(source));

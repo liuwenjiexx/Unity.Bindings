@@ -171,7 +171,7 @@ static BindingBuilder<TTarget, TSource> Bind<TTarget, TSource>(this TTarget targ
 static BindingBuilder<TTarget, object> Bind<TTarget>(this TTarget target)
 ```
 
-`BindingBuilder` 生成复杂的绑定
+生成复杂的绑定，`Bind` 方法获取 `BindingBuilder` 生成器，最后调用 `Build` 生成绑定
 
 **样例**
 
@@ -179,11 +179,11 @@ static BindingBuilder<TTarget, object> Bind<TTarget>(this TTarget target)
 textField.Bind(data).From(o => o.Value).Build();
 ```
 
-### 模式
+**模式**
 
 默认源到目标，`INotifyValueChanged` 默认为 `TwoWay` 模式
 
-- OneWay
+- **OneWay**
 
   源到目标
 
@@ -191,7 +191,7 @@ textField.Bind(data).From(o => o.Value).Build();
   label.Bind(data).From(o => o.Value).OneWay().Build();
   ```
 
-- OneWayToSource
+- **OneWayToSource**
 
   目标到源
 
@@ -199,7 +199,7 @@ textField.Bind(data).From(o => o.Value).Build();
   textField.Bind(data).From(o => o.Value).OneWayToSource().Build();
   ```
 
-- TwoWay
+- **TwoWay**
 
   双向模式，源到目标和目标到源
 
@@ -207,29 +207,82 @@ textField.Bind(data).From(o => o.Value).Build();
 textField.Bind(data).From(o => o.Value).TwoWay().Build();
 ```
 
+- **To**
 
+  目标属性
 
-### 源到目标通知
+  ```c#
+  To<TValue>(Expression<Func<TTarget, TValue>> targetPropertySelector)
+  ```
 
-`EnableSourceToTargetNotify` 开启，`DisableSourceToTargetNotify` 关闭
+  自动设置 `TargetPropertyName`
+
+  ```c#
+  To(IAccessor targetAccessor)
+  ```
+
+  需要手动指定 `TargetPropertyName`
+
+- **TargetPropertyName**
+
+  目标属性名称，需要 `Target` 支持 `INotifyPropertyChanged`，监听属性值变化事件
+
+- **From**
+
+  源属性
+
+  ```c#
+  From(string path)
+  ```
+
+  使用属性路径绑定
+
+  ```c#
+  From<TValue>(Expression<Func<TSource, TValue>> propertySelector)
+  From<TValue>(Expression<Func<TValue>> propertySelector)
+  ```
+
+  自动设置 `TargetPropertyName`
+
+  ```c#
+  From(IAccessor accessor)
+  ```
+
+  需要手动指定 `TargetPropertyName`
+
+- **PropertyName**
+
+  源属性名称，需要 `Source` 支持 `INotifyPropertyChanged`，监听属性值变化事件
+
+- **EnableSourceToTargetNotify**
+
+  是否开启源到目标通知，`DisableSourceToTargetNotify` 为关闭
 
 ```c#
 textField.Bind(data).From(o => o.Value).EnableSourceToTargetNotify().Build();
 ```
 
-
-
-### 定制通知
-
 - **TargetNotify**
 
-  定制目标通知
+  定制目标属性变化通知
 
 - **SourceNotify**
 
-  定制源属性通知，事件类型为 `PropertyChangedEventHandler`
+  定制源属性属性变化通知，事件类型为 `PropertyChangedEventHandler`
 
-**绑定静态属性**
+  ```c#
+  SourceNotify((handler, b) =>
+               {
+                    if (b)
+                        StaticPropertyChanged += handler;
+                    else
+                        StaticPropertyChanged -= handler;
+                })
+  ```
+
+  
+
+**绑定静态属性样例**
 
 ```c#
 //静态属性
@@ -309,6 +362,17 @@ IAccessor Enumerable(int index)
 ```
 
 枚举器只支持获取，不能写入
+
+
+
+**样例**
+
+```c#
+textField.Bind(data)
+    .From(new Accessor<TestData, string>((o) => o.Value, (o, val) => o.Value = val))
+    .Property(nameof(TestData.Value))
+    .Build();
+```
 
 
 
