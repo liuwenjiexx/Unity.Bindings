@@ -17,15 +17,6 @@ public class TestBindingProperty : EditorWindow
         }
     };
 
-    public static string staticProperty = "1";
-
-    public static string StaticProperty
-    {
-        get => staticProperty;
-        set => StaticPropertyChanged.Invoke(null, nameof(StaticProperty), ref staticProperty, value);
-    }
-    public static event PropertyChangedEventHandler StaticPropertyChanged;
-
 
     [MenuItem("Test/Binding Property")]
     public static void ShowWindow()
@@ -41,8 +32,7 @@ public class TestBindingProperty : EditorWindow
         rootVisualElement.Add(new IMGUIContainer(() =>
         {
             data.Value = EditorGUILayout.TextField("Source Value", data.Value);
-        //    data.Data2.Value = EditorGUILayout.TextField("Data2.Value", data.Data2.Value);
-            StaticProperty = EditorGUILayout.TextField("StaticValue", StaticProperty);
+            //    data.Data2.Value = EditorGUILayout.TextField("Data2.Value", data.Data2.Value); 
 
             using (new GUILayout.HorizontalScope())
             {
@@ -68,30 +58,31 @@ public class TestBindingProperty : EditorWindow
 
         var fldProperty = new TextField();
         fldProperty.label = "Value";
-        fldProperty.BindProperty(data, o => o.Value);
+        fldProperty.Bind(data, o => o.Value);
         fldProperty.RegisterValueChangedCallback(e =>
         {
             Debug.Log($"Value: {e.newValue}");
         });
         rootVisualElement.Add(fldProperty);
 
+        var fldProperty2 = new TextField();
+        fldProperty2.label = "Build Value";
+        fldProperty2.Bind(data).From(o => o.Value).Build();
+        fldProperty2.RegisterValueChangedCallback(e =>
+        {
+            Debug.Log($"Build Value: {e.newValue}");
+        });
+        rootVisualElement.Add(fldProperty2);
+
         var fldCustom = new TextField();
-        fldCustom.label = "Custom MemberAccessor";
-        fldCustom.BindProperty(data, nameof(TestData.Value), new Accessor<TestData, string>((o) => o.Value, (o, val) => o.Value = val));
+        fldCustom.label = "Source Accessor";
+        fldCustom.Bind(data, new Accessor<TestData, string>((o) => o.Value, (o, val) => o.Value = val), nameof(TestData.Value));
         fldCustom.RegisterValueChangedCallback(e =>
         {
-            Debug.Log($"Custom MemberAccessor: {e.newValue}");
+            Debug.Log($"Source Accessor: {e.newValue}");
         });
         rootVisualElement.Add(fldCustom);
-
-        var fldCustom2 = new TextField();
-        fldCustom2.label = "MemberAccessor.From";
-        fldCustom2.BindProperty(data, nameof(TestData.Value), Accessor.Member<TestData, string>(o => o.Value));
-        fldCustom2.RegisterValueChangedCallback(e =>
-        {
-            Debug.Log($"MemberAccessor.From: {e.newValue}");
-        });
-        rootVisualElement.Add(fldCustom2);
+         
 
         //GetPropertyChangedEventHandlerDelegate aaa;
         //aaa = (out PropertyChangedEventHandler handler) =>
@@ -118,26 +109,6 @@ public class TestBindingProperty : EditorWindow
         //var changedEventInfo = mmm.DeclaringType.GetEvent(mmm.Name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
         //  changedEventInfo.
 
-        var options = new BindingOptions()
-        {
-            SourceNotify = (handler, b) =>
-            {
-                if (b)
-                    StaticPropertyChanged += handler;
-                else
-                    StaticPropertyChanged -= handler;
-            }
-        };
-
-        var fldStatic = new TextField();
-        fldStatic.label = "Static Property";
-        fldStatic.BindProperty(() => StaticProperty, options);
-
-        fldStatic.RegisterValueChangedCallback(e =>
-        {
-            Debug.Log($"Static Property: {StaticProperty}: {e.newValue}");
-        });
-        rootVisualElement.Add(fldStatic);
 
         Bind();
 
@@ -151,16 +122,14 @@ public class TestBindingProperty : EditorWindow
     void Bind()
     {
         isBind = true;
-
-        rootVisualElement.Bind(new SerializedObject(this));
+         
         rootVisualElement.BindAll();
     }
 
     void Unbind()
     {
         isBind = false;
-
-        rootVisualElement.Unbind();
+         
         rootVisualElement.UnbindAll();
     }
 

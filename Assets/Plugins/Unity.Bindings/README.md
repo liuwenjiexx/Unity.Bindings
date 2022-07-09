@@ -5,7 +5,8 @@
 | 特性                   | 支持 |
 | ---------------------- | ---- |
 | 路径                   | ✔    |
-| 静态属性               | ✔    |
+| 静态源属性             | ✔    |
+| 静态目标属性           |      |
 | 双向 TwoWay            | ✔    |
 | INotifyPropertyChanged | ✔    |
 | INotifyValueChanged    | ✔    |

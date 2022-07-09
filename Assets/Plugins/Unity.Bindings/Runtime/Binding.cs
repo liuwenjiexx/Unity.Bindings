@@ -1,7 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UIElements;
 using System;
 using System.ComponentModel;
 using System.Reflection;
@@ -37,10 +35,6 @@ namespace Yanmonet.Bindings
         }
 
 
-        protected override string PropertyName => binder.MemberName;
-
-     
-
         public string Path
         {
             get { return path; }
@@ -75,11 +69,12 @@ namespace Yanmonet.Bindings
 
             binder = PropertyBinder.Create(path);
             binder.Target = Source;
+            PropertyName = binder.MemberName;
 
             base.Bind();
 
             if (CanUpdateSourceToTarget)
-            { 
+            {
                 if (!SourceSupportNotify && binder.SupportNotify)
                 {
                     binder.TargetUpdatedCallback = () =>
@@ -113,9 +108,9 @@ namespace Yanmonet.Bindings
 
             if (binder != null)
             {
-                if (SourceNotify != null)
+                if (SourceNotifyCallback != null)
                 {
-                    SourceNotify(OnSourcePropertyChanged, false);
+                    SourceNotifyCallback(OnSourcePropertyChanged, false);
                 }
                 binder.TargetUpdatedCallback = null;
 
@@ -158,7 +153,6 @@ namespace Yanmonet.Bindings
             object targetValue = GetTargetValue();
             if (!object.Equals(targetValue, value))
             {
-                Debug.Log("set target value:" + value);
                 SetTargetValue(value);
             }
 
@@ -179,7 +173,6 @@ namespace Yanmonet.Bindings
 
             if (binder.TrySetValue(value))
             {
-                Debug.Log("set source value:" + value);
                 //if (enabledSourceUpdated)
                 //{
                 //    var sourceUpdated = SourceUpdated;

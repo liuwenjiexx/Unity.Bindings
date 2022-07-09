@@ -62,8 +62,19 @@ public class TestBindingPath : EditorWindow
 
 
         fldBindingPath = new TextField();
-        fldBindingPath.label = "Value";
-        fldBindingPath.BindPath<string>(data, nameof(TestData.Value));
+        fldBindingPath.label = "Path";
+        fldBindingPath.Bind(data, nameof(TestData.Value));
+        fldBindingPath.RegisterValueChangedCallback(e =>
+        {
+            Debug.Log($"Path [Value] changed: {e.newValue}");
+            e.StopPropagation();
+        });
+        rootVisualElement.Add(fldBindingPath);
+
+
+        fldBindingPath = new TextField();
+        fldBindingPath.label = "bindingPath";
+        fldBindingPath.bindingPath = nameof(TestData.Value);
         fldBindingPath.RegisterValueChangedCallback(e =>
         {
             Debug.Log($"bindingPath [Value] changed: {e.newValue}");
@@ -73,7 +84,7 @@ public class TestBindingPath : EditorWindow
 
         var fld = new TextField();
         fld.label = "Data2.Value";
-        fld.BindPath<string>(data, "Data2.Value");
+        fld.Bind<string>(data, "Data2.Value");
         fld.RegisterValueChangedCallback(e =>
         {
             Debug.Log($"bindingPath [Data2.Value] changed: {e.newValue}");
@@ -87,13 +98,13 @@ public class TestBindingPath : EditorWindow
         h.Add(new Label() { text = "Target Selector" });
 
         var fldTargetSelector = new Label();
-        fldTargetSelector.BindPath<Label, string>(o => o.text, data, nameof(TestData.Value));
+        fldTargetSelector.Bind<Label, string>(o => o.text, data, nameof(TestData.Value));
         fldTargetSelector.RegisterValueChangedCallback(e =>
         {
             Debug.Log($"Target Selector: {e.newValue}");
             e.StopPropagation();
         });
-        h.Add(fldTargetSelector);
+        h.Add(fldTargetSelector); 
         rootVisualElement.Add(h);
 
 
@@ -102,15 +113,15 @@ public class TestBindingPath : EditorWindow
             Debug.Log($"{e.target} change " + e.newValue);
         });
 
-        isBind = true;
+        Bind();
     }
 
 
     void Bind()
-    {
-
+    { 
         Debug.Log("Bind");
-        rootVisualElement.BindAll();
+        isBind = true;
+        rootVisualElement.BindAll(data);
 
     }
 

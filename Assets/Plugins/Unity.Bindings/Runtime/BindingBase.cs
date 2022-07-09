@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Reflection;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Yanmonet.Bindings
@@ -25,6 +24,7 @@ namespace Yanmonet.Bindings
                 throw new ArgumentNullException(nameof(targetAccessor));
             this.target = target;
             this.targetAccessor = targetAccessor;
+
         }
 
 
@@ -33,7 +33,9 @@ namespace Yanmonet.Bindings
         public object Target => target;
 
         protected IAccessor TargetAccessor => targetAccessor;
-
+        /// <summary>
+        /// 绑定属性名称，监听属性值改变事件
+        /// </summary>
         public string TargetPropertyName { get; set; }
 
         public bool TargetNotifyValueChangedEnabled { get; set; }
@@ -43,8 +45,10 @@ namespace Yanmonet.Bindings
             get => source;
             set => source = value;
         }
-
-        protected virtual string PropertyName { get => null; }
+        /// <summary>
+        /// 绑定属性名称，监听属性值改变事件
+        /// </summary>
+        public string PropertyName { get; set; }
 
         public BindingMode Mode
         {
@@ -66,24 +70,10 @@ namespace Yanmonet.Bindings
             get => Mode != BindingMode.OneWayToSource;
         }
 
-        public BindingNotifyDelegate TargetNotify { get; set; }
+        public BindingNotifyDelegate TargetNotifyCallback { get; set; }
 
-        public BindingNotifyDelegate SourceNotify { get; set; }
-
-        public void ApplyOptions(BindingOptions options)
-        {
-            if (options == null)
-                return;
-            if (options.Mode.HasValue)
-                Mode = options.Mode.Value;
-            if (options.TargetNotify != null)
-                TargetNotify = options.TargetNotify;
-            if (options.SourceNotify != null)
-                SourceNotify = options.SourceNotify;
-            if (options.TargetNotifyValueChangedEnabled.HasValue)
-                TargetNotifyValueChangedEnabled = options.TargetNotifyValueChangedEnabled.Value;
-        }
-
+        public BindingNotifyDelegate SourceNotifyCallback { get; set; }
+         
         public virtual void Bind()
         {
             if (isBinding)
@@ -99,9 +89,9 @@ namespace Yanmonet.Bindings
 
             if (CanUpdateTargetToSource)
             {
-                if (!TargetSupportNotify && TargetNotify != null)
+                if (!TargetSupportNotify && TargetNotifyCallback != null && !string.IsNullOrEmpty(TargetPropertyName))
                 {
-                    TargetNotify(OnTargetPropertyChanged, true);
+                    TargetNotifyCallback(OnTargetPropertyChanged, true);
                     TargetSupportNotify = true;
                 }
 
@@ -119,18 +109,13 @@ namespace Yanmonet.Bindings
 
             if (CanUpdateSourceToTarget)
             {
-                if (!SourceSupportNotify && SourceNotify != null)
+                if (!SourceSupportNotify && SourceNotifyCallback != null && !string.IsNullOrEmpty(PropertyName))
                 {
-                    SourceNotify(OnSourcePropertyChanged, true);
+                    SourceNotifyCallback(OnSourcePropertyChanged, true);
                     SourceSupportNotify = true;
                 }
             }
 
-            IBindable bindable = Target as IBindable;
-            if (bindable != null)
-            {
-                bindable.binding = this;
-            }
         }
 
 
@@ -141,9 +126,9 @@ namespace Yanmonet.Bindings
                 return;
             isBinding = false;
 
-            if (TargetNotify != null)
+            if (TargetNotifyCallback != null)
             {
-                TargetNotify(OnTargetPropertyChanged, false);
+                TargetNotifyCallback(OnTargetPropertyChanged, false);
             }
             else
             {
@@ -166,6 +151,7 @@ namespace Yanmonet.Bindings
         {
             targetAccessor.SetValue(Target, value);
         }
+
 
         public virtual void PreUpdate()
         {

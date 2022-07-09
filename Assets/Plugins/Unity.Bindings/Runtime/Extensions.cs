@@ -12,70 +12,48 @@ namespace Yanmonet.Bindings
 {
     public static class Extensions
     {
+
+        public static BindingBuilder<TTarget, TSource> Bind<TTarget, TSource>(this TTarget target, TSource source)
+        {
+            return new BindingBuilder<TTarget, TSource>(target, source);
+        }
+
+        public static BindingBuilder<TTarget, object> Bind<TTarget>(this TTarget target)
+        {
+            return new BindingBuilder<TTarget, object>(target, null);
+        }
+
         #region Binding Path
 
         /// <summary>
         /// 绑定属性路径
-        /// </summary>
-        public static BindingBase BindPath<TValue>(this object target, IAccessor<TValue> targetAccessor, object source, string path, BindingOptions options = null)
+        /// </summary> 
+        public static BindingBase Bind(this object target, IAccessor targetAccessor, string targetPropertyName, object source, string path)
         {
-
             if (target == null) throw new ArgumentNullException(nameof(target));
             if (targetAccessor == null) throw new ArgumentNullException(nameof(targetAccessor));
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (path == null) throw new ArgumentNullException(nameof(path));
 
             Binding binding = new Binding(target, targetAccessor, source, path);
-            binding.ApplyOptions(options);
-            binding.Bind();
+            binding.TargetPropertyName = targetPropertyName;
 
-            return binding;
-        }
-
-        /// <summary>
-        /// 绑定属性路径, <paramref name="target"/> 为 <see cref="INotifyValueChanged{T}"/>
-        /// </summary>
-        public static BindingBase BindPath<TValue>(this object target, object source, string path, BindingOptions options = null)
-        {
-            if (target == null) throw new ArgumentNullException(nameof(target));
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (path == null) throw new ArgumentNullException(nameof(path));
-
-            var targetNotifyValue = target as INotifyValueChanged<TValue>;
-            if (targetNotifyValue == null)
-                throw new ArgumentException("Not implemented INotifyValueChanged<T>", nameof(target));
-
-
-            IAccessor<TValue> targetAccessor;
-
-            if (options != null)
+            IBindable bindable = target as IBindable;
+            if (bindable != null)
             {
-                if (options != null && options.SourceToTargetNotifyEnabled.HasValue && !options.SourceToTargetNotifyEnabled.Value)
-                    targetAccessor = INotifyValueChangedAccessor<TValue>.instanceWithoutNotify;
-                else
-                    targetAccessor = INotifyValueChangedAccessor<TValue>.instance;
+                bindable.binding = binding;
             }
-            else
-            {
-                targetAccessor = INotifyValueChangedAccessor<TValue>.instance;
-            }
-
-            Binding binding = new Binding(target, targetAccessor, source, path);
-            binding.ApplyOptions(options);
-            binding.TargetNotifyValueChangedEnabled = true;
-            binding.Bind();
             return binding;
         }
 
         /// <summary>
         /// 绑定属性路径
         /// </summary>
-        public static BindingBase BindPath<TTarget, TValue>(this object target, Expression<Func<TTarget, TValue>> targetPropertySelector, object source, string path, BindingOptions options = null)
+        public static BindingBase Bind<TTarget, TValue>(this object target, Expression<Func<TTarget, TValue>> targetPropertySelector, object source, string path)
         {
-            IAccessor<TValue> targetAccessor = Accessor.Member(targetPropertySelector);
-            return BindPath(target, targetAccessor, source, path, options);
+            var targetAccessor = Accessor.Member(targetPropertySelector);
+            return Bind(target, targetAccessor, targetAccessor.MemberInfo.Name, source, path);
         }
-
 
         #endregion
 
@@ -84,152 +62,145 @@ namespace Yanmonet.Bindings
         /// <summary>
         /// 绑定属性
         /// </summary>
-        public static BindingBase BindProperty<TSource, TValue>(this object target, IAccessor<TValue> targetAccessor, TSource source, string propertyName, IAccessor<TValue> accessor, BindingOptions options = null)
+        public static BindingBase Bind<TSource, TValue>(this object target, IAccessor<TValue> targetAccessor, string targetPropertyName, TSource source, IAccessor<TValue> accessor, string propertyName)
         {
             if (target == null) throw new ArgumentNullException(nameof(target));
             if (targetAccessor == null) throw new ArgumentNullException(nameof(targetAccessor));
-            if (propertyName == null) throw new ArgumentNullException(nameof(propertyName));
             if (accessor == null) throw new ArgumentNullException(nameof(accessor));
 
-            var binding = new PropertyBinding<TValue>(target, targetAccessor, source, propertyName, accessor);
+            var binding = new PropertyBinding(target, targetAccessor, source, accessor);
+            binding.TargetPropertyName = targetPropertyName;
+            binding.PropertyName = propertyName;
 
-            binding.ApplyOptions(options);
-            binding.Bind();
-
+            IBindable bindable = target as IBindable;
+            if (bindable != null)
+            {
+                bindable.binding = binding;
+            }
             return binding;
         }
 
-        public static BindingBase BindProperty<TTarget, TSource, TValue>(this object target, Expression<Func<TTarget, TValue>> targetPropertySelector, TSource source, Expression<Func<TSource, TValue>> propertySelector, BindingOptions options = null)
+        public static BindingBase Bind<TTarget, TSource, TValue>(this object target, Expression<Func<TTarget, TValue>> targetPropertySelector, TSource source, Expression<Func<TSource, TValue>> propertySelector)
         {
-            if (target == null) throw new ArgumentNullException(nameof(target));
             if (targetPropertySelector == null) throw new ArgumentNullException(nameof(targetPropertySelector));
-            if (source == null) throw new ArgumentNullException(nameof(source));
 
             var targetAccessor = Accessor.Member(targetPropertySelector);
             var member = BindingUtility.FindMember(propertySelector);
-            string propertyName = member.Name;
             var accessor = Accessor.Member<TValue>(member);
-            return BindProperty(target, targetAccessor, source, propertyName, accessor, options);
+            return Bind(target, targetAccessor, targetAccessor.MemberInfo.Name, source, accessor, accessor.MemberInfo.Name);
         }
 
-        public static BindingBase BindProperty<TTarget, TSource, TValue>(this object target, Expression<Func<TTarget, TValue>> targetPropertySelector, TSource source, string propertyName, IAccessor<TValue> accessor, BindingOptions options = null)
+        public static BindingBase Bind<TTarget, TSource, TValue>(this object target, Expression<Func<TTarget, TValue>> targetPropertySelector, TSource source, IAccessor<TValue> accessor, string propertyName)
         {
-            if (target == null) throw new ArgumentNullException(nameof(target));
             if (targetPropertySelector == null) throw new ArgumentNullException(nameof(targetPropertySelector));
-            if (source == null) throw new ArgumentNullException(nameof(source));
 
             var targetAccessor = Accessor.Member(targetPropertySelector);
-            return BindProperty(target, targetAccessor, source, propertyName, accessor, options);
+            return Bind(target, targetAccessor, targetAccessor.MemberInfo.Name, source, accessor, propertyName);
         }
 
-        /// <summary>
-        /// 绑定属性, <paramref name="target"/> 为 <see cref="INotifyValueChanged{T}"/>
-        /// </summary>
-        public static BindingBase BindProperty<TSource, TValue>(this object target, TSource source, string propertyName, IAccessor<TValue> accessor, BindingOptions options = null)
+
+        #endregion
+
+
+        #region Target INotifyValueChanged
+
+        private static IAccessor<TValue> GetTargetAccessorWithINotifyValueChanged<TValue>(object target)
         {
-            if (target == null) throw new ArgumentNullException(nameof(target));
-            if (source == null) throw new ArgumentNullException(nameof(source));
             var targetNotifyValue = target as INotifyValueChanged<TValue>;
             if (targetNotifyValue == null)
                 throw new ArgumentException("Not implemented INotifyValueChanged<T>", nameof(target));
 
             IAccessor<TValue> targetAccessor;
-            if (options != null)
-            {
-                if (options.SourceToTargetNotifyEnabled.HasValue && !options.SourceToTargetNotifyEnabled.Value)
-                    targetAccessor = INotifyValueChangedAccessor<TValue>.instanceWithoutNotify;
-                else
-                    targetAccessor = INotifyValueChangedAccessor<TValue>.instance;
-            }
-            else
-            {
-                targetAccessor = INotifyValueChangedAccessor<TValue>.instance;
-            }
 
-            var binding = new PropertyBinding<TValue>(target, targetAccessor, source, propertyName, accessor);
-            binding.ApplyOptions(options);
-            binding.TargetNotifyValueChangedEnabled = true;
-            binding.Bind();
-            return binding;
+            targetAccessor = INotifyValueChangedAccessor<TValue>.instanceWithoutNotify;
+
+            return targetAccessor;
         }
 
+
         /// <summary>
-        /// 绑定属性
+        /// <paramref name="target"/> 绑定到 <see cref="INotifyValueChanged{T}.value"/> 属性
         /// </summary>
-        public static BindingBase BindProperty<TSource, TValue>(this object target, TSource source, Expression<Func<TSource, TValue>> propertySelector, BindingOptions options = null)
+        public static BindingBase Bind<TValue>(this INotifyValueChanged<TValue> target, object source, string path)
         {
             if (target == null) throw new ArgumentNullException(nameof(target));
             if (source == null) throw new ArgumentNullException(nameof(source));
-            var member = BindingUtility.FindMember(propertySelector);
-            string propertyName = member.Name;
-            var accessor = Accessor.Member<TValue>(member);
-            return BindProperty(target, source, propertyName, accessor, options);
-        }
+            if (path == null) throw new ArgumentNullException(nameof(path));
 
+            var targetAccessor = GetTargetAccessorWithINotifyValueChanged<TValue>(target);
 
-        /// <summary>
-        /// 绑定静态属性
-        /// </summary>
-        public static BindingBase BindProperty<TValue>(this object target, IAccessor<TValue> targetAccessor, string propertyName, IAccessor<TValue> accessor, BindingOptions options = null)
-        {
-            if (target == null) throw new ArgumentNullException(nameof(target));
-            if (targetAccessor == null) throw new ArgumentNullException(nameof(targetAccessor));
-            if (propertyName == null) throw new ArgumentNullException(nameof(propertyName));
-            if (accessor == null) throw new ArgumentNullException(nameof(accessor));
-
-            var binding = new PropertyBinding<TValue>(target, targetAccessor, null, propertyName, accessor);
-            binding.ApplyOptions(options);
-            binding.Bind();
-
-            return binding;
-        }
-        /// <summary>
-        /// 绑定静态属性, <paramref name="target"/> 为 <see cref="INotifyValueChanged{T}"/>
-        /// </summary>
-        public static BindingBase BindProperty<TValue>(this object target, Expression<Func<TValue>> propertySelector, BindingOptions options = null)
-        {
-            if (target == null) throw new ArgumentNullException(nameof(target));
-            if (propertySelector == null) throw new ArgumentNullException(nameof(propertySelector));
-
-            var notify = target as INotifyValueChanged<TValue>;
-            if (notify == null)
-                throw new ArgumentException("Not implemented INotifyValueChanged<T>", nameof(target));
-            var member = BindingUtility.FindMember(propertySelector);
-            string propertyName = member.Name;
-            IAccessor<TValue> targetAccessor;
-            if (options != null)
-            {
-                if (options.SourceToTargetNotifyEnabled.HasValue && !options.SourceToTargetNotifyEnabled.Value)
-                    targetAccessor = INotifyValueChangedAccessor<TValue>.instanceWithoutNotify;
-                else
-                    targetAccessor = INotifyValueChangedAccessor<TValue>.instance;
-            }
-            else
-            {
-                targetAccessor = INotifyValueChangedAccessor<TValue>.instance;
-            }
-            var accessor = Accessor.Member<TValue>(member);
-
-            var binding = new PropertyBinding<TValue>(target, targetAccessor, null, propertyName, accessor);
-            binding.ApplyOptions(options);
+            Binding binding = new Binding(target, targetAccessor, source, path);
             binding.TargetNotifyValueChangedEnabled = true;
-            binding.Bind();
+
+            IBindable bindable = target as IBindable;
+            if (bindable != null)
+            {
+                bindable.binding = binding;
+            }
             return binding;
+        }
+
+        /// <summary>
+        /// <paramref name="target"/> 绑定到 <see cref="INotifyValueChanged{T}.value"/> 属性
+        /// </summary>
+        public static BindingBase Bind<TSource, TValue>(this INotifyValueChanged<TValue> target, TSource source, IAccessor<TValue> accessor, string propertyName)
+        {
+            if (target == null) throw new ArgumentNullException(nameof(target));
+            if (source == null) throw new ArgumentNullException(nameof(source));
+
+            var targetAccessor = GetTargetAccessorWithINotifyValueChanged<TValue>(target);
+
+            var binding = new PropertyBinding(target, targetAccessor, source, accessor);
+            binding.PropertyName = propertyName;
+            binding.TargetNotifyValueChangedEnabled = true;
+
+            IBindable bindable = target as IBindable;
+            if (bindable != null)
+            {
+                bindable.binding = binding;
+            }
+            return binding;
+        }
+
+        /// <summary>
+        /// <paramref name="target"/> 绑定到 <see cref="INotifyValueChanged{T}.value"/> 属性
+        /// </summary>
+        public static BindingBase Bind<TSource, TValue>(this INotifyValueChanged<TValue> target, TSource source, Expression<Func<TSource, TValue>> propertySelector)
+        {
+            if (propertySelector == null) throw new ArgumentNullException(nameof(propertySelector));
+            var member = BindingUtility.FindMember(propertySelector);
+            var accessor = Accessor.Member<TValue>(member);
+            return Bind(target, source, accessor, accessor.MemberInfo.Name);
         }
 
         #endregion
 
 
-        public static void BindAll(this VisualElement root)
+        public static void BindAll(this VisualElement root, object source = null)
         {
-            root.Query<BindableElement>().Build().ForEach(o =>
+            root.Query<BindableElement>().Build().ForEach(target =>
             {
-                if (o.binding != null)
+                if (target.binding != null)
                 {
-                    var binding = o.binding as BindingBase;
+                    var binding = target.binding as BindingBase;
                     if (binding != null && !binding.IsBinding)
                     {
                         binding.Bind();
+                    }
+                }
+                else if (!string.IsNullOrEmpty(target.bindingPath) && source != null)
+                {
+                    var type = FindGenericTypeDefinition(target.GetType(), typeof(INotifyValueChanged<>));
+                    if (type != null)
+                    {
+                        Type valueType = type.GenericTypeArguments[0];
+                        var method = typeof(Extensions).GetMethod(nameof(GetTargetAccessorWithINotifyValueChanged), BindingFlags.NonPublic | BindingFlags.Static);
+                        var targetAccessor = (IAccessor)method.MakeGenericMethod(valueType).Invoke(null, new object[] { target });
+
+                        var binding = new Binding(target, targetAccessor, source, target.bindingPath);
+                        binding.TargetNotifyValueChangedEnabled = true;
+                        binding.Bind();
+                        target.binding = binding;
                     }
                 }
             });

@@ -1,38 +1,31 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UIElements;
 using System;
 using System.ComponentModel;
 using System.Reflection;
 
 namespace Yanmonet.Bindings
 {
-    class PropertyBinding<TValue> : BindingBase
-    {
-        private string propertyName;
-        private IAccessor<TValue> accessor;
+    class PropertyBinding : BindingBase
+    { 
+        private IAccessor accessor;
 
-        public PropertyBinding(object target, IAccessor<TValue> targetAccessor, object source, string propertyName, IAccessor<TValue> accessor)
+        public PropertyBinding(object target, IAccessor targetAccessor, object source, IAccessor accessor )
             : base(target, targetAccessor)
         {
             this.Source = source;
-            this.propertyName = propertyName;
             this.accessor = accessor;
         }
 
-        /// <summary>
-        /// 绑定属性名称，监听属性值改变事件
-        /// </summary>
-        protected override string PropertyName { get => propertyName; }
 
-        protected virtual TValue GetSourceValue()
+
+        protected virtual object GetSourceValue()
         {
             var value = accessor.GetValue(Source);
             return value;
         }
 
-        protected virtual void SetSourceValue(TValue value)
+        protected virtual void SetSourceValue(object value)
         {
             accessor.SetValue(Source, value);
         }
@@ -48,7 +41,7 @@ namespace Yanmonet.Bindings
             {
                 if (Source != null)
                 {
-                    if (!SourceSupportNotify && Source is INotifyPropertyChanged)
+                    if (!SourceSupportNotify && Source is INotifyPropertyChanged && !string.IsNullOrEmpty(PropertyName))
                     {
                         ((INotifyPropertyChanged)Source).PropertyChanged += OnSourcePropertyChanged;
                         SourceSupportNotify = true;
@@ -72,9 +65,9 @@ namespace Yanmonet.Bindings
         public override void Unbind()
         {
 
-            if (SourceNotify != null)
+            if (SourceNotifyCallback != null)
             {
-                SourceNotify(OnSourcePropertyChanged, false);
+                SourceNotifyCallback(OnSourcePropertyChanged, false);
             }
             else if (Source != null)
             {
@@ -104,7 +97,7 @@ namespace Yanmonet.Bindings
             var value = GetTargetValue();
             if (!object.Equals(GetSourceValue(), value))
             {
-                SetSourceValue((TValue)value);
+                SetSourceValue(value);
             }
         }
 

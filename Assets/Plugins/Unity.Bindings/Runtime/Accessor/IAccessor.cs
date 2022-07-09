@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 namespace Yanmonet.Bindings
@@ -39,6 +40,11 @@ namespace Yanmonet.Bindings
         new TValue GetValue(object target);
 
         void SetValue(object target, TValue value);
+    }
+
+    public interface IMemberAccessor<TValue> : IAccessor<TValue>
+    {
+        MemberInfo MemberInfo { get; }
     }
 
 }

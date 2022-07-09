@@ -31,9 +31,9 @@ public class TestBindingTargetProperty : EditorWindow
         }));
 
         var label = new Label();
-        label.BindProperty<Label, TestData, string>(o => o.text, data, o => o.Value);
+        label.Bind<Label, TestData, string>(o => o.text, data, o => o.Value);
         rootVisualElement.Add(label);
-
+        rootVisualElement.BindAll();
     }
 
 

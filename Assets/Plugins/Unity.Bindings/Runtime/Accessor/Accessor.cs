@@ -107,20 +107,19 @@ namespace Yanmonet.Bindings
                 getter = Expression.Lambda(typeof(Func<,>).MakeGenericType(targetType, valueType), memberExpr, targetExpr)
                     .Compile();
 
-                accessor = (IAccessor)Activator.CreateInstance(typeof(Accessor<,>).MakeGenericType(targetType, valueType), getter, setter);
+                accessor = (IAccessor)Activator.CreateInstance(typeof(MemberAccessor<,>).MakeGenericType(targetType, valueType), propertyOrField, getter, setter);
                 cachedMemberAccessors[propertyOrField] = accessor;
             }
 
             return accessor;
         }
 
-        public static IAccessor<TValue> Member<TValue>(MemberInfo propertyOrField)
+        public static IMemberAccessor<TValue> Member<TValue>(MemberInfo propertyOrField)
         {
-
-            return (IAccessor<TValue>)Member(propertyOrField);
+            return (IMemberAccessor<TValue>)Member(propertyOrField);
         }
 
-        public static IAccessor<TValue> Member<TTarget, TValue>(Expression<Func<TTarget, TValue>> propertySelector)
+        public static IMemberAccessor<TValue> Member<TTarget, TValue>(Expression<Func<TTarget, TValue>> propertySelector)
         {
             MemberInfo member = BindingUtility.FindMember(propertySelector);
             if (member == null)
@@ -128,7 +127,7 @@ namespace Yanmonet.Bindings
             return Member<TValue>(member);
         }
 
-        public static IAccessor<TValue> Member<TValue>(Expression<Func<TValue>> propertySelector)
+        public static IMemberAccessor<TValue> Member<TValue>(Expression<Func<TValue>> propertySelector)
         {
             MemberInfo member = BindingUtility.FindMember(propertySelector);
             if (member == null)
@@ -210,4 +209,17 @@ namespace Yanmonet.Bindings
 
     }
 
+
+    public class MemberAccessor<TTarget, TValue> : Accessor<TTarget, TValue>, IMemberAccessor<TValue>
+    {
+        private MemberInfo memberInfo;
+
+        public MemberAccessor(MemberInfo memberInfo, Func<TTarget, TValue> getter, Action<TTarget, TValue> setter)
+            : base(getter, setter)
+        {
+            this.memberInfo = memberInfo;
+        }
+
+        public MemberInfo MemberInfo { get => memberInfo; }
+    }
 }
