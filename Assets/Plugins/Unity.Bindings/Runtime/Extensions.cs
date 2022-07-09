@@ -12,6 +12,7 @@ namespace Yanmonet.Bindings
 {
     public static class Extensions
     {
+        #region BindingBuilder
 
         public static BindingBuilder<TTarget, TSource> Bind<TTarget, TSource>(this TTarget target, TSource source)
         {
@@ -23,12 +24,15 @@ namespace Yanmonet.Bindings
             return new BindingBuilder<TTarget, object>(target, null);
         }
 
+
+        #endregion
+
         #region Binding Path
 
         /// <summary>
         /// 绑定属性路径
         /// </summary> 
-        public static BindingBase Bind(this object target, IAccessor targetAccessor, string targetPropertyName, object source, string path)
+        public static BindingBase Bind(this object target, IAccessor targetAccessor, string targetPropertyName, object source, string path, BindingMode mode = BindingMode.OneWay)
         {
             if (target == null) throw new ArgumentNullException(nameof(target));
             if (targetAccessor == null) throw new ArgumentNullException(nameof(targetAccessor));
@@ -36,6 +40,7 @@ namespace Yanmonet.Bindings
             if (path == null) throw new ArgumentNullException(nameof(path));
 
             Binding binding = new Binding(target, targetAccessor, source, path);
+            binding.Mode = mode;
             binding.TargetPropertyName = targetPropertyName;
 
             IBindable bindable = target as IBindable;
@@ -49,10 +54,10 @@ namespace Yanmonet.Bindings
         /// <summary>
         /// 绑定属性路径
         /// </summary>
-        public static BindingBase Bind<TTarget, TValue>(this object target, Expression<Func<TTarget, TValue>> targetPropertySelector, object source, string path)
+        public static BindingBase Bind<TTarget, TValue>(this object target, Expression<Func<TTarget, TValue>> targetPropertySelector, object source, string path, BindingMode mode = BindingMode.OneWay)
         {
             var targetAccessor = Accessor.Member(targetPropertySelector);
-            return Bind(target, targetAccessor, targetAccessor.MemberInfo.Name, source, path);
+            return Bind(target, targetAccessor, targetAccessor.MemberInfo.Name, source, path, mode);
         }
 
         #endregion
@@ -62,13 +67,14 @@ namespace Yanmonet.Bindings
         /// <summary>
         /// 绑定属性
         /// </summary>
-        public static BindingBase Bind<TSource, TValue>(this object target, IAccessor<TValue> targetAccessor, string targetPropertyName, TSource source, IAccessor<TValue> accessor, string propertyName)
+        public static BindingBase Bind<TSource, TValue>(this object target, IAccessor<TValue> targetAccessor, string targetPropertyName, TSource source, IAccessor<TValue> accessor, string propertyName, BindingMode mode = BindingMode.OneWay)
         {
             if (target == null) throw new ArgumentNullException(nameof(target));
             if (targetAccessor == null) throw new ArgumentNullException(nameof(targetAccessor));
             if (accessor == null) throw new ArgumentNullException(nameof(accessor));
 
             var binding = new PropertyBinding(target, targetAccessor, source, accessor);
+            binding.Mode = mode;
             binding.TargetPropertyName = targetPropertyName;
             binding.PropertyName = propertyName;
 
@@ -80,22 +86,22 @@ namespace Yanmonet.Bindings
             return binding;
         }
 
-        public static BindingBase Bind<TTarget, TSource, TValue>(this object target, Expression<Func<TTarget, TValue>> targetPropertySelector, TSource source, Expression<Func<TSource, TValue>> propertySelector)
+        public static BindingBase Bind<TTarget, TSource, TValue>(this object target, Expression<Func<TTarget, TValue>> targetPropertySelector, TSource source, Expression<Func<TSource, TValue>> propertySelector, BindingMode mode = BindingMode.OneWay)
         {
             if (targetPropertySelector == null) throw new ArgumentNullException(nameof(targetPropertySelector));
 
             var targetAccessor = Accessor.Member(targetPropertySelector);
             var member = BindingUtility.FindMember(propertySelector);
             var accessor = Accessor.Member<TValue>(member);
-            return Bind(target, targetAccessor, targetAccessor.MemberInfo.Name, source, accessor, accessor.MemberInfo.Name);
+            return Bind(target, targetAccessor, targetAccessor.MemberInfo.Name, source, accessor, accessor.MemberInfo.Name, mode);
         }
 
-        public static BindingBase Bind<TTarget, TSource, TValue>(this object target, Expression<Func<TTarget, TValue>> targetPropertySelector, TSource source, IAccessor<TValue> accessor, string propertyName)
+        public static BindingBase Bind<TTarget, TSource, TValue>(this object target, Expression<Func<TTarget, TValue>> targetPropertySelector, TSource source, IAccessor<TValue> accessor, string propertyName, BindingMode mode = BindingMode.OneWay)
         {
             if (targetPropertySelector == null) throw new ArgumentNullException(nameof(targetPropertySelector));
 
             var targetAccessor = Accessor.Member(targetPropertySelector);
-            return Bind(target, targetAccessor, targetAccessor.MemberInfo.Name, source, accessor, propertyName);
+            return Bind(target, targetAccessor, targetAccessor.MemberInfo.Name, source, accessor, propertyName, mode);
         }
 
 
@@ -121,7 +127,7 @@ namespace Yanmonet.Bindings
         /// <summary>
         /// <paramref name="target"/> 绑定到 <see cref="INotifyValueChanged{T}.value"/> 属性
         /// </summary>
-        public static BindingBase Bind<TValue>(this INotifyValueChanged<TValue> target, object source, string path)
+        public static BindingBase Bind<TValue>(this INotifyValueChanged<TValue> target, object source, string path, BindingMode mode = BindingMode.TwoWay)
         {
             if (target == null) throw new ArgumentNullException(nameof(target));
             if (source == null) throw new ArgumentNullException(nameof(source));
@@ -130,6 +136,7 @@ namespace Yanmonet.Bindings
             var targetAccessor = GetTargetAccessorWithINotifyValueChanged<TValue>(target);
 
             Binding binding = new Binding(target, targetAccessor, source, path);
+            binding.Mode = mode;
             binding.TargetNotifyValueChangedEnabled = true;
 
             IBindable bindable = target as IBindable;
@@ -143,7 +150,7 @@ namespace Yanmonet.Bindings
         /// <summary>
         /// <paramref name="target"/> 绑定到 <see cref="INotifyValueChanged{T}.value"/> 属性
         /// </summary>
-        public static BindingBase Bind<TSource, TValue>(this INotifyValueChanged<TValue> target, TSource source, IAccessor<TValue> accessor, string propertyName)
+        public static BindingBase Bind<TSource, TValue>(this INotifyValueChanged<TValue> target, TSource source, IAccessor<TValue> accessor, string propertyName, BindingMode mode = BindingMode.TwoWay)
         {
             if (target == null) throw new ArgumentNullException(nameof(target));
             if (source == null) throw new ArgumentNullException(nameof(source));
@@ -151,6 +158,7 @@ namespace Yanmonet.Bindings
             var targetAccessor = GetTargetAccessorWithINotifyValueChanged<TValue>(target);
 
             var binding = new PropertyBinding(target, targetAccessor, source, accessor);
+            binding.Mode = mode;
             binding.PropertyName = propertyName;
             binding.TargetNotifyValueChangedEnabled = true;
 
@@ -165,12 +173,12 @@ namespace Yanmonet.Bindings
         /// <summary>
         /// <paramref name="target"/> 绑定到 <see cref="INotifyValueChanged{T}.value"/> 属性
         /// </summary>
-        public static BindingBase Bind<TSource, TValue>(this INotifyValueChanged<TValue> target, TSource source, Expression<Func<TSource, TValue>> propertySelector)
+        public static BindingBase Bind<TSource, TValue>(this INotifyValueChanged<TValue> target, TSource source, Expression<Func<TSource, TValue>> propertySelector, BindingMode mode = BindingMode.TwoWay)
         {
             if (propertySelector == null) throw new ArgumentNullException(nameof(propertySelector));
             var member = BindingUtility.FindMember(propertySelector);
             var accessor = Accessor.Member<TValue>(member);
-            return Bind(target, source, accessor, accessor.MemberInfo.Name);
+            return Bind(target, source, accessor, accessor.MemberInfo.Name, mode);
         }
 
         #endregion

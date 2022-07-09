@@ -76,7 +76,7 @@ namespace Yanmonet.Bindings
         }
 
         public BindingBuilder<TTarget, TSource> From(string path)
-        { 
+        {
             this.path = path;
             accessor = null;
             propertyName = null;
@@ -85,7 +85,7 @@ namespace Yanmonet.Bindings
 
 
         public BindingBuilder<TTarget, TSource> From(IAccessor accessor)
-        { 
+        {
             path = null;
             this.accessor = accessor;
             return this;
@@ -138,7 +138,7 @@ namespace Yanmonet.Bindings
         public BindingBase Build()
         {
             var targetAccessor = this.targetAccessor;
-            bool targetNotifyValueChangedEnabled = false;
+            bool isINotifyValueChangedAccessor = false;
             if (targetAccessor == null)
             {
                 ///目标对象默认绑定属性
@@ -148,7 +148,7 @@ namespace Yanmonet.Bindings
                     targetAccessor = (IAccessor)GetType().GetMethod(nameof(GetINotifyValueChangedAccessor), BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                           .MakeGenericMethod(targetNotifyValueType.GetGenericArguments()[0])
                           .Invoke(this, null);
-                    targetNotifyValueChangedEnabled = true;
+                    isINotifyValueChangedAccessor = true;
                 }
                 else
                 {
@@ -174,10 +174,18 @@ namespace Yanmonet.Bindings
             }
 
             bindingBase.TargetPropertyName = targetPropertyName;
-            bindingBase.TargetNotifyValueChangedEnabled = targetNotifyValueChangedEnabled;
+            bindingBase.TargetNotifyValueChangedEnabled = isINotifyValueChangedAccessor;
 
             if (mode.HasValue)
+            {
                 bindingBase.Mode = mode.Value;
+            }
+            else
+            {
+                if (isINotifyValueChangedAccessor)
+                    bindingBase.Mode = BindingMode.TwoWay;
+            }
+
             if (targetNotifyCallback != null)
                 bindingBase.TargetNotifyCallback = targetNotifyCallback;
             if (sourceNotifyCallback != null)

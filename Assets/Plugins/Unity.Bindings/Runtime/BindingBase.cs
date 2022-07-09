@@ -53,7 +53,7 @@ namespace Yanmonet.Bindings
         public BindingMode Mode
         {
             get; set;
-        } = BindingMode.TwoWay;
+        } = BindingMode.OneWay;
 
         protected bool TargetSupportNotify { get; set; }
         protected bool SourceSupportNotify { get; set; }
