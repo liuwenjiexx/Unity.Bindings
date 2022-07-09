@@ -18,7 +18,7 @@
 
 ### INotifyValueChanged
 
-绑定到 `INotifyValueChanged.value` 属性，默认使用 `SetValueWithoutNotify` 设置值，不会触发 `RegisterValueChangedCallback`，通过开启 [EnableSourceToTargetNotify](#源到目标通知) 使用 `value` 设置值，默认为 `TwoWay` 模式
+绑定到 `INotifyValueChanged.value` 属性，默认使用 `SetValueWithoutNotify` 设置值，不会触发 `RegisterValueChangedCallback`，通过开启 [EnableSourceToTargetNotify](#源到目标通知) 使用 `value` 设置值，值传递默认为 `TwoWay` 模式
 
 ```c#
 BindingBase BindPath<TValue>(this INotifyValueChanged<TValue> target, object source, string path)
@@ -51,9 +51,7 @@ rootVisualElement.BindAll();
 
 **VisualElement**
 
-可以绑定实现了 `IBindable` 接口的 `VisualElement` 对象，同时实现  `INotifyValueChanged` 支持绑定 `value` 属性
-
-如：TextField，FloatField，IntegerField，EnumField 等， [支持 IBindable 默认绑定完整列表](https://docs.unity3d.com/Manual/UIE-Binding.html)
+可以绑定实现了 `IBindable` 接口的 `VisualElement` 对象，如：`TextField`，`FloatField`，`IntegerField`，`EnumField` 等， [支持 IBindable 默认绑定完整列表](https://docs.unity3d.com/Manual/UIE-Binding.html)
 
 ### IBindable.bindingPath
 
@@ -164,12 +162,6 @@ root.UnbindAll();
 所有子节点调用 `binding.Unbind` 方法
 
 ## 绑定生成器 
-
-```c#
-static BindingBuilder<TTarget, TSource> Bind<TTarget, TSource>(this TTarget target, TSource source)
-
-static BindingBuilder<TTarget, object> Bind<TTarget>(this TTarget target)
-```
 
 生成复杂的绑定，`Bind` 方法获取 `BindingBuilder` 生成器，最后调用 `Build` 生成绑定
 
@@ -296,7 +288,7 @@ static string StaticProperty
 //静态属性通知
 static event PropertyChangedEventHandler StaticPropertyChanged;
 
-//获取 BindingBuilder 绑定生成器
+//获取 BindingBuilder 绑定生成器, source为null
 textField.Bind()
     //设置绑定源属性
     .From(() => StaticProperty)
@@ -313,7 +305,7 @@ textField.Bind()
 
 
 //执行绑定
-root.BindAll();
+rootVisualElement.BindAll();
 ```
 
 
