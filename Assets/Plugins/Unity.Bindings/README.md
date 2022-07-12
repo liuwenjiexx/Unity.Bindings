@@ -5,6 +5,8 @@
 | 特性                   | 支持 |
 | ---------------------- | ---- |
 | 路径                   | ✔    |
+| 数组                   | ✔    |
+| 索引                   | ✔    |
 | 静态源属性             | ✔    |
 | 静态目标属性           |      |
 | 双向                   | ✔    |
@@ -12,13 +14,39 @@
 | INotifyValueChanged    | ✔    |
 | UIElements             | ✔    |
 
+## 快速使用
 
+1. 创建绑定集
 
-## 绑定
+```c#
+var bindingSet = new BindingSet<TestData>(data);
+```
+
+`TestData` 为 [样例数据](#样例数据)
+
+1. 设置 `bindingPath`
+
+```c#
+textField.bindingPath = "Value";
+```
+
+3. 调用 `CreateBinding` 根据 `bindingPath` 创建绑定 `binding` 对象
+
+```c#
+bindingSet.CreateBinding(rootVisualElement);
+```
+
+4. 调用 `Bind` 方法执行绑定
+
+```c#
+bindingSet.Bind();
+```
+
+## 绑定对象
 
 ### INotifyValueChanged
 
-绑定到 `INotifyValueChanged.value` 属性，默认使用 `SetValueWithoutNotify` 设置值，不会触发 `RegisterValueChangedCallback`，通过开启 [EnableSourceToTargetNotify](#源到目标通知) 使用 `value` 设置值，值传递默认为 `TwoWay` 模式
+默认绑定到 `INotifyValueChanged.value` 属性，默认使用 `SetValueWithoutNotify` 设置值，不会触发 `RegisterValueChangedCallback`，通过开启 [EnableSourceToTargetNotify](#源到目标通知) 使用 `value` 设置值，值传递默认为 `TwoWay` 模式
 
 ```c#
 BindingBase BindPath<TValue>(this INotifyValueChanged<TValue> target, object source, string path)
@@ -39,15 +67,15 @@ BindingBase BindPath<TValue>(this INotifyValueChanged<TValue> target, object sou
 **样例**
 
 ```c#
-textField.Bind(data, nameof(TestData.Value));
-textField.Bind(data, "Value");
-textField.Bind(data, "Data2.Value");
+var bindingSet = new BindingSet<TestData>(data);
+
+bindingSet.Bind(textField, nameof(TestData.Value));
+bindingSet.Bind(textField, "Value");
+bindingSet.Bind(textField, "Data2.Value");
 
 //绑定
-rootVisualElement.BindAll();
+bindingSet.Bind();
 ```
-
-`TestData` 为 [样例数据](#样例数据)
 
 **VisualElement**
 
@@ -56,65 +84,112 @@ rootVisualElement.BindAll();
 ### IBindable.bindingPath
 
 ```c#
-textField.bindingPath = nameof(TestData.Value);
+var bindingSet = new BindingSet<TestData>(data);
 
-//需要 source 源对象参数
-rootVisualElement.BindAll(data);
+textField.bindingPath = "Value";
+
+// bindingPath生成 binding 对象
+bindingSet.CreateBinding(rootVisualElement);
+
+//绑定
+bindingSet.Bind();
 ```
 
+源到目标值传递修改，`UXML bindingPath` 默认会通知 `RegisterValueChangedCallback`，该 `Bind` 默认使用 `SetValueWithoutNotify` 不会进行通知，以区分用户输入值
 
 
-### 目标属性
 
-```c#
-BindingBase Bind<TTarget, TValue>(this object target, Expression<Func<TTarget, TValue>> targetPropertySelector, object source, string path)
-```
+`CreateBinding` 根据 `bindingPath` 生成 `binding` 对象，条件如果  `binding` 为空且 `bindingPath` 不为空，则创建新的 `Binding`
 
-- **targetPropertySelector**
+如果要兼容 UXML 绑定 需要在 `Bind` 之前调用 `root.Bind(SerializedObject)`，让UXML先生成 `binding` 对象
 
-  目标属性选择器
+## 绑定属性
 
-**样例**
+### 选择器
 
 ```c#
-label.Bind<Label, string>(o => o.text, data, "Value");
-```
-
-
-
-### 源属性
-
-```c#
-BindingBase BindProperty<TSource, TValue>(this object target, TSource source, Expression<Func<TSource, TValue>> propertySelector)
-```
-
-- **propertySelector**
-
-  源属性选择器
-
-**样例**
-
-```c#
-textField.Bind(data, o => o.Value);
-```
-
-
-
-**同时指定目标和源属性**
-
-```c#
-BindingBase BindProperty<TTarget, TSource, TValue>(this object target, Expression<Func<TTarget, TValue>> targetPropertySelector, TSource source, Expression<Func<TSource, TValue>> propertySelector)
+Expression<Func<TTarget, TValue>> targetPropertySelector
+Expression<Func<TSource, TValue>> propertySelector
 ```
 
 **样例**
 
 ```c#
-label.BindProperty<Label, TestData, string>(o => o.text, data, o => o.Value);
+bindingSet.Bind(label, o => o.text, "Value");
+bindingSet.Bind(textField, o => o.Value);
+```
+
+
+### 访问器
+
+```c#
+IAccessor targetAccessor
+IAccessor accessor
+```
+
+**样例**
+
+`backgroundImage` 属性
+
+```c#
+bindingSet.Bind(icon, new Accessor<VisualElement, Texture2D>(
+    (o) => o.style.backgroundImage.value.texture,
+    (o, v) =>
+    {
+        o.style.backgroundImage = v;
+    }), nameof(Icon));
+```
+
+`enabledSelf` 属性
+
+```c#
+bindingSet.Bind(button, 
+   new Accessor<Button, bool>(
+       (t) => btn.enabledSelf, 
+       (t, v) => btn.SetEnabled(v)), 
+   nameof(Enabled));
+```
+
+### 索引
+
+支持数组 `T[]`，列表 `IList`，枚举器 `IEnumerable`
+
+```c#
+public TestData[] array = new TestData[] {
+    new TestData(){ Value = "abc" },
+    new TestData(){ Value = "123" }
+};
+
+textField.bindingPath = "array[0].Value";
+bindingSet.Bind(textField, "array[0].Value");
+```
+
+重新指定 `Source`
+
+```c#
+bindingSet.Build(textField, array).From("[0].Value");
+```
+
+**This 索引器**
+
+`this[int index]`，索引器类型支持：int， string
+
+```c#
+public TestData this[int index]
+{
+    get => array[index];
+    set => array[index] = value;
+}
+
+textField.bindingPath = "[0].Value";
+bindingSet.Build(textField, this).From("[0].Value");
 ```
 
 
 
-### 解绑
+## 解绑
+
+**BindingBase**
 
 ```c#
 //绑定
@@ -126,49 +201,29 @@ binding.Unbind();
 
 ` binding.IsBinding` 判断是否绑定
 
-**样例**
+**BindingSet** 
 
 ```c#
-var binding = textField.Bind<string>(data, "Value");
-binding.Unbind();
-
 //绑定
-binding.Bind();
+bindingSet.Bind();
+
+//解绑
+bindingSet.Unbind();
 ```
-
-
-
-### VisualElement
-
-**绑定**
-
-```c#
-root.BindAll();
-root.BindAll(source);
-```
-
-所有子节点调用 `binding.Bind` 方法
-
-如果  `binding` 为空且 `bindingPath` 不为空，则创建新的 `Binding`
-
-如果要兼容 UXML 绑定 需要在 `BindAll` 之前调用 `root.Bind(SerializedObject)`，将生成 `binding` 对象
-
-**解绑**
-
-```c#
-root.UnbindAll();
-```
-
-所有子节点调用 `binding.Unbind` 方法
 
 ## 绑定生成器 
 
 生成复杂的绑定，`Bind` 方法获取 `BindingBuilder` 生成器，最后调用 `Build` 生成绑定
 
+```c#
+bindingSet.Build(Target) //绑定 Source 的静态属性
+bindingSet.Build(Target, Source)
+```
+
 **样例**
 
 ```c#
-textField.Bind(data).From(o => o.Value).Build();
+bindingSet.Build(textField).From(o => o.Value);
 ```
 
 **模式**
@@ -180,7 +235,7 @@ textField.Bind(data).From(o => o.Value).Build();
   源到目标
 
   ```c#
-  label.Bind(data).From(o => o.Value).OneWay().Build();
+  bindingSet.Build(label).From(o => o.Value).OneWay();
   ```
 
 - **OneWayToSource**
@@ -188,7 +243,7 @@ textField.Bind(data).From(o => o.Value).Build();
   目标到源
 
   ```c#
-  textField.Bind(data).From(o => o.Value).OneWayToSource().Build();
+  bindingSet.Build(textField).From(o => o.Value).OneWayToSource();
   ```
 
 - **TwoWay**
@@ -196,7 +251,7 @@ textField.Bind(data).From(o => o.Value).Build();
   双向模式，源到目标和目标到源
 
 ```c#
-textField.Bind(data).From(o => o.Value).TwoWay().Build();
+bindingSet.Build(textField).From(o => o.Value).TwoWay();
 ```
 
 - **To**
@@ -251,7 +306,7 @@ textField.Bind(data).From(o => o.Value).TwoWay().Build();
   是否开启源到目标通知，`DisableSourceToTargetNotify` 为关闭
 
 ```c#
-textField.Bind(data).From(o => o.Value).EnableSourceToTargetNotify().Build();
+bindingSet.Build(textField).From(o => o.Value).EnableSourceToTargetNotify();
 ```
 
 - **TargetNotify**
@@ -289,28 +344,25 @@ static string StaticProperty
 static event PropertyChangedEventHandler StaticPropertyChanged;
 
 //获取 BindingBuilder 绑定生成器, source为null
-textField.Bind()
+bindingSet.Build(textField)
     //设置绑定源属性
     .From(() => StaticProperty)
     //定制源属性通知
     .SourceNotify((handler, b) =>
-                  {
-                      if (b)
-                          StaticPropertyChanged += handler;
-                      else
-                          StaticPropertyChanged -= handler;
-                  })
-    //生成 binding 对象
-    .Build();
+       {
+           if (b)
+               StaticPropertyChanged += handler;
+           else
+               StaticPropertyChanged -= handler;
+       });
 
-
-//执行绑定
-rootVisualElement.BindAll();
+//绑定
+bindingSet.Bind();
 ```
 
 
 
-## 定制访问器
+## 定制读写器
 
 **访问器接口**
 
@@ -324,16 +376,57 @@ public interface IAccessor
 }
 ```
 
-**Accessor 提供的访问器**
+**样例**
+
+Button.enabledSelf
+
+```c#
+bindingSet.Bind(btn, 
+   new Accessor<Button, bool>((t) => btn.enabledSelf, 
+                              (t, v) => btn.SetEnabled(v)), 
+   nameof(IsAvailable));
+```
+
+验证值
+
+```c#
+bindingSet.Build(textField).From((o) => MyDirectory, (o, value) =>
+	{
+        if (!value.StartsWith("Assets/", StringComparison.InvariantCultureIgnoreCase))
+        {
+            textField.SetValueWithoutNotify(MyDirectory);
+            return;
+        }
+        MyDirectory = value;
+    });
+```
+
+**Accessor 提供的读写器**
+
+- This
+
+```c#
+IAccessor This()
+```
+
+- This 索引器
+
+```c#
+IAccessor Indexer(Type type, object index)
+```
 
 - 属性或字段
 
 ```c#
 IAccessor Member(MemberInfo propertyOrField)
-IMemberAccessor<TValue> Member<TValue>(Expression<Func<TValue>> propertySelector)
 ```
 
-支持 `lambda` 属性选择器
+`lambda` 属性选择器
+
+```c#
+IMemberAccessor<TValue> Member<TTarget, TValue>(Expression<Func<TTarget, TValue>> propertySelector)
+IMemberAccessor<TValue> Member<TValue>(Expression<Func<TValue>> propertySelector)
+```
 
 - 数组 `T[]`
 
@@ -354,19 +447,6 @@ IAccessor Enumerable(int index)
 ```
 
 枚举器只支持获取，不能写入
-
-
-
-**样例**
-
-```c#
-textField.Bind(data)
-    .From(new Accessor<TestData, string>((o) => o.Value, (o, val) => o.Value = val))
-    .Property(nameof(TestData.Value))
-    .Build();
-```
-
-
 
 ## 样例数据
 

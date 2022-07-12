@@ -128,7 +128,7 @@ namespace Yanmonet.Bindings
             IsNullValue = false;
             IsFallbackValue = false;
 
-            if (binder.TryGetValue(out value))
+            if (binder.TryGetTargetValue(out value))
             {
                 if (value != null)
                 {
@@ -171,7 +171,7 @@ namespace Yanmonet.Bindings
             //if (converter != null)
             //    value = converter.ConvertBack(value, sourceBinder.GetValueType(), converterParameter);
 
-            if (binder.TrySetValue(value))
+            if (binder.TrySetTargetValue(value))
             {
                 //if (enabledSourceUpdated)
                 //{

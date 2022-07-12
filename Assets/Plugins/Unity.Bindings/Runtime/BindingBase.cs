@@ -32,7 +32,7 @@ namespace Yanmonet.Bindings
 
         public object Target => target;
 
-        protected IAccessor TargetAccessor => targetAccessor;
+        public IAccessor TargetAccessor => targetAccessor;
         /// <summary>
         /// 绑定属性名称，监听属性值改变事件
         /// </summary>

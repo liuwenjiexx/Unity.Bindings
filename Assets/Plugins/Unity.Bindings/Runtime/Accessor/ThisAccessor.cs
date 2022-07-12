@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Yanmonet.Bindings
 {
-    class SelfAccessor : IAccessor
+    class ThisAccessor : IAccessor
     {
         public bool CanGetValue(object target) => true;
 

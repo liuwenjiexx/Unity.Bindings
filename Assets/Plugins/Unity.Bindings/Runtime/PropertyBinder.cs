@@ -20,11 +20,12 @@ namespace Yanmonet.Bindings
         private AccessMemberType accessMemberType;
         private IAccessor accessor;
         private Type memberType;
+        private PropertyBinder prev;
         private PropertyBinder next;
         private PropertyBinder first;
         private PropertyBinder last;
         private bool isIndexer;
-        private int index;
+        private int? index;
         private Flags flags;
         private enum Flags
         {
@@ -46,10 +47,11 @@ namespace Yanmonet.Bindings
 
             this.memberName = memberName;
             this.isIndexer = isIndexer;
+
             if (isIndexer)
             {
-                if (!int.TryParse(memberName, out index))
-                    throw new ArgumentException("indexer memberName error:" + memberName);
+                if (int.TryParse(memberName, out var n))
+                    index = n;
             }
         }
 
@@ -84,31 +86,25 @@ namespace Yanmonet.Bindings
         {
             get
             {
-                //StringBuilder sb = new StringBuilder();
-                //MemberBinder current = this;
-                //while (current != null)
-                //{
-                //    if (isIndexer)
-                //    {
-                //        sb.Append('[').Append(memberName).Append(']');
-                //    }
-                //    else if (current.memberName != null)
-                //    {
-                //        if (sb.Length > 0)
-                //            sb.Append('.');
-                //        sb.Append(current.memberName);
-                //    }
-                //    current = current.next;
-                //}            
-                //return sb.ToString();
+                //if (isIndexer)
+                //    return "[" + memberName + "]";
+                //return memberName + (next != null ? "." + next.ToString() : "");
+                string str = "";
+                if (prev != null)
+                    str = prev.ToString();
                 if (isIndexer)
-                    return "[" + memberName + "]";
-                return memberName + (next != null ? "." + next.ToString() : "");
+                {
+                    str += "[" + memberName + "]";
+                }
+                else
+                {
+                    if (prev != null)
+                        str += ".";
+                    str += memberName;
+                }
+                return str;
             }
         }
-
-
-
 
         //public string MemberName { get => memberName; }
         /*       public bool AllowListenerChanged
@@ -168,7 +164,7 @@ namespace Yanmonet.Bindings
 
         private bool SetTarget(object value, Flags prevFlags = Flags.None)
         {
-            if (target == value)
+            if (object.Equals(target, value))
             {
                 return false;
             }
@@ -198,7 +194,7 @@ namespace Yanmonet.Bindings
                     {
                         accessMemberType = AccessMemberType.None;
                         memberType = targetType;
-                        accessor = new SelfAccessor();
+                        accessor = new ThisAccessor();
                         flags &= ~Flags.AllowListenerMember;
                     }
                     else if (!isIndexer)
@@ -228,33 +224,51 @@ namespace Yanmonet.Bindings
                     }
                     else
                     {
-                        if (targetType.IsArray)
+                        if (index.HasValue)
                         {
-                            accessMemberType = AccessMemberType.Collection;
-                            memberType = targetType.GetElementType();
-                            accessor = Accessor.Array(index);
-                        }
-                        else if (typeof(IList).IsAssignableFrom(targetType))
-                        {
-                            accessMemberType = AccessMemberType.Collection;
-                            if (targetType.IsGenericType)
-                                memberType = targetType.GetGenericArguments()[0];
+                            if (targetType.IsArray)
+                            {
+                                accessMemberType = AccessMemberType.Collection;
+                                memberType = targetType.GetElementType();
+                                accessor = Accessor.Array(index.Value);
+                            }
+                            else if (typeof(IList).IsAssignableFrom(targetType))
+                            {
+                                accessMemberType = AccessMemberType.Collection;
+                                if (targetType.IsGenericType)
+                                    memberType = targetType.GetGenericArguments()[0];
+                                else
+                                    memberType = typeof(object);
+                                accessor = Accessor.List(index.Value);
+                            }
                             else
-                                memberType = typeof(object);
-                            accessor = Accessor.List(index);
+                            {
+                                // this[int index]
+                                accessor = Accessor.Indexer(targetType, index.Value);
+                            }
+                             
+                            if (accessor == null)
+                            {
+                                if (typeof(IEnumerable).IsAssignableFrom(targetType))
+                                {
+                                    accessMemberType = AccessMemberType.Collection;
+                                    memberType = typeof(object);
+                                    accessor = Accessor.Enumerable(index.Value);
+                                }
+                                else if (typeof(IEnumerator).IsAssignableFrom(targetType))
+                                {
+                                    accessMemberType = AccessMemberType.Collection;
+                                    memberType = typeof(object);
+                                    accessor = Accessor.Enumerable(index.Value);
+                                }
+                            }
                         }
-                        else if (typeof(IEnumerable).IsAssignableFrom(targetType))
+                        else
                         {
-                            accessMemberType = AccessMemberType.Collection;
-                            memberType = typeof(object);
-                            accessor = Accessor.Enumerable(index);
+                            // this[string index]
+                            accessor = Accessor.Indexer(targetType, memberName);
                         }
-                        else if (typeof(IEnumerator).IsAssignableFrom(targetType))
-                        {
-                            accessMemberType = AccessMemberType.Collection;
-                            memberType = typeof(object);
-                            accessor = Accessor.Enumerable(index);
-                        }
+
                     }
 
                 }
@@ -467,7 +481,7 @@ namespace Yanmonet.Bindings
             return last.memberType;
         }
 
-        public bool TryGetValue(out object value)
+        public bool TryGetTargetValue(out object targetValue)
         {
             if (next != null)
             {
@@ -480,29 +494,37 @@ namespace Yanmonet.Bindings
                     }
                     else
                     {
-                        value = null;
+                        targetValue = null;
                         return false;
                     }
                 }
-                return next.TryGetValue(out value);
+                return next.TryGetTargetValue(out targetValue);
             }
-            return TryGetMemberValue(out value);
+            return TryGetMemberValue(out targetValue);
         }
 
 
-        public bool TrySetValue(object value)
+        public bool TrySetTargetValue(object targetValue)
         {
             if (next != null)
             {
-                //object nextTarget;
-                //if (!GetMemberValue(out nextTarget))
-                //    return false;
+                if ((flags & Flags.ListenerMember) == 0)
+                {
+                    object tmp;
+                    if (TryGetMemberValue(out tmp))
+                    {
+                        next.SetTarget(tmp);
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
 
-                //next.Target = nextTarget;
-                return next.TrySetValue(value);
+                return next.TrySetTargetValue(targetValue);
             }
 
-            return TrySetMemberValue(value);
+            return TrySetMemberValue(targetValue);
         }
 
 
@@ -548,6 +570,7 @@ namespace Yanmonet.Bindings
                     else
                     {
                         last.next = binder;
+                        binder.prev = last;
 
                     }
                     last = binder;
@@ -579,9 +602,7 @@ namespace Yanmonet.Bindings
 
         public override string ToString()
         {
-            if (isIndexer)
-                return "[" + memberName + "]";
-            return memberName + (next != null ? "." + next.ToString() : "");
+            return Path;
         }
 
 

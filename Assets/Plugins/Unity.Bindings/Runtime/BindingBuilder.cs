@@ -12,58 +12,68 @@ namespace Yanmonet.Bindings
     {
 
         private TTarget target;
-        private IAccessor targetAccessor;
-        private string targetPropertyName;
         private TSource source;
-        private IAccessor accessor;
-        private string path;
-        private string propertyName;
-
-        /// <summary>
-        /// 绑定模式
-        /// </summary>
-        private BindingMode? mode;
-
-        private BindingNotifyDelegate targetNotifyCallback;
-
-        private bool? TargetNotifyValueChangedEnabled;
-
-        /// <summary>
-        /// 源到目标是否触发事件，如：<see cref="ChangeEvent{T}"/>
-        /// </summary>
-        private bool? sourceToTargetNotifyEnabled;
-
-        private BindingNotifyDelegate sourceNotifyCallback;
-
-
-
+        
         public BindingBuilder(TTarget target, TSource source)
         {
             this.target = target;
             this.source = source;
         }
 
+        internal Action<BindingBase> Created { get; set; }
+
+        public TTarget Target => target;
+
+        public IAccessor TargetAccessor { get; set; }
+
+        private string targetPropertyName { get; set; }
+
+        public TSource Source => source;
+
+        public IAccessor Accessor { get; set; }
+
+        private string SourcePropertyName { get; set; }
+
+
+        public string Path { get; set; }
+
+        /// <summary>
+        /// 绑定模式
+        /// </summary>
+        public BindingMode? Mode { get; set; }
+
+        public BindingNotifyDelegate TargetNotifyCallback { get; set; }
+
+        public bool? TargetNotifyValueChangedEnabled { get; set; }
+
+        /// <summary>
+        /// 源到目标是否触发事件，如：<see cref="ChangeEvent{T}"/>
+        /// </summary>
+        public bool? SourceToTargetNotifyEnabled { get; set; }
+
+        public BindingNotifyDelegate SourceNotifyCallback { get; set; }
+
         public BindingBuilder<TTarget, TSource> OneWay()
         {
-            mode = BindingMode.OneWay;
+            Mode = BindingMode.OneWay;
             return this;
         }
 
         public BindingBuilder<TTarget, TSource> OneWayToSource()
         {
-            mode = BindingMode.OneWayToSource;
+            Mode = BindingMode.OneWayToSource;
             return this;
         }
 
         public BindingBuilder<TTarget, TSource> TwoWay()
         {
-            mode = BindingMode.TwoWay;
+            Mode = BindingMode.TwoWay;
             return this;
         }
 
         public BindingBuilder<TTarget, TSource> To(IAccessor targetAccessor)
         {
-            this.targetAccessor = targetAccessor;
+            this.TargetAccessor = targetAccessor;
             return this;
         }
 
@@ -71,40 +81,51 @@ namespace Yanmonet.Bindings
         {
             var member = BindingUtility.FindMember(targetPropertySelector);
             targetPropertyName = member.Name;
-            targetAccessor = Accessor.Member(member);
+            TargetAccessor = Bindings.Accessor.Member(member);
             return this;
+        }
+
+        public BindingBuilder<TTarget, TSource> To<TValue>(Func<TTarget, TValue> getter, Action<TTarget, TValue> setter)
+        {
+            return To(new Accessor<TTarget, TValue>(getter, setter));
         }
 
         public BindingBuilder<TTarget, TSource> From(string path)
         {
-            this.path = path;
-            accessor = null;
-            propertyName = null;
+            this.Path = path;
+            Accessor = null;
+            SourcePropertyName = null;
             return this;
         }
 
 
         public BindingBuilder<TTarget, TSource> From(IAccessor accessor)
         {
-            path = null;
-            this.accessor = accessor;
+            Path = null;
+            this.Accessor = accessor;
             return this;
         }
 
         public BindingBuilder<TTarget, TSource> From<TValue>(Expression<Func<TSource, TValue>> propertySelector)
         {
             var member = BindingUtility.FindMember(propertySelector);
-            propertyName = member.Name;
-            accessor = Accessor.Member(member);
-            return From(accessor);
+            SourcePropertyName = member.Name;
+            Accessor = Bindings.Accessor.Member(member);
+            return From(Accessor);
         }
         public BindingBuilder<TTarget, TSource> From<TValue>(Expression<Func<TValue>> propertySelector)
         {
             var member = BindingUtility.FindMember(propertySelector);
-            propertyName = member.Name;
-            accessor = Accessor.Member(member);
-            return From(accessor);
+            SourcePropertyName = member.Name;
+            Accessor = Bindings.Accessor.Member(member);
+            return From(Accessor);
         }
+
+        public BindingBuilder<TTarget, TSource> From<TValue>(Func<TTarget, TValue> getter, Action<TTarget, TValue> setter)
+        {
+            return From(new Accessor<TTarget, TValue>(getter, setter));
+        }
+
         public BindingBuilder<TTarget, TSource> TargetPropertyName(string targetPropertyName)
         {
             this.targetPropertyName = targetPropertyName;
@@ -112,37 +133,37 @@ namespace Yanmonet.Bindings
         }
         public BindingBuilder<TTarget, TSource> PropertyName(string propertyName)
         {
-            this.propertyName = propertyName;
+            this.SourcePropertyName = propertyName;
             return this;
         }
 
         public BindingBuilder<TTarget, TSource> EnableSourceToTargetNotify()
         {
-            sourceToTargetNotifyEnabled = true;
+            SourceToTargetNotifyEnabled = true;
             return this;
         }
 
         public BindingBuilder<TTarget, TSource> DisableSourceToTargetNotify()
         {
-            sourceToTargetNotifyEnabled = false;
+            SourceToTargetNotifyEnabled = false;
             return this;
         }
 
         public BindingBuilder<TTarget, TSource> TargetNotify(BindingNotifyDelegate targetNotifyCallback)
         {
-            this.targetNotifyCallback = targetNotifyCallback;
+            this.TargetNotifyCallback = targetNotifyCallback;
             return this;
         }
         public BindingBuilder<TTarget, TSource> SourceNotify(BindingNotifyDelegate sourceNotifyCallback)
         {
-            this.sourceNotifyCallback = sourceNotifyCallback;
+            this.SourceNotifyCallback = sourceNotifyCallback;
             return this;
         }
 
         public BindingBase Build()
         {
-            var targetAccessor = this.targetAccessor;
-            bool isINotifyValueChangedAccessor = false;
+            var targetAccessor = this.TargetAccessor;
+            bool isTargetINotifyValueChangedAccessor = false;
             if (targetAccessor == null)
             {
                 ///目标对象默认绑定属性
@@ -152,24 +173,31 @@ namespace Yanmonet.Bindings
                     targetAccessor = (IAccessor)GetType().GetMethod(nameof(GetINotifyValueChangedAccessor), BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                           .MakeGenericMethod(targetNotifyValueType.GetGenericArguments()[0])
                           .Invoke(this, null);
-                    isINotifyValueChangedAccessor = true;
+                    isTargetINotifyValueChangedAccessor = true;
                 }
                 else
                 {
                     throw new ArgumentException("Not implemented INotifyValueChanged<T>", nameof(target));
                 }
             }
+            else
+            { 
+                if (targetAccessor is INotifyValueChangedAccessor)
+                {
+                    isTargetINotifyValueChangedAccessor = true;
+                }
+            }
 
             BindingBase bindingBase;
-            if (!string.IsNullOrEmpty(path))
+            if (!string.IsNullOrEmpty(Path))
             {
-                Binding binding = new Binding(target, targetAccessor, source, path);
+                Binding binding = new Binding(target, targetAccessor, source, Path);
                 bindingBase = binding;
             }
-            else if (accessor != null)
+            else if (Accessor != null)
             {
-                PropertyBinding binding = new PropertyBinding(target, targetAccessor, source, accessor);
-                binding.PropertyName = propertyName;
+                PropertyBinding binding = new PropertyBinding(target, targetAccessor, source, Accessor);
+                binding.PropertyName = SourcePropertyName;
                 bindingBase = binding;
             }
             else
@@ -178,37 +206,43 @@ namespace Yanmonet.Bindings
             }
 
             bindingBase.TargetPropertyName = targetPropertyName;
-            bindingBase.TargetNotifyValueChangedEnabled = isINotifyValueChangedAccessor;
+            bindingBase.TargetNotifyValueChangedEnabled = isTargetINotifyValueChangedAccessor;
 
-            if (mode.HasValue)
+            if (Mode.HasValue)
             {
-                bindingBase.Mode = mode.Value;
+                bindingBase.Mode = Mode.Value;
             }
             else
             {
-                if (isINotifyValueChangedAccessor)
+                if (isTargetINotifyValueChangedAccessor)
                     bindingBase.Mode = BindingMode.TwoWay;
             }
 
-            if (targetNotifyCallback != null)
-                bindingBase.TargetNotifyCallback = targetNotifyCallback;
-            if (sourceNotifyCallback != null)
-                bindingBase.SourceNotifyCallback = sourceNotifyCallback;
+            if (TargetNotifyCallback != null)
+                bindingBase.TargetNotifyCallback = TargetNotifyCallback;
+            if (SourceNotifyCallback != null)
+                bindingBase.SourceNotifyCallback = SourceNotifyCallback;
             if (TargetNotifyValueChangedEnabled.HasValue)
                 bindingBase.TargetNotifyValueChangedEnabled = TargetNotifyValueChangedEnabled.Value;
 
-            IBindable bindable = target as IBindable;
-            if (bindable != null)
+            if (targetAccessor != null && targetAccessor is INotifyValueChangedAccessor)
             {
-                bindable.binding = bindingBase;
+                IBindable bindable = target as IBindable;
+                if (bindable != null)
+                {
+                    bindable.binding = bindingBase;
+                }
             }
+
+            Created?.Invoke(bindingBase);
+
             return bindingBase;
         }
 
         INotifyValueChangedAccessor<TValue> GetINotifyValueChangedAccessor<TValue>()
         {
             INotifyValueChangedAccessor<TValue> accessor;
-            if (sourceToTargetNotifyEnabled.HasValue && sourceToTargetNotifyEnabled.Value)
+            if (SourceToTargetNotifyEnabled.HasValue && SourceToTargetNotifyEnabled.Value)
                 accessor = INotifyValueChangedAccessor<TValue>.instance;
             else
                 accessor = INotifyValueChangedAccessor<TValue>.instanceWithoutNotify;

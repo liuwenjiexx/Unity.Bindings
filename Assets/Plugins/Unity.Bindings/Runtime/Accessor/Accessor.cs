@@ -15,7 +15,8 @@ namespace Yanmonet.Bindings
         private Action<object, object> setter;
 
         private static Dictionary<MemberInfo, IAccessor> cachedMemberAccessors;
-        static SelfAccessor selfAccessor;
+        private static Dictionary<(Type, Type), IAccessor> cachedIndexerAccessors;
+        static ThisAccessor selfAccessor;
 
         public Accessor(Func<object, object> getter, Action<object, object> setter)
         {
@@ -95,6 +96,9 @@ namespace Yanmonet.Bindings
 
                 Delegate getter = null, setter = null;
 
+                getter = Expression.Lambda(typeof(Func<,>).MakeGenericType(targetType, valueType), memberExpr, targetExpr)
+                    .Compile();
+
                 if (canWrite)
                 {
 
@@ -103,9 +107,6 @@ namespace Yanmonet.Bindings
                     setter = Expression.Lambda(typeof(Action<,>).MakeGenericType(targetType, valueType), setterBody, targetExpr, valueExpr)
                         .Compile();
                 }
-
-                getter = Expression.Lambda(typeof(Func<,>).MakeGenericType(targetType, valueType), memberExpr, targetExpr)
-                    .Compile();
 
                 accessor = (IAccessor)Activator.CreateInstance(typeof(MemberAccessor<,>).MakeGenericType(targetType, valueType), propertyOrField, getter, setter);
                 cachedMemberAccessors[propertyOrField] = accessor;
@@ -150,10 +151,52 @@ namespace Yanmonet.Bindings
             return new EnumerableAccessor(index);
         }
 
-        public static IAccessor Self()
+
+        public static IAccessor Indexer(Type type, object index)
+        {
+            if (type == null) throw new ArgumentNullException(nameof(type));
+            if (index == null) throw new ArgumentNullException(nameof(index));
+
+            Type indexType = index.GetType();
+
+            if (cachedIndexerAccessors == null)
+                cachedIndexerAccessors = new Dictionary<(Type, Type), IAccessor>();
+
+            if (!cachedIndexerAccessors.TryGetValue((type, indexType), out var accessor))
+            {
+                PropertyInfo property = null;
+                foreach (var pInfo in type.GetProperties())
+                {
+                    var indexPrams = pInfo.GetIndexParameters();
+                    if (indexPrams.Length == 1)
+                    {
+                        if (indexPrams[0].ParameterType.IsAssignableFrom(indexType))
+                        {
+                            property = pInfo;
+                            break;
+                        }
+                    }
+                }
+
+                if (property != null)
+                {
+                    var indexParameters = property.GetIndexParameters();
+                    if (indexParameters.Length == 0)
+                        throw new ArgumentException("Index Parameters 0");
+                    indexType = indexParameters[0].ParameterType;
+                    var valueType = property.PropertyType;
+                    accessor = (IAccessor)Activator.CreateInstance(typeof(IndexerAccessor<,,>).MakeGenericType(property.DeclaringType, indexType, valueType), property);
+                }
+
+                cachedIndexerAccessors[(type, indexType)] = accessor;
+            }
+            return accessor;
+        }
+
+        public static IAccessor This()
         {
             if (selfAccessor == null)
-                selfAccessor = new SelfAccessor();
+                selfAccessor = new ThisAccessor();
             return selfAccessor;
         }
     }

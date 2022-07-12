@@ -5,7 +5,10 @@ using UnityEngine.UIElements;
 
 namespace Yanmonet.Bindings
 {
-    class INotifyValueChangedAccessor<TValue> : IAccessor<TValue>
+
+    interface INotifyValueChangedAccessor : IAccessor { }
+
+    class INotifyValueChangedAccessor<TValue> : IAccessor<TValue>, INotifyValueChangedAccessor
     {
 
         private bool withoutNotify;
