@@ -24,7 +24,7 @@ var bindingSet = new BindingSet<TestData>(data);
 
 `TestData` 为 [样例数据](#样例数据)
 
-1. 设置 `bindingPath`
+2. 设置 `bindingPath`
 
 ```c#
 textField.bindingPath = "Value";
