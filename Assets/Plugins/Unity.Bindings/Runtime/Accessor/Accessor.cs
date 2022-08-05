@@ -1,10 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace Yanmonet.Bindings
 {
@@ -12,13 +10,24 @@ namespace Yanmonet.Bindings
     public class Accessor : IAccessor
     {
         private Func<object, object> getter;
-        private Action<object, object> setter;
+        private Func<object, object, object> setter;
+
+
 
         private static Dictionary<MemberInfo, IAccessor> cachedMemberAccessors;
         private static Dictionary<(Type, Type), IAccessor> cachedIndexerAccessors;
         static ThisAccessor selfAccessor;
 
         public Accessor(Func<object, object> getter, Action<object, object> setter)
+        {
+            this.getter = getter;
+            this.setter = (o, v) =>
+             {
+                 setter(o, v);
+                 return o;
+             };
+        }
+        public Accessor(Func<object, object> getter, Func<object, object, object> setter)
         {
             this.getter = getter;
             this.setter = setter;
@@ -37,11 +46,13 @@ namespace Yanmonet.Bindings
         }
 
 
-        public virtual void SetValue(object target, object value)
+        public virtual object SetValue(object target, object value)
         {
-            if (setter == null)
-                throw new AccessViolationException();
-            setter(target, value);
+            if (setter != null)
+            {
+                return setter(target, value);
+            }
+            throw new AccessViolationException();
         }
 
 
@@ -53,7 +64,34 @@ namespace Yanmonet.Bindings
                 throw new ArgumentNullException(nameof(propertyOrField));
 
             if (cachedMemberAccessors == null)
+            {
                 cachedMemberAccessors = new Dictionary<MemberInfo, IAccessor>();
+
+                Type memberAccessorTypeDefine = typeof(MemberAccessor<,>);
+
+                foreach (var type in typeof(IAccessor).Assembly.ReferencedAssemblies().SelectMany(o => o.GetTypes()))
+                {
+                    if (type.IsAbstract || !type.IsClass)
+                        continue;
+                    if (!typeof(IAccessor).IsAssignableFrom(type))
+                        continue;
+                    if (type == memberAccessorTypeDefine)
+                        continue;
+                    var memberAccessorType = type.FindGenericTypeDefinition(memberAccessorTypeDefine);
+
+                    if (memberAccessorType != null)
+                    {
+                        var memberAccessor = Activator.CreateInstance(type) as IAccessor;
+                        if (memberAccessor != null)
+                        {
+                            var memberInfoProp = type.GetProperty("MemberInfo");
+                            var memberInfo = (MemberInfo)memberInfoProp.GetValue(memberAccessor);
+                            cachedMemberAccessors[memberInfo] = memberAccessor;
+                        }
+                    }
+                }
+
+            }
 
             if (!cachedMemberAccessors.TryGetValue(propertyOrField, out accessor))
             {
@@ -69,7 +107,7 @@ namespace Yanmonet.Bindings
                     targetType = pInfo.DeclaringType;
                     valueType = pInfo.PropertyType;
                     targetExpr = Expression.Parameter(targetType);
-                    if (pInfo.GetGetMethod().IsStatic)
+                    if (pInfo.GetMethod.IsStatic)
                         memberExpr = Expression.Property(null, pInfo);
                     else
                         memberExpr = Expression.Property(targetExpr, pInfo);
@@ -104,7 +142,8 @@ namespace Yanmonet.Bindings
 
                     var valueExpr = Expression.Parameter(valueType);
                     var setterBody = Expression.Assign(memberExpr, valueExpr);
-                    setter = Expression.Lambda(typeof(Action<,>).MakeGenericType(targetType, valueType), setterBody, targetExpr, valueExpr)
+                    //var retExpr = memberExpr;
+                    setter = Expression.Lambda(typeof(Func<,,>).MakeGenericType(targetType, valueType, targetType), Expression.Block(setterBody, targetExpr), targetExpr, valueExpr)
                         .Compile();
                 }
 
@@ -122,7 +161,7 @@ namespace Yanmonet.Bindings
 
         public static IMemberAccessor<TValue> Member<TTarget, TValue>(Expression<Func<TTarget, TValue>> propertySelector)
         {
-            MemberInfo member = BindingUtility.FindMember(propertySelector);
+            MemberInfo member = BindingUtility.GetMember(propertySelector);
             if (member == null)
                 throw new ArgumentException(nameof(propertySelector));
             return Member<TValue>(member);
@@ -130,7 +169,7 @@ namespace Yanmonet.Bindings
 
         public static IMemberAccessor<TValue> Member<TValue>(Expression<Func<TValue>> propertySelector)
         {
-            MemberInfo member = BindingUtility.FindMember(propertySelector);
+            MemberInfo member = BindingUtility.GetMember(propertySelector);
             if (member == null)
                 throw new ArgumentException(nameof(propertySelector));
             return Member<TValue>(member);
@@ -199,15 +238,25 @@ namespace Yanmonet.Bindings
                 selfAccessor = new ThisAccessor();
             return selfAccessor;
         }
+
     }
 
 
     public class Accessor<TTarget, TValue> : IAccessor<TValue>
     {
         private Func<TTarget, TValue> getter;
-        private Action<TTarget, TValue> setter;
+        private Func<TTarget, TValue, TTarget> setter;
 
         public Accessor(Func<TTarget, TValue> getter, Action<TTarget, TValue> setter)
+        {
+            this.getter = getter;
+            this.setter = (o, v) =>
+            {
+                setter(o, v);
+                return o;
+            };
+        }
+        public Accessor(Func<TTarget, TValue> getter, Func<TTarget, TValue, TTarget> setter)
         {
             this.getter = getter;
             this.setter = setter;
@@ -236,33 +285,22 @@ namespace Yanmonet.Bindings
             return getter((TTarget)target);
         }
 
-        public void SetValue(object target, TValue value)
+        public object SetValue(object target, TValue value)
         {
-            if (setter == null)
-                throw new MemberAccessException();
-            setter((TTarget)target, value);
+            if (setter != null)
+            {
+                return setter((TTarget)target, value);
+            }
+            throw new MemberAccessException();
         }
 
-        public void SetValue(object target, object value)
+        public object SetValue(object target, object value)
         {
-            if (setter == null)
-                throw new MemberAccessException();
-            SetValue((TTarget)target, (TValue)value);
+            return SetValue((TTarget)target, (TValue)value);
         }
+
 
     }
 
 
-    public class MemberAccessor<TTarget, TValue> : Accessor<TTarget, TValue>, IMemberAccessor<TValue>
-    {
-        private MemberInfo memberInfo;
-
-        public MemberAccessor(MemberInfo memberInfo, Func<TTarget, TValue> getter, Action<TTarget, TValue> setter)
-            : base(getter, setter)
-        {
-            this.memberInfo = memberInfo;
-        }
-
-        public MemberInfo MemberInfo { get => memberInfo; }
-    }
 }

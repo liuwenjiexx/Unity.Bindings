@@ -79,7 +79,7 @@ namespace Yanmonet.Bindings
         }
 
 
-        protected override void UpdateSourceToTarget()
+        public override void UpdateSourceToTarget()
         {
             if (!accessor.CanGetValue(Source) || !TargetAccessor.CanSetValue(Target))
                 return;
@@ -90,7 +90,7 @@ namespace Yanmonet.Bindings
             }
         }
 
-        protected override void UpdateTargetToSource()
+        public override void UpdateTargetToSource()
         {
             if (!accessor.CanSetValue(Source) || !TargetAccessor.CanGetValue(Target))
                 return;

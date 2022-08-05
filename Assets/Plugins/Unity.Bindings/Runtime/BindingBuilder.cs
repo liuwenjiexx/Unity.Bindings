@@ -79,7 +79,7 @@ namespace Yanmonet.Bindings
 
         public BindingBuilder<TTarget, TSource> To<TValue>(Expression<Func<TTarget, TValue>> targetPropertySelector)
         {
-            var member = BindingUtility.FindMember(targetPropertySelector);
+            var member = BindingUtility.GetMember(targetPropertySelector);
             targetPropertyName = member.Name;
             TargetAccessor = Bindings.Accessor.Member(member);
             return this;
@@ -108,14 +108,14 @@ namespace Yanmonet.Bindings
 
         public BindingBuilder<TTarget, TSource> From<TValue>(Expression<Func<TSource, TValue>> propertySelector)
         {
-            var member = BindingUtility.FindMember(propertySelector);
+            var member = BindingUtility.GetMember(propertySelector);
             SourcePropertyName = member.Name;
             Accessor = Bindings.Accessor.Member(member);
             return From(Accessor);
         }
         public BindingBuilder<TTarget, TSource> From<TValue>(Expression<Func<TValue>> propertySelector)
         {
-            var member = BindingUtility.FindMember(propertySelector);
+            var member = BindingUtility.GetMember(propertySelector);
             SourcePropertyName = member.Name;
             Accessor = Bindings.Accessor.Member(member);
             return From(Accessor);

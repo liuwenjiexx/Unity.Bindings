@@ -30,10 +30,14 @@ public class TestBindingTargetProperty : EditorWindow
             data.Value = EditorGUILayout.TextField("Value", data.Value);
         }));
 
+        BindingSet<TestData> bindingSet = new BindingSet<TestData>(data);
+
         var label = new Label();
-        label.Bind<Label, TestData, string>(o => o.text, data, o => o.Value);
+        bindingSet.Bind<Label, string>(label, o => o.text,  o => o.Value);
+ 
         rootVisualElement.Add(label);
-        rootVisualElement.BindAll();
+        
+        bindingSet.Bind();
     }
 
 

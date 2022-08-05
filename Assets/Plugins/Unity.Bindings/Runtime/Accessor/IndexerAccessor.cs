@@ -58,11 +58,12 @@ namespace Yanmonet.Bindings
             return getter((TTarget)target, index);
         }
 
-        public void SetValue(object target, object value)
+        public object SetValue(object target, object value)
         {
             if (setter == null)
                 throw new MemberAccessException();
             setter((TTarget)target, index, (TValue)value);
+            return target;
         }
     }
 }

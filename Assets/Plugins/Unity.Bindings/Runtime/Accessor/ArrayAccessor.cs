@@ -42,15 +42,17 @@ namespace Yanmonet.Bindings
             throw new AccessViolationException();
         }
 
-        public void SetValue(object target, object value)
+        public object SetValue(object target, object value)
         {
             Array array = (Array)target;
             if (array != null && index >= 0 && index < array.Length)
             {
                 array.SetValue(value, index);
+                return target;
             }
             throw new AccessViolationException();
         }
+         
     }
 
 }

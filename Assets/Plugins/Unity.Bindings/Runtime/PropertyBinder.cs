@@ -246,7 +246,7 @@ namespace Yanmonet.Bindings
                                 // this[int index]
                                 accessor = Accessor.Indexer(targetType, index.Value);
                             }
-                             
+
                             if (accessor == null)
                             {
                                 if (typeof(IEnumerable).IsAssignableFrom(targetType))
@@ -453,7 +453,11 @@ namespace Yanmonet.Bindings
             {
                 if (accessor.CanSetValue(target))
                 {
-                    accessor.SetValue(target, value);
+                    var newTarget = accessor.SetValue(target, value);
+                    if (targetType.IsValueType)
+                    {
+                        Target = newTarget;
+                    }
                     return true;
                 }
             }
@@ -521,7 +525,20 @@ namespace Yanmonet.Bindings
                     }
                 }
 
-                return next.TrySetTargetValue(targetValue);
+                if (next.TrySetTargetValue(targetValue))
+                {
+                    // Value type: struct
+                    if (next.targetType != null && next.targetType.IsValueType)
+                    {
+                        TrySetMemberValue(next.Target);
+                    }
+                     
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
 
             return TrySetMemberValue(targetValue);

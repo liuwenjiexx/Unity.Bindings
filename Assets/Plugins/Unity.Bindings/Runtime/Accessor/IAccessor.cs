@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -25,11 +26,12 @@ namespace Yanmonet.Bindings
         /// 获取值
         /// </summary>
         object GetValue(object target);
-
         /// <summary>
         /// 设置值
         /// </summary>
-        void SetValue(object target, object value);
+        /// <returns>return struct</returns>
+        object SetValue(object target, object value);
+         
     }
 
     /// <summary>
@@ -39,12 +41,10 @@ namespace Yanmonet.Bindings
     {
         new TValue GetValue(object target);
 
-        void SetValue(object target, TValue value);
+        object SetValue(object target, TValue value);
+
     }
 
-    public interface IMemberAccessor<TValue> : IAccessor<TValue>
-    {
-        MemberInfo MemberInfo { get; }
-    }
+
 
 }

@@ -7,7 +7,7 @@ public class TestBindingPath : EditorWindow
 {
 
     TextField fldBindingPath;
-    bool isBind;
+    BindingSet<TestData> bindingSet;
 
     TestData data = new TestData()
     {
@@ -42,8 +42,7 @@ public class TestBindingPath : EditorWindow
 
             using (new GUILayout.HorizontalScope())
             {
-
-                if (isBind)
+                if (bindingSet.IsBinding)
                 {
                     if (GUILayout.Button("Unbind"))
                     {
@@ -60,10 +59,11 @@ public class TestBindingPath : EditorWindow
             }
         }));
 
+        bindingSet = new BindingSet<TestData>(data);
 
         fldBindingPath = new TextField();
-        fldBindingPath.label = "Path";
-        fldBindingPath.Bind(data, nameof(TestData.Value));
+        fldBindingPath.label = "Value";
+        bindingSet.Bind(fldBindingPath, nameof(TestData.Value));
         fldBindingPath.RegisterValueChangedCallback(e =>
         {
             Debug.Log($"Path [Value] changed: {e.newValue}");
@@ -73,7 +73,7 @@ public class TestBindingPath : EditorWindow
 
 
         fldBindingPath = new TextField();
-        fldBindingPath.label = "bindingPath";
+        fldBindingPath.label = "bindingPath Value";
         fldBindingPath.bindingPath = nameof(TestData.Value);
         fldBindingPath.RegisterValueChangedCallback(e =>
         {
@@ -84,13 +84,21 @@ public class TestBindingPath : EditorWindow
 
         var fld = new TextField();
         fld.label = "Data2.Value";
-        fld.Bind<string>(data, "Data2.Value");
+        bindingSet.Bind(fld, "Data2.Value");
         fld.RegisterValueChangedCallback(e =>
         {
             Debug.Log($"bindingPath [Data2.Value] changed: {e.newValue}");
         });
         rootVisualElement.Add(fld);
 
+        fld = new TextField();
+        fld.label = "bindingPath Data2.Value";
+        fld.bindingPath = "Data2.Value";
+        fld.RegisterValueChangedCallback(e =>
+        {
+            Debug.Log($"bindingPath [Data2.Value] changed: {e.newValue}");
+        });
+        rootVisualElement.Add(fld);
 
         VisualElement h;
         h = new VisualElement();
@@ -98,13 +106,13 @@ public class TestBindingPath : EditorWindow
         h.Add(new Label() { text = "Target Selector" });
 
         var fldTargetSelector = new Label();
-        fldTargetSelector.Bind<Label, string>(o => o.text, data, nameof(TestData.Value));
+        bindingSet.Bind(fldTargetSelector, o => o.text, nameof(TestData.Value));
         fldTargetSelector.RegisterValueChangedCallback(e =>
         {
             Debug.Log($"Target Selector: {e.newValue}");
             e.StopPropagation();
         });
-        h.Add(fldTargetSelector); 
+        h.Add(fldTargetSelector);
         rootVisualElement.Add(h);
 
 
@@ -113,22 +121,20 @@ public class TestBindingPath : EditorWindow
             Debug.Log($"{e.target} change " + e.newValue);
         });
 
+        bindingSet.CreateBinding(rootVisualElement);
+
         Bind();
     }
 
-
     void Bind()
-    { 
+    {
         Debug.Log("Bind");
-        isBind = true;
-        rootVisualElement.BindAll(data);
-
+        bindingSet.Bind();
     }
 
     void Unbind()
     {
-        isBind = false;
-        rootVisualElement.UnbindAll();
+        bindingSet.Unbind();
     }
 
 }

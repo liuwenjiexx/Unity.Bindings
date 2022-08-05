@@ -33,7 +33,17 @@ namespace Yanmonet.Bindings
             this.Source = source;
             this.path = path;
         }
+        public Binding(object target, string targetPath)
+            : base(target, targetPath)
+        {
+        }
 
+        public Binding(object target, string targetPath, object source, string path)
+            : base(target, targetPath)
+        {
+            this.Source = source;
+            this.path = path;
+        }
 
         public string Path
         {
@@ -120,7 +130,7 @@ namespace Yanmonet.Bindings
             base.Unbind();
         }
 
-        protected override void UpdateSourceToTarget()
+        public override void UpdateSourceToTarget()
         {
 
             object value;
@@ -160,7 +170,7 @@ namespace Yanmonet.Bindings
 
 
 
-        protected override void UpdateTargetToSource()
+        public override void UpdateTargetToSource()
         {
             if (!binder.CanSetValue)
                 return;

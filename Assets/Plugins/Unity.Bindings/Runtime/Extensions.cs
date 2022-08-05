@@ -357,6 +357,36 @@ namespace Yanmonet.Bindings
         }
 
         #endregion
+
+
+        internal static IEnumerable<Assembly> ReferencedAssemblies(this Assembly assembly)
+        {
+            return Referenced(AppDomain.CurrentDomain.GetAssemblies(), assembly);
+        }
+
+        internal static IEnumerable<Assembly> Referenced(this IEnumerable<Assembly> assemblies, Assembly referenced)
+        {
+            string fullName = referenced.FullName;
+
+            foreach (var ass in assemblies)
+            {
+                if (referenced == ass)
+                {
+                    yield return ass;
+                }
+                else
+                {
+                    foreach (var refAss in ass.GetReferencedAssemblies())
+                    {
+                        if (fullName == refAss.FullName)
+                        {
+                            yield return ass;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     }
 
 

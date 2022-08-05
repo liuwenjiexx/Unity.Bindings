@@ -16,6 +16,7 @@ public class TestBindingProperty : EditorWindow
             Value = "b"
         }
     };
+    BindingSet<TestData> bindingSet;
 
 
     [MenuItem("Test/Binding Property")]
@@ -36,8 +37,7 @@ public class TestBindingProperty : EditorWindow
 
             using (new GUILayout.HorizontalScope())
             {
-
-                if (isBind)
+                if (bindingSet.IsBinding)
                 {
                     if (GUILayout.Button("Unbind"))
                     {
@@ -54,11 +54,11 @@ public class TestBindingProperty : EditorWindow
             }
         }));
 
-
+        bindingSet = new BindingSet<TestData>(data);
 
         var fldProperty = new TextField();
         fldProperty.label = "Value";
-        fldProperty.Bind(data, o => o.Value);
+        bindingSet.Bind(fldProperty, o => o.Value);
         fldProperty.RegisterValueChangedCallback(e =>
         {
             Debug.Log($"Value: {e.newValue}");
@@ -67,7 +67,7 @@ public class TestBindingProperty : EditorWindow
 
         var fldProperty2 = new TextField();
         fldProperty2.label = "Build Value";
-        fldProperty2.Bind(data).From(o => o.Value).Build();
+        bindingSet.Build(fldProperty2).From(o => o.Value).TwoWay();
         fldProperty2.RegisterValueChangedCallback(e =>
         {
             Debug.Log($"Build Value: {e.newValue}");
@@ -76,13 +76,13 @@ public class TestBindingProperty : EditorWindow
 
         var fldCustom = new TextField();
         fldCustom.label = "Source Accessor";
-        fldCustom.Bind(data, new Accessor<TestData, string>((o) => o.Value, (o, val) => o.Value = val), nameof(TestData.Value));
+        bindingSet.Build(fldCustom).From(new Accessor<TestData, string>((o) => o.Value, (o, val) => o.Value = val)).PropertyName(nameof(TestData.Value));
         fldCustom.RegisterValueChangedCallback(e =>
         {
             Debug.Log($"Source Accessor: {e.newValue}");
         });
         rootVisualElement.Add(fldCustom);
-         
+
 
         //GetPropertyChangedEventHandlerDelegate aaa;
         //aaa = (out PropertyChangedEventHandler handler) =>
@@ -109,7 +109,7 @@ public class TestBindingProperty : EditorWindow
         //var changedEventInfo = mmm.DeclaringType.GetEvent(mmm.Name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
         //  changedEventInfo.
 
-
+        bindingSet.CreateBinding(rootVisualElement);
         Bind();
 
 
@@ -117,20 +117,15 @@ public class TestBindingProperty : EditorWindow
     }
 
     public delegate void GetPropertyChangedEventHandlerDelegate(out PropertyChangedEventHandler handler);
-
-    bool isBind;
+     
     void Bind()
-    {
-        isBind = true;
-         
-        rootVisualElement.BindAll();
+    { 
+        bindingSet.Bind();
     }
 
     void Unbind()
-    {
-        isBind = false;
-         
-        rootVisualElement.UnbindAll();
+    { 
+        bindingSet.Unbind();
     }
 
 }

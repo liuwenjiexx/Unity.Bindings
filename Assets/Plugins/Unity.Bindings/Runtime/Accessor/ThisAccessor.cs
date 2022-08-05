@@ -16,7 +16,7 @@ namespace Yanmonet.Bindings
             return target;
         }
 
-        public void SetValue(object target, object value)
+        public object SetValue(object target, object value)
         {
             throw new AccessViolationException();
         }

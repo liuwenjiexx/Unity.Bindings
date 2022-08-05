@@ -43,12 +43,13 @@ namespace Yanmonet.Bindings
             throw new AccessViolationException();
         }
 
-        public void SetValue(object target, object value)
+        public object SetValue(object target, object value)
         {
             IList list = target as IList;
             if (list != null && index < list.Count)
             {
                 list[index] = value;
+                return target;
             }
             throw new AccessViolationException();
         }

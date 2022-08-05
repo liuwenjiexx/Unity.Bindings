@@ -46,7 +46,7 @@ namespace Yanmonet.Bindings
 
             builder.TargetNotifyCallback = TargetNotifyCallback;
             builder.SourceNotifyCallback = SourceNotifyCallback;
-    
+
             if (Mode.HasValue) builder.Mode = Mode;
             if (SourceToTargetNotifyEnabled.HasValue) builder.SourceToTargetNotifyEnabled = SourceToTargetNotifyEnabled;
 
@@ -116,6 +116,33 @@ namespace Yanmonet.Bindings
             }
         }
 
+        public void UpdateSourceToTarget()
+        {
+            foreach (var binding in bindings)
+            {
+                if (binding.IsBinding)
+                {
+                    if (binding.CanUpdateSourceToTarget)
+                    {
+                        binding.UpdateSourceToTarget();
+                    }
+                }
+            }
+        }
+        public void UpdateTargetToSource()
+        {
+            foreach (var binding in bindings)
+            {
+                if (binding.IsBinding)
+                {
+                    if (binding.CanUpdateTargetToSource)
+                    {
+                        binding.UpdateTargetToSource();
+                    } 
+                }
+            }
+        }
+
 
     }
 
@@ -160,6 +187,17 @@ namespace Yanmonet.Bindings
         {
             return Bind(target, targetAccessor, (string)null, path, mode);
         }
+        public BindingBase Bind(object target, string targetPath, string path, BindingMode mode = BindingMode.OneWay)
+        {
+            if (target == null) throw new ArgumentNullException(nameof(target));
+            if (targetPath == null) throw new ArgumentNullException(nameof(targetPath));
+            if (path == null) throw new ArgumentNullException(nameof(path));
+
+            Binding binding = new Binding(target, targetPath, Source, path);
+            binding.Mode = mode;
+            bindings.Add(binding);
+            return binding;
+        }
 
         /// <summary>
         /// ∞Û∂® Ù–‘¬∑æ∂
@@ -203,7 +241,7 @@ namespace Yanmonet.Bindings
             if (targetPropertySelector == null) throw new ArgumentNullException(nameof(targetPropertySelector));
 
             var targetAccessor = Accessor.Member(targetPropertySelector);
-            var member = BindingUtility.FindMember(propertySelector);
+            var member = BindingUtility.GetMember(propertySelector);
             var accessor = Accessor.Member<TValue>(member);
             return Bind(target, targetAccessor, targetAccessor.MemberInfo.Name, accessor, accessor.MemberInfo.Name, mode);
         }
@@ -262,7 +300,7 @@ namespace Yanmonet.Bindings
         public BindingBase Bind<TValue>(INotifyValueChanged<TValue> target, Expression<Func<TSource, TValue>> propertySelector, BindingMode mode = BindingMode.TwoWay)
         {
             if (propertySelector == null) throw new ArgumentNullException(nameof(propertySelector));
-            var member = BindingUtility.FindMember(propertySelector);
+            var member = BindingUtility.GetMember(propertySelector);
             var accessor = Accessor.Member<TValue>(member);
             return Bind(target, accessor, accessor.MemberInfo.Name, mode);
         }
@@ -272,6 +310,11 @@ namespace Yanmonet.Bindings
 
         public void CreateBinding(VisualElement root)
         {
+            CreateBinding(root, null);
+        }
+
+        public void CreateBinding(VisualElement root, Func<VisualElement, bool> filter = null)
+        {
             root.Query<BindableElement>().Build().ForEach(target =>
             {
                 if (!string.IsNullOrEmpty(target.bindingPath) && target.binding == null)
@@ -279,6 +322,9 @@ namespace Yanmonet.Bindings
                     var type = Extensions.FindGenericTypeDefinition(target.GetType(), typeof(INotifyValueChanged<>));
                     if (type != null)
                     {
+                        if (filter != null && !filter.Invoke(target))
+                            return;
+
                         Type valueType = type.GenericTypeArguments[0];
                         var method = typeof(Extensions).GetMethod(nameof(Extensions.GetTargetAccessorWithINotifyValueChanged), BindingFlags.NonPublic | BindingFlags.Static);
                         var targetAccessor = (IAccessor)method.MakeGenericMethod(valueType).Invoke(null, new object[] { target });

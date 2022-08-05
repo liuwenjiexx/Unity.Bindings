@@ -36,7 +36,7 @@ namespace Yanmonet.Bindings
             return ((INotifyValueChanged<TValue>)target).value;
         }
 
-        public void SetValue(object target, TValue value)
+        public object SetValue(object target, TValue value)
         {
             if (withoutNotify)
             {
@@ -46,11 +46,12 @@ namespace Yanmonet.Bindings
             {
                 ((INotifyValueChanged<TValue>)target).value = value;
             }
+            return target;
         }
 
-        public void SetValue(object target, object value)
+        public object SetValue(object target, object value)
         {
-            SetValue(target, (TValue)value);
+            return SetValue(target, (TValue)value);
         }
 
     }

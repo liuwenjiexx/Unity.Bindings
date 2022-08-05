@@ -10,11 +10,11 @@ namespace Yanmonet.Bindings
 {
     public static class BindingUtility
     {
-        
+
 
         #region Lambda
 
-        internal static MemberInfo FindMember<TTarget, TValue>( Expression<Func<TTarget, TValue>> selector)
+        internal static MemberInfo GetMember<TTarget, TValue>(Expression<Func<TTarget, TValue>> selector)
         {
             MemberExpression memberExpr = null;
 
@@ -27,7 +27,7 @@ namespace Yanmonet.Bindings
             return null;
         }
 
-        internal static MemberInfo FindMember<TValue>( Expression<Func<TValue>> selector)
+        internal static MemberInfo GetMember<TValue>(Expression<Func<TValue>> selector)
         {
             MemberExpression memberExpr = null;
 

@@ -7,6 +7,7 @@ using Yanmonet.Bindings;
 
 public class TestStaticProperty : EditorWindow
 {
+    BindingSet bindingSet;
 
     public static string staticProperty = "1";
 
@@ -33,8 +34,7 @@ public class TestStaticProperty : EditorWindow
 
             using (new GUILayout.HorizontalScope())
             {
-
-                if (isBind)
+                if (bindingSet.IsBinding)
                 {
                     if (GUILayout.Button("Unbind"))
                     {
@@ -51,9 +51,12 @@ public class TestStaticProperty : EditorWindow
             }
         }));
 
+        bindingSet = new BindingSet();
+
+
         var fldStatic = new TextField();
         fldStatic.label = "Static Property";
-        fldStatic.Bind()
+        bindingSet.Build(fldStatic)
             .From(() => StaticProperty)
             .SourceNotify((handler, b) =>
             {
@@ -61,7 +64,7 @@ public class TestStaticProperty : EditorWindow
                     StaticPropertyChanged += handler;
                 else
                     StaticPropertyChanged -= handler;
-            }).Build();
+            });
 
         fldStatic.RegisterValueChangedCallback(e =>
         {
@@ -69,20 +72,18 @@ public class TestStaticProperty : EditorWindow
         });
         rootVisualElement.Add(fldStatic);
 
+
         Bind();
 
     }
 
-    bool isBind;
     void Bind()
     {
-        isBind = true;
-        rootVisualElement.BindAll();
+        bindingSet.Bind();
     }
 
     void Unbind()
     {
-        isBind = false;
-        rootVisualElement.UnbindAll();
+        bindingSet.Unbind();
     }
 }

@@ -25,9 +25,11 @@ public class TestSourceToTargetNotify : EditorWindow
             data.Value = EditorGUILayout.TextField("Source", data.Value);
         }));
 
+        BindingSet<TestData> bindingSet = new BindingSet<TestData>(data);
+
         var fldProperty = new TextField();
         fldProperty.label = "Target Notify enabled";
-        fldProperty.Bind(data).From(o => o.Value).EnableSourceToTargetNotify().Build();
+        bindingSet.Build(fldProperty).From(o => o.Value).EnableSourceToTargetNotify();
         fldProperty.RegisterValueChangedCallback(e =>
         {
             Debug.Log($"Target Notify enabled: {e.newValue}");
@@ -37,14 +39,14 @@ public class TestSourceToTargetNotify : EditorWindow
 
         fldProperty = new TextField();
         fldProperty.label = "Target Notify disabled";
-        fldProperty.Bind(data).From(o => o.Value).DisableSourceToTargetNotify().Build();
+        bindingSet.Build(fldProperty).From(o => o.Value).DisableSourceToTargetNotify();
         fldProperty.RegisterValueChangedCallback(e =>
         {
             Debug.Log($"Target Notify disabled: {e.newValue}");
         });
         rootVisualElement.Add(fldProperty);
 
-        rootVisualElement.BindAll();
+        bindingSet.Bind();
 
     }
 

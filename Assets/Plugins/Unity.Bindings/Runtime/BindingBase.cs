@@ -13,18 +13,27 @@ namespace Yanmonet.Bindings
         private bool isBinding;
         private object target;
         private IAccessor targetAccessor;
+        private PropertyBinder targetBinder;
+        private string targetPath;
         private object source;
 
 
         public BindingBase(object target, IAccessor targetAccessor)
         {
-            if (target == null)
-                throw new ArgumentNullException(nameof(target));
-            if (targetAccessor == null)
-                throw new ArgumentNullException(nameof(targetAccessor));
+            if (target == null) throw new ArgumentNullException(nameof(target));
+            if (targetAccessor == null) throw new ArgumentNullException(nameof(targetAccessor));
+
             this.target = target;
             this.targetAccessor = targetAccessor;
 
+        }
+
+        public BindingBase(object target, string targetPath)
+        {
+            if (target == null) throw new ArgumentNullException(nameof(target));
+            if (targetPath == null) throw new ArgumentNullException(nameof(targetPath));
+            this.target = target;
+            this.targetPath = targetPath;
         }
 
 
@@ -60,12 +69,12 @@ namespace Yanmonet.Bindings
 
 
 
-        protected virtual bool CanUpdateTargetToSource
+        public virtual bool CanUpdateTargetToSource
         {
             get => Mode != BindingMode.OneWay;
         }
 
-        protected virtual bool CanUpdateSourceToTarget
+        public virtual bool CanUpdateSourceToTarget
         {
             get => Mode != BindingMode.OneWayToSource;
         }
@@ -73,7 +82,7 @@ namespace Yanmonet.Bindings
         public BindingNotifyDelegate TargetNotifyCallback { get; set; }
 
         public BindingNotifyDelegate SourceNotifyCallback { get; set; }
-         
+
         public virtual void Bind()
         {
             if (isBinding)
@@ -84,8 +93,11 @@ namespace Yanmonet.Bindings
 
             TargetSupportNotify = false;
             SourceSupportNotify = false;
-
-
+            if (targetAccessor == null)
+            {
+                targetBinder = PropertyBinder.Create(targetPath);
+                targetBinder.Target = target;
+            }
 
             if (CanUpdateTargetToSource)
             {
@@ -94,14 +106,26 @@ namespace Yanmonet.Bindings
                     TargetNotifyCallback(OnTargetPropertyChanged, true);
                     TargetSupportNotify = true;
                 }
-
-                if (!TargetSupportNotify && TargetNotifyValueChangedEnabled)
+                if (TargetNotifyValueChangedEnabled)
                 {
-                    var notifyType = Target.GetType().FindGenericTypeDefinition(typeof(INotifyValueChanged<>));
-                    if (notifyType != null)
+                    if (!TargetSupportNotify && targetBinder != null && targetBinder.SupportNotify)
                     {
-                        BindingUtility.RegisterValueChangedCallback(notifyType.GetGenericArguments()[0], Target, OnTargetValueChanged);
+                        targetBinder.TargetUpdatedCallback = () =>
+                        {
+                            if (CanUpdateTargetToSource)
+                                UpdateTargetToSource();
+                        };
                         TargetSupportNotify = true;
+                    }
+
+                    if (!TargetSupportNotify)
+                    {
+                        var notifyType = Target.GetType().FindGenericTypeDefinition(typeof(INotifyValueChanged<>));
+                        if (notifyType != null)
+                        {
+                            BindingUtility.RegisterValueChangedCallback(notifyType.GetGenericArguments()[0], Target, OnTargetValueChanged);
+                            TargetSupportNotify = true;
+                        }
                     }
                 }
             }
@@ -126,6 +150,13 @@ namespace Yanmonet.Bindings
                 return;
             isBinding = false;
 
+            if (targetBinder != null)
+            {
+                targetBinder.TargetUpdatedCallback = null;
+                targetBinder.Dispose();
+                targetBinder = null;
+            }
+
             if (TargetNotifyCallback != null)
             {
                 TargetNotifyCallback(OnTargetPropertyChanged, false);
@@ -143,13 +174,29 @@ namespace Yanmonet.Bindings
 
         protected virtual object GetTargetValue()
         {
-            var value = targetAccessor.GetValue(Target);
+            object value;
+            if (targetAccessor != null)
+            {
+                value = targetAccessor.GetValue(Target);
+            }
+            else
+            {
+                if (!targetBinder.TryGetTargetValue(out value))
+                    return null;
+            }
             return value;
         }
 
         protected virtual void SetTargetValue(object value)
         {
-            targetAccessor.SetValue(Target, value);
+            if (targetAccessor != null)
+            {
+                targetAccessor.SetValue(Target, value);
+            }
+            else
+            {
+                targetBinder.TrySetTargetValue(value);
+            }
         }
 
 
@@ -180,9 +227,9 @@ namespace Yanmonet.Bindings
             }
         }
 
-        protected abstract void UpdateSourceToTarget();
+        public abstract void UpdateSourceToTarget();
 
-        protected abstract void UpdateTargetToSource();
+        public abstract void UpdateTargetToSource();
 
         protected void OnTargetValueChanged(IChangeEvent e)
         {
