@@ -314,12 +314,15 @@ namespace Yanmonet.Bindings
             PoolPropertyChangedEventArgs.Release(e);
         }
 
-        public static void Invoke<T>(this PropertyChangedEventHandler propertyChanged, object sender, string propertyName, ref T field, T newValue)
+        public static bool Invoke<T>(this PropertyChangedEventHandler propertyChanged, object sender, string propertyName, ref T field, T newValue)
         {
-            if (Equals(field, newValue)) return;
+            if (Equals(field, newValue)) return false;
             field = newValue;
-            if (propertyChanged == null) return;
-            Invoke(propertyChanged, sender, propertyName);
+            if (propertyChanged != null)
+            {
+                Invoke(propertyChanged, sender, propertyName);
+            }
+            return true;
         }
 
         class PoolPropertyChangedEventArgs : PropertyChangedEventArgs

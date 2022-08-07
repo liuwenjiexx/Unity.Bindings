@@ -67,8 +67,6 @@ namespace Yanmonet.Bindings
         protected bool TargetSupportNotify { get; set; }
         protected bool SourceSupportNotify { get; set; }
 
-
-
         public virtual bool CanUpdateTargetToSource
         {
             get => Mode != BindingMode.OneWay;
@@ -82,6 +80,12 @@ namespace Yanmonet.Bindings
         public BindingNotifyDelegate TargetNotifyCallback { get; set; }
 
         public BindingNotifyDelegate SourceNotifyCallback { get; set; }
+
+
+        public event BindingPropertyChangedEventHandler SourcePropertyChanged;
+
+        public event BindingPropertyChangedEventHandler TargetPropertyChanged;
+
 
         public virtual void Bind()
         {
@@ -187,18 +191,45 @@ namespace Yanmonet.Bindings
             return value;
         }
 
-        protected virtual void SetTargetValue(object value)
+        protected virtual bool SetTargetValue(object value)
         {
-            if (targetAccessor != null)
+            object origin = GetTargetValue();
+            if (!object.Equals(origin, value))
             {
-                targetAccessor.SetValue(Target, value);
+                if (targetAccessor != null)
+                {
+                    targetAccessor.SetValue(Target, value);
+                    OnTargetPropertyChanged();
+                    return true;
+                }
+                else
+                {
+                    if (targetBinder.TrySetTargetValue(value))
+                    {
+                        OnTargetPropertyChanged();
+                        return true;
+                    }
+                }
             }
-            else
-            {
-                targetBinder.TrySetTargetValue(value);
-            }
+            return false;
         }
 
+        protected void OnSourcePropertyChanged(string path)
+        {
+            if (SourcePropertyChanged == null) return;
+            var e = BindingPropertyChangedEventArgs.Get(this, path);
+            SourcePropertyChanged?.Invoke(this, e);
+            BindingPropertyChangedEventArgs.Release(e);
+        }
+
+        protected void OnTargetPropertyChanged()
+        {
+            if (TargetPropertyChanged == null) return;
+
+            var e = BindingPropertyChangedEventArgs.Get(this, targetBinder != null ? targetPath : TargetPropertyName);
+            TargetPropertyChanged?.Invoke(this, e);
+            BindingPropertyChangedEventArgs.Release(e);
+        }
 
         public virtual void PreUpdate()
         {
@@ -265,5 +296,7 @@ namespace Yanmonet.Bindings
     }
 
     public delegate void BindingNotifyDelegate(PropertyChangedEventHandler handler, bool add);
+
+    public delegate void BindingPropertyChangedEventHandler(object sender, BindingPropertyChangedEventArgs e);
 
 }

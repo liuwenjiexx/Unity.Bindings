@@ -160,11 +160,8 @@ namespace Yanmonet.Bindings
                 IsFallbackValue = true;
             }
 
-            object targetValue = GetTargetValue();
-            if (!object.Equals(targetValue, value))
-            {
-                SetTargetValue(value);
-            }
+
+            SetTargetValue(value);
 
         }
 
@@ -192,7 +189,7 @@ namespace Yanmonet.Bindings
                 //        sourceUpdated(this, args);
                 //    }
                 //}
-
+                OnSourcePropertyChanged(path);
             }
         }
 

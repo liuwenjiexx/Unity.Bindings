@@ -7,10 +7,10 @@ using System.Reflection;
 namespace Yanmonet.Bindings
 {
     class PropertyBinding : BindingBase
-    { 
+    {
         private IAccessor accessor;
 
-        public PropertyBinding(object target, IAccessor targetAccessor, object source, IAccessor accessor )
+        public PropertyBinding(object target, IAccessor targetAccessor, object source, IAccessor accessor)
             : base(target, targetAccessor)
         {
             this.Source = source;
@@ -25,9 +25,15 @@ namespace Yanmonet.Bindings
             return value;
         }
 
-        protected virtual void SetSourceValue(object value)
+        protected virtual bool SetSourceValue(object value)
         {
-            accessor.SetValue(Source, value);
+            var origin = GetSourceValue();
+            if (!object.Equals(origin, value))
+            {
+                accessor.SetValue(Source, value);
+                return true;
+            }
+            return false;
         }
 
         public override void Bind()
@@ -84,10 +90,7 @@ namespace Yanmonet.Bindings
             if (!accessor.CanGetValue(Source) || !TargetAccessor.CanSetValue(Target))
                 return;
             var value = GetSourceValue();
-            if (!object.Equals(GetTargetValue(), value))
-            {
-                SetTargetValue(value);
-            }
+            SetTargetValue(value);
         }
 
         public override void UpdateTargetToSource()
@@ -95,10 +98,7 @@ namespace Yanmonet.Bindings
             if (!accessor.CanSetValue(Source) || !TargetAccessor.CanGetValue(Target))
                 return;
             var value = GetTargetValue();
-            if (!object.Equals(GetSourceValue(), value))
-            {
-                SetSourceValue(value);
-            }
+            SetSourceValue(value);
         }
 
     }

@@ -158,7 +158,7 @@ namespace Yanmonet.Bindings
 
         public string SelfMemberName => memberName;
 
-        public string MemberName => Last.memberName;
+        public string MemberName => first.memberName;
         bool supportNotify;
         public bool SupportNotify => Last.supportNotify;
 
@@ -284,7 +284,7 @@ namespace Yanmonet.Bindings
             }
 
 
-            OnMemberValueChanged();
+            OnTargetMemberValueChanged();
             return true;
         }
 
@@ -362,7 +362,7 @@ namespace Yanmonet.Bindings
         {
             if (e.PropertyName == memberName)
             {
-                OnMemberValueChanged();
+                OnTargetMemberValueChanged();
             }
         }
 
@@ -400,11 +400,11 @@ namespace Yanmonet.Bindings
 
             if (changed)
             {
-                OnMemberValueChanged();
+                OnTargetMemberValueChanged();
             }
         }
 
-        void OnMemberValueChanged()
+        void OnTargetMemberValueChanged()
         {
 
             if (next != null)
@@ -437,7 +437,11 @@ namespace Yanmonet.Bindings
         //    return current;
         //}
 
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns>值是否发生改变, true: 改变, false: 未改变</returns>
         private bool TrySetMemberValue(object value)
         {
             if (target == null || accessor == null)
@@ -530,9 +534,9 @@ namespace Yanmonet.Bindings
                     // Value type: struct
                     if (next.targetType != null && next.targetType.IsValueType)
                     {
-                        TrySetMemberValue(next.Target);
+                        return TrySetMemberValue(next.Target);
                     }
-                     
+
                     return true;
                 }
                 else

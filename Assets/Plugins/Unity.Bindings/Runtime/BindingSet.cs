@@ -35,6 +35,11 @@ namespace Yanmonet.Bindings
             }
         }
 
+        public event BindingPropertyChangedEventHandler SourcePropertyChanged;
+
+        public event BindingPropertyChangedEventHandler TargetPropertyChanged;
+
+
         public BindingBuilder<TTarget, object> Build<TTarget>(TTarget target)
         {
             return Build<TTarget, object>(target, default);
@@ -71,6 +76,16 @@ namespace Yanmonet.Bindings
             builders.Clear();
         }
 
+        protected void OnSourcePropertyChangedEventArgs(object sender, BindingPropertyChangedEventArgs e)
+        {
+            SourcePropertyChanged?.Invoke(sender, e);
+        }
+
+        protected void OnTargetPropertyChangedEventArgs(object sender, BindingPropertyChangedEventArgs e)
+        {
+            TargetPropertyChanged?.Invoke(sender, e);
+        }
+
         public void Bind()
         {
             BuildBinding();
@@ -79,6 +94,19 @@ namespace Yanmonet.Bindings
             {
                 if (!binding.IsBinding)
                     binding.Bind();
+
+                if (SourcePropertyChanged != null)
+                {
+                    binding.SourcePropertyChanged -= OnSourcePropertyChangedEventArgs;
+                    binding.SourcePropertyChanged += OnSourcePropertyChangedEventArgs;
+                }
+
+                if (TargetPropertyChanged != null)
+                {
+                    binding.TargetPropertyChanged -= OnTargetPropertyChangedEventArgs;
+                    binding.TargetPropertyChanged += OnTargetPropertyChangedEventArgs;
+                }
+
                 if (binding.TargetAccessor != null && binding.TargetAccessor is INotifyValueChangedAccessor)
                 {
                     IBindable bindable = binding.Target as IBindable;
@@ -94,8 +122,12 @@ namespace Yanmonet.Bindings
         {
             foreach (var binding in bindings)
             {
+                binding.SourcePropertyChanged -= OnSourcePropertyChangedEventArgs;
+                binding.TargetPropertyChanged -= OnTargetPropertyChangedEventArgs;
+
                 if (binding.IsBinding)
                     binding.Unbind();
+
                 if (binding.TargetAccessor != null && binding.TargetAccessor is INotifyValueChangedAccessor)
                 {
                     IBindable bindable = binding.Target as IBindable;
