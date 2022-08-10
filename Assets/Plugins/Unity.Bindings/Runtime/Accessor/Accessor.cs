@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using UnityEngine;
 
 namespace Yanmonet.Bindings
 {
@@ -131,24 +132,31 @@ namespace Yanmonet.Bindings
                     }
                 }
 
-
-                Delegate getter = null, setter = null;
-
-                getter = Expression.Lambda(typeof(Func<,>).MakeGenericType(targetType, valueType), memberExpr, targetExpr)
-                    .Compile();
-
-                if (canWrite)
+                try
                 {
+                    Delegate getter = null, setter = null;
 
-                    var valueExpr = Expression.Parameter(valueType);
-                    var setterBody = Expression.Assign(memberExpr, valueExpr);
-                    //var retExpr = memberExpr;
-                    setter = Expression.Lambda(typeof(Func<,,>).MakeGenericType(targetType, valueType, targetType), Expression.Block(setterBody, targetExpr), targetExpr, valueExpr)
+                    getter = Expression.Lambda(typeof(Func<,>).MakeGenericType(targetType, valueType), memberExpr, targetExpr)
                         .Compile();
-                }
 
-                accessor = (IAccessor)Activator.CreateInstance(typeof(MemberAccessor<,>).MakeGenericType(targetType, valueType), propertyOrField, getter, setter);
-                cachedMemberAccessors[propertyOrField] = accessor;
+                    if (canWrite)
+                    {
+
+                        var valueExpr = Expression.Parameter(valueType);
+                        var setterBody = Expression.Assign(memberExpr, valueExpr);
+                        //var retExpr = memberExpr;
+                        setter = Expression.Lambda(typeof(Func<,,>).MakeGenericType(targetType, valueType, targetType), Expression.Block(setterBody, targetExpr), targetExpr, valueExpr)
+                            .Compile();
+                    }
+
+                    accessor = (IAccessor)Activator.CreateInstance(typeof(MemberAccessor<,>).MakeGenericType(targetType, valueType), propertyOrField, getter, setter);
+                    cachedMemberAccessors[propertyOrField] = accessor;
+                }
+                catch
+                {
+                    Debug.LogError($"Create accessor error. '{propertyOrField.DeclaringType.Name}.{propertyOrField.Name}'");
+                    throw;
+                }
             }
 
             return accessor;

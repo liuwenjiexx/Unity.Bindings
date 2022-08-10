@@ -92,28 +92,36 @@ namespace Yanmonet.Bindings
 
             foreach (var binding in bindings)
             {
-                if (!binding.IsBinding)
-                    binding.Bind();
-
-                if (SourcePropertyChanged != null)
+                try
                 {
-                    binding.SourcePropertyChanged -= OnSourcePropertyChangedEventArgs;
-                    binding.SourcePropertyChanged += OnSourcePropertyChangedEventArgs;
-                }
+                    if (!binding.IsBinding)
+                        binding.Bind();
 
-                if (TargetPropertyChanged != null)
-                {
-                    binding.TargetPropertyChanged -= OnTargetPropertyChangedEventArgs;
-                    binding.TargetPropertyChanged += OnTargetPropertyChangedEventArgs;
-                }
-
-                if (binding.TargetAccessor != null && binding.TargetAccessor is INotifyValueChangedAccessor)
-                {
-                    IBindable bindable = binding.Target as IBindable;
-                    if (bindable != null)
+                    if (SourcePropertyChanged != null)
                     {
-                        bindable.binding = binding;
+                        binding.SourcePropertyChanged -= OnSourcePropertyChangedEventArgs;
+                        binding.SourcePropertyChanged += OnSourcePropertyChangedEventArgs;
                     }
+
+                    if (TargetPropertyChanged != null)
+                    {
+                        binding.TargetPropertyChanged -= OnTargetPropertyChangedEventArgs;
+                        binding.TargetPropertyChanged += OnTargetPropertyChangedEventArgs;
+                    }
+
+                    if (binding.TargetAccessor != null && binding.TargetAccessor is INotifyValueChangedAccessor)
+                    {
+                        IBindable bindable = binding.Target as IBindable;
+                        if (bindable != null)
+                        {
+                            bindable.binding = binding;
+                        }
+                    }
+                }
+                catch
+                {
+                    Debug.LogError($"Bind error '{binding.PropertyName}'");
+                    throw;
                 }
             }
         }
@@ -170,7 +178,7 @@ namespace Yanmonet.Bindings
                     if (binding.CanUpdateTargetToSource)
                     {
                         binding.UpdateTargetToSource();
-                    } 
+                    }
                 }
             }
         }
