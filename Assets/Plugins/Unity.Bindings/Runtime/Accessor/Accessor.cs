@@ -22,11 +22,14 @@ namespace Yanmonet.Bindings
         public Accessor(Func<object, object> getter, Action<object, object> setter)
         {
             this.getter = getter;
-            this.setter = (o, v) =>
-             {
-                 setter(o, v);
-                 return o;
-             };
+            if (setter != null)
+            {
+                this.setter = (o, v) =>
+                 {
+                     setter(o, v);
+                     return o;
+                 };
+            }
         }
         public Accessor(Func<object, object> getter, Func<object, object, object> setter)
         {
@@ -147,9 +150,15 @@ namespace Yanmonet.Bindings
                         //var retExpr = memberExpr;
                         setter = Expression.Lambda(typeof(Func<,,>).MakeGenericType(targetType, valueType, targetType), Expression.Block(setterBody, targetExpr), targetExpr, valueExpr)
                             .Compile();
-                    }
 
-                    accessor = (IAccessor)Activator.CreateInstance(typeof(MemberAccessor<,>).MakeGenericType(targetType, valueType), propertyOrField, getter, setter);
+                        accessor = (IAccessor)Activator.CreateInstance(typeof(MemberAccessor<,>).MakeGenericType(targetType, valueType), propertyOrField, getter, setter);
+                    }
+                    else
+                    {
+                        accessor = (IAccessor)Activator.CreateInstance(typeof(MemberAccessor<,>).MakeGenericType(targetType, valueType), propertyOrField, getter);
+                    }
+                    
+                    
                     cachedMemberAccessors[propertyOrField] = accessor;
                 }
                 catch
@@ -258,11 +267,14 @@ namespace Yanmonet.Bindings
         public Accessor(Func<TTarget, TValue> getter, Action<TTarget, TValue> setter)
         {
             this.getter = getter;
-            this.setter = (o, v) =>
+            if (setter != null)
             {
-                setter(o, v);
-                return o;
-            };
+                this.setter = (o, v) =>
+                {
+                    setter(o, v);
+                    return o;
+                };
+            }
         }
         public Accessor(Func<TTarget, TValue> getter, Func<TTarget, TValue, TTarget> setter)
         {

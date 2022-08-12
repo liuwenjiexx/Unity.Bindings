@@ -201,7 +201,10 @@ namespace Yanmonet.Bindings
         {
             return Build(target, Source);
         }
-
+        public BindingBuilder<TTarget, TSource> Target<TTarget>(TTarget target)
+        {
+            return Build(target, Source);
+        }
 
 
         #region Binding Path

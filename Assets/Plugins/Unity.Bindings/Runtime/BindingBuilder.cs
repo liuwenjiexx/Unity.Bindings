@@ -121,9 +121,9 @@ namespace Yanmonet.Bindings
             return From(Accessor);
         }
 
-        public BindingBuilder<TTarget, TSource> From<TValue>(Func<TTarget, TValue> getter, Action<TTarget, TValue> setter)
+        public BindingBuilder<TTarget, TSource> From<TValue>(Func<TSource, TValue> getter, Action<TSource, TValue> setter)
         {
-            return From(new Accessor<TTarget, TValue>(getter, setter));
+            return From(new Accessor<TSource, TValue>(getter, setter));
         }
 
         public BindingBuilder<TTarget, TSource> TargetPropertyName(string targetPropertyName)

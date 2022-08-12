@@ -29,6 +29,14 @@ namespace Yanmonet.Bindings
             this.memberInfo = memberInfo;
         }
 
+        public MemberAccessor(MemberInfo memberInfo, Func<TTarget, TValue> getter)
+        : base(getter, null)
+        {
+            if (memberInfo == null) throw new ArgumentNullException(nameof(memberInfo));
+
+            this.memberInfo = memberInfo;
+        }
+
         public MemberInfo MemberInfo { get => memberInfo; }
     }
 }
