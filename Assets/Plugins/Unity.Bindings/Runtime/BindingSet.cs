@@ -39,12 +39,23 @@ namespace Yanmonet.Bindings
 
         public event BindingPropertyChangedEventHandler TargetPropertyChanged;
 
-
+        [Obsolete("Use 'To'")]
         public BindingBuilder<TTarget, object> Build<TTarget>(TTarget target)
         {
             return Build<TTarget, object>(target, default);
         }
 
+        public BindingBuilder<TTarget, object> To<TTarget>(TTarget target)
+        {
+            return Build<TTarget, object>(target, default);
+        }
+
+        public BindingBuilder<TTarget, TNewSource> To<TTarget, TNewSource>(TTarget target, TNewSource source)
+        {
+            return Build(target, source);
+        }
+
+        [Obsolete("Use 'To'")]
         public BindingBuilder<TTarget, TNewSource> Build<TTarget, TNewSource>(TTarget target, TNewSource source)
         {
             var builder = new BindingBuilder<TTarget, TNewSource>(target, source);
