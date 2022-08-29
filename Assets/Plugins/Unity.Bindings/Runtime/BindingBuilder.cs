@@ -13,7 +13,7 @@ namespace Yanmonet.Bindings
 
         private TTarget target;
         private TSource source;
-        
+
         public BindingBuilder(TTarget target, TSource source)
         {
             this.target = target;
@@ -81,7 +81,7 @@ namespace Yanmonet.Bindings
         {
             var member = BindingUtility.GetMember(targetPropertySelector);
             targetPropertyName = member.Name;
-            TargetAccessor = Bindings.Accessor.Member(member);
+            TargetAccessor = Yanmonet.Accessor.Member(member);
             return this;
         }
 
@@ -110,14 +110,14 @@ namespace Yanmonet.Bindings
         {
             var member = BindingUtility.GetMember(propertySelector);
             SourcePropertyName = member.Name;
-            Accessor = Bindings.Accessor.Member(member);
+            Accessor = Yanmonet.Accessor.Member(member);
             return From(Accessor);
         }
         public BindingBuilder<TTarget, TSource> From<TValue>(Expression<Func<TValue>> propertySelector)
         {
             var member = BindingUtility.GetMember(propertySelector);
             SourcePropertyName = member.Name;
-            Accessor = Bindings.Accessor.Member(member);
+            Accessor = Yanmonet.Accessor.Member(member);
             return From(Accessor);
         }
 
@@ -181,7 +181,7 @@ namespace Yanmonet.Bindings
                 }
             }
             else
-            { 
+            {
                 if (targetAccessor is INotifyValueChangedAccessor)
                 {
                     isTargetINotifyValueChangedAccessor = true;

@@ -5,11 +5,11 @@ using UnityEngine;
 namespace Yanmonet.Bindings
 {
 
-    class CombineAccessor : IAccessor
+    class CompositeAccessor : IAccessor
     {
         private IAccessor[] accessors;
 
-        public CombineAccessor(params IAccessor[] accessors)
+        public CompositeAccessor(params IAccessor[] accessors)
         {
             this.accessors = accessors;
         }

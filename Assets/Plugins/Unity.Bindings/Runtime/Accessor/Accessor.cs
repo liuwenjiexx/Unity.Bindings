@@ -4,8 +4,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using UnityEngine;
+using Yanmonet.Bindings;
 
-namespace Yanmonet.Bindings
+namespace Yanmonet
 {
 
     public class Accessor : IAccessor
