@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Yanmonet.Bindings;
 
-namespace Yanmonet
+namespace YMFramework
 {
     public class BindingSet
     {
@@ -45,19 +45,17 @@ namespace Yanmonet
         {
             return Build<TTarget, object>(target, default);
         }
+        public BindingBuilder<TTarget, object> Target<TTarget>(TTarget target)
+        {
+            return To<TTarget, object>(target, default);
+        }
 
         public BindingBuilder<TTarget, object> To<TTarget>(TTarget target)
         {
-            return Build<TTarget, object>(target, default);
+            return To<TTarget, object>(target, default);
         }
 
         public BindingBuilder<TTarget, TNewSource> To<TTarget, TNewSource>(TTarget target, TNewSource source)
-        {
-            return Build(target, source);
-        }
-
-        [Obsolete("Use 'To'")]
-        public BindingBuilder<TTarget, TNewSource> Build<TTarget, TNewSource>(TTarget target, TNewSource source)
         {
             var builder = new BindingBuilder<TTarget, TNewSource>(target, source);
 
@@ -74,6 +72,12 @@ namespace Yanmonet
             };
             builders.Add(builder);
             return builder;
+        }
+
+        [Obsolete("Use 'To'")]
+        public BindingBuilder<TTarget, TNewSource> Build<TTarget, TNewSource>(TTarget target, TNewSource source)
+        {
+            return To(target, source);
         }
 
         protected void BuildBinding()
@@ -208,14 +212,30 @@ namespace Yanmonet
 
         public TSource Source { get; private set; }
 
-
-        public BindingBuilder<TTarget, TSource> Build<TTarget>(TTarget target)
+        [Obsolete]
+        public new BindingBuilder<TTarget, TSource> Build<TTarget>(TTarget target)
         {
-            return Build(target, Source);
+            return Target(target);
         }
-        public BindingBuilder<TTarget, TSource> Target<TTarget>(TTarget target)
+
+
+        public new BindingBuilder<TTarget, TSource> Target<TTarget>(TTarget target)
         {
-            return Build(target, Source);
+            var builder = new BindingBuilder<TTarget, TSource>(target, Source);
+
+            builder.TargetNotifyCallback = TargetNotifyCallback;
+            builder.SourceNotifyCallback = SourceNotifyCallback;
+
+            if (Mode.HasValue) builder.Mode = Mode;
+            if (SourceToTargetNotifyEnabled.HasValue) builder.SourceToTargetNotifyEnabled = SourceToTargetNotifyEnabled;
+
+            builder.Created = (binding) =>
+            {
+                bindings.Add(binding);
+                builders.Remove(builder);
+            };
+            builders.Add(builder);
+            return builder;
         }
 
 
@@ -384,7 +404,7 @@ namespace Yanmonet
                         var method = typeof(Extensions).GetMethod(nameof(Extensions.GetTargetAccessorWithINotifyValueChanged), BindingFlags.NonPublic | BindingFlags.Static);
                         var targetAccessor = (IAccessor)method.MakeGenericMethod(valueType).Invoke(null, new object[] { target });
 
-                        Build(target).To(targetAccessor).From(target.bindingPath);
+                        Target(target).To(targetAccessor).From(target.bindingPath);
                         //var binding = new Binding(target, targetAccessor, source, target.bindingPath);
                         //binding.TargetNotifyValueChangedEnabled = true;
                         //binding.Bind();

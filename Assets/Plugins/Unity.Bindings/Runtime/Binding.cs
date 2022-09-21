@@ -4,6 +4,7 @@ using System;
 using System.ComponentModel;
 using System.Reflection;
 using System.Linq;
+using YMFramework;
 
 namespace Yanmonet.Bindings
 {
@@ -140,10 +141,18 @@ namespace Yanmonet.Bindings
 
             if (binder.TryGetTargetValue(out value))
             {
+                var converter = Converter;
+                if (converter != null)
+                {
+                    Type valueType = GetTargetValueType();
+                    if (valueType != null)
+                    {
+                        value = converter.Convert(value, valueType, ConverterParameter);
+                    }
+                }
+
                 if (value != null)
                 {
-                    //if (converter != null)
-                    //    value = converter.Convert(value, targetBinder.GetValueType(), converterParameter);
                     string stringFormat = StringFormat;
                     if (!string.IsNullOrEmpty(stringFormat))
                         value = String.Format(stringFormat, value);
@@ -169,14 +178,24 @@ namespace Yanmonet.Bindings
 
         public override void UpdateTargetToSource()
         {
-            if (!binder.CanSetValue)
-                return;
+            if (!binder.CanSetValue) return;
 
             object value;
 
             value = GetTargetValue();
-            //if (converter != null)
-            //    value = converter.ConvertBack(value, sourceBinder.GetValueType(), converterParameter);
+            if (value == UnsetValue) return;
+
+            var converter = Converter;
+            if (converter != null)
+            {
+                Type valueType;
+                valueType = binder.GetLast()?.ValueType;
+                if (valueType != null)
+                {
+                    value = converter.ConvertBack(value, valueType, ConverterParameter);
+                }
+            }
+            if (value == UnsetValue) return;
 
             if (binder.TrySetTargetValue(value))
             {

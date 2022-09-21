@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Reflection;
 using UnityEngine.UIElements;
+using YMFramework;
 
 namespace Yanmonet.Bindings
 {
@@ -16,6 +17,8 @@ namespace Yanmonet.Bindings
         private PropertyBinder targetBinder;
         private string targetPath;
         private object source;
+
+        public static readonly object UnsetValue = new object();
 
 
         public BindingBase(object target, IAccessor targetAccessor)
@@ -81,6 +84,8 @@ namespace Yanmonet.Bindings
 
         public BindingNotifyDelegate SourceNotifyCallback { get; set; }
 
+        public IValueConverter Converter { get; set; }
+        public object ConverterParameter { get; set; }
 
         public event BindingPropertyChangedEventHandler SourcePropertyChanged;
 
@@ -194,6 +199,7 @@ namespace Yanmonet.Bindings
         protected virtual bool SetTargetValue(object value)
         {
             object origin = GetTargetValue();
+
             if (!object.Equals(origin, value))
             {
                 if (targetAccessor != null)
@@ -291,6 +297,20 @@ namespace Yanmonet.Bindings
                     UpdateSourceToTarget();
                 }
             }
+        }
+
+        protected Type GetTargetValueType()
+        {
+            Type valueType;
+            if (TargetAccessor != null)
+            {
+                valueType = TargetAccessor.ValueType;
+            }
+            else
+            {
+                valueType = targetBinder.GetLast()?.ValueType;
+            }
+            return valueType;
         }
 
     }

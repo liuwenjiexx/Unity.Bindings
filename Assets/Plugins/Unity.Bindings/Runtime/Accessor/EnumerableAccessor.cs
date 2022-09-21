@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using YMFramework;
 
 namespace Yanmonet.Bindings
 {
@@ -16,6 +17,8 @@ namespace Yanmonet.Bindings
                 throw new ArgumentOutOfRangeException(nameof(index));
             this.index = index;
         }
+
+        public Type ValueType => null;
 
         public bool CanGetValue(object target)
         {

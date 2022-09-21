@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 using UnityEngine;
+using YMFramework;
+
 namespace Yanmonet.Bindings
 {
     public class IndexerAccessor<TTarget, TIndex, TValue> : IAccessor
@@ -11,12 +13,13 @@ namespace Yanmonet.Bindings
         private TIndex index;
         private Func<TTarget, TIndex, TValue> getter;
         private Action<TTarget, TIndex, TValue> setter;
+        private Type valueType;
 
         public IndexerAccessor(PropertyInfo property)
         {
             ParameterExpression targetExpr = null;
             ParameterExpression indexExpr = null;
-            Type targetType = null, indexType, valueType = null;
+            Type targetType = null, indexType;
 
             indexExpr = Expression.Parameter(typeof(TIndex));
 
@@ -40,6 +43,8 @@ namespace Yanmonet.Bindings
                     .Compile();
             }
         }
+        
+        public Type ValueType => valueType;
 
         public bool CanGetValue(object target)
         {

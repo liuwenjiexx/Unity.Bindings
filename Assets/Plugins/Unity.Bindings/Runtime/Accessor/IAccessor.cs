@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-namespace Yanmonet
+namespace YMFramework
 {
 
     /// <summary>
@@ -12,6 +12,9 @@ namespace Yanmonet
     /// </summary>
     public interface IAccessor
     {
+
+        Type ValueType { get; }
+
         /// <summary>
         /// 能否获取值
         /// </summary>

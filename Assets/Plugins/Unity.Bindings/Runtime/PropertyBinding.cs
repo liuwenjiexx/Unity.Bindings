@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System;
 using System.ComponentModel;
 using System.Reflection;
+using YMFramework;
 
 namespace Yanmonet.Bindings
 {
@@ -90,6 +91,17 @@ namespace Yanmonet.Bindings
             if (!accessor.CanGetValue(Source) || !TargetAccessor.CanSetValue(Target))
                 return;
             var value = GetSourceValue();
+
+            var converter = Converter;
+            if (converter != null)
+            {
+                Type valueType = GetTargetValueType();
+                if (valueType != null)
+                {
+                    value = converter.Convert(value, valueType, ConverterParameter);
+                }
+            }
+
             SetTargetValue(value);
         }
 
@@ -98,6 +110,20 @@ namespace Yanmonet.Bindings
             if (!accessor.CanSetValue(Source) || !TargetAccessor.CanGetValue(Target))
                 return;
             var value = GetTargetValue();
+            if (value == UnsetValue) return;
+
+            var converter = Converter;
+            if (converter != null)
+            {
+                Type valueType;
+                valueType =accessor.ValueType;
+                if (valueType != null)
+                {
+                    value = converter.ConvertBack(value, valueType, ConverterParameter);
+                }
+            }
+            if (value == UnsetValue) return;
+
             SetSourceValue(value);
         }
 

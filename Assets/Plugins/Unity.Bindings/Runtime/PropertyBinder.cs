@@ -5,6 +5,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Reflection;
 using UnityEngine;
+using YMFramework;
 
 namespace Yanmonet.Bindings
 {
@@ -76,9 +77,7 @@ namespace Yanmonet.Bindings
                 SetTarget(value);
             }
         }
-
-
-
+         
         //public Type TargetType { get => targetType; }
 
 
@@ -488,6 +487,10 @@ namespace Yanmonet.Bindings
         {
             return last.memberType;
         }
+        public Type ValueType
+        {
+            get => memberType;
+        }
 
         public bool TryGetTargetValue(out object targetValue)
         {
@@ -546,6 +549,29 @@ namespace Yanmonet.Bindings
             }
 
             return TrySetMemberValue(targetValue);
+        }
+
+        public PropertyBinder GetLast()
+        {
+            if (next != null)
+            {
+                if ((flags & Flags.ListenerMember) == 0)
+                {
+                    object tmp;
+                    if (TryGetMemberValue(out tmp))
+                    {
+                        next.SetTarget(tmp);
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+
+                return next.GetLast();
+            }
+
+            return this;
         }
 
 

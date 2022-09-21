@@ -5,8 +5,9 @@ using System.Linq.Expressions;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Yanmonet.Bindings;
 
-namespace Yanmonet.Bindings
+namespace YMFramework
 {
     public class BindingBuilder<TTarget, TSource>
     {
@@ -81,7 +82,7 @@ namespace Yanmonet.Bindings
         {
             var member = BindingUtility.GetMember(targetPropertySelector);
             targetPropertyName = member.Name;
-            TargetAccessor = Yanmonet.Accessor.Member(member);
+            TargetAccessor = YMFramework.Accessor.Member(member);
             return this;
         }
 
@@ -110,14 +111,14 @@ namespace Yanmonet.Bindings
         {
             var member = BindingUtility.GetMember(propertySelector);
             SourcePropertyName = member.Name;
-            Accessor = Yanmonet.Accessor.Member(member);
+            Accessor = YMFramework.Accessor.Member(member);
             return From(Accessor);
         }
         public BindingBuilder<TTarget, TSource> From<TValue>(Expression<Func<TValue>> propertySelector)
         {
             var member = BindingUtility.GetMember(propertySelector);
             SourcePropertyName = member.Name;
-            Accessor = Yanmonet.Accessor.Member(member);
+            Accessor = YMFramework.Accessor.Member(member);
             return From(Accessor);
         }
 

@@ -1,6 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using YMFramework;
 
 namespace Yanmonet.Bindings
 {
@@ -14,6 +16,7 @@ namespace Yanmonet.Bindings
             this.accessors = accessors;
         }
 
+        public Type ValueType => typeof(object);
 
         private object GetTarget(object target)
         {

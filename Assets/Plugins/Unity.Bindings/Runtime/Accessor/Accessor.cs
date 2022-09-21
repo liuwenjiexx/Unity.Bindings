@@ -6,11 +6,12 @@ using System.Reflection;
 using UnityEngine;
 using Yanmonet.Bindings;
 
-namespace Yanmonet
+namespace YMFramework
 {
 
     public class Accessor : IAccessor
     {
+        private Type valueType;
         private Func<object, object> getter;
         private Func<object, object, object> setter;
 
@@ -20,8 +21,9 @@ namespace Yanmonet
         private static Dictionary<(Type, Type), IAccessor> cachedIndexerAccessors;
         static ThisAccessor selfAccessor;
 
-        public Accessor(Func<object, object> getter, Action<object, object> setter)
+        public Accessor(Type valueType, Func<object, object> getter, Action<object, object> setter)
         {
+            this.valueType = valueType;
             this.getter = getter;
             if (setter != null)
             {
@@ -32,11 +34,15 @@ namespace Yanmonet
                  };
             }
         }
-        public Accessor(Func<object, object> getter, Func<object, object, object> setter)
+        public Accessor(Type valueType, Func<object, object> getter, Func<object, object, object> setter)
         {
+            this.valueType = valueType;
             this.getter = getter;
             this.setter = setter;
         }
+
+
+        public Type ValueType => valueType;
 
         public bool CanGetValue(object target) => getter != null;
 
@@ -158,8 +164,8 @@ namespace Yanmonet
                     {
                         accessor = (IAccessor)Activator.CreateInstance(typeof(MemberAccessor<,>).MakeGenericType(targetType, valueType), propertyOrField, getter);
                     }
-                    
-                    
+
+
                     cachedMemberAccessors[propertyOrField] = accessor;
                 }
                 catch
@@ -257,6 +263,18 @@ namespace Yanmonet
             return selfAccessor;
         }
 
+     
+
+        public static IAccessor<TValue> NotifyValueChanged<TValue>(bool withoutNotify = false)
+        {
+            INotifyValueChangedAccessor<TValue> accessor;
+            if (withoutNotify)
+                accessor = INotifyValueChangedAccessor<TValue>.instanceWithoutNotify;
+            else
+                accessor = INotifyValueChangedAccessor<TValue>.instance;
+            return accessor;
+        }
+
     }
 
 
@@ -282,6 +300,8 @@ namespace Yanmonet
             this.getter = getter;
             this.setter = setter;
         }
+
+        public Type ValueType => typeof(TValue);
 
         public bool CanGetValue(object target) => getter != null;
 

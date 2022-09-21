@@ -2,15 +2,19 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using YMFramework;
 
 namespace Yanmonet.Bindings
 {
     class ThisAccessor : IAccessor
     {
+
+        public Type ValueType => null;
+
         public bool CanGetValue(object target) => true;
 
         public bool CanSetValue(object target) => false;
-
+         
         public object GetValue(object target)
         {
             return target;

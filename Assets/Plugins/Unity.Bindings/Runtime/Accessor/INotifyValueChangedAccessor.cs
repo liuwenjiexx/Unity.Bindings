@@ -1,7 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using YMFramework;
 
 namespace Yanmonet.Bindings
 {
@@ -18,6 +20,8 @@ namespace Yanmonet.Bindings
         {
             this.withoutNotify = withoutNotify;
         }
+
+        public Type ValueType => typeof(TValue);
 
         public static readonly INotifyValueChangedAccessor<TValue> instance = new INotifyValueChangedAccessor<TValue>(false);
 
@@ -51,6 +55,15 @@ namespace Yanmonet.Bindings
 
         public object SetValue(object target, object value)
         {
+            if (value != null)
+            {
+                if (!typeof(TValue).IsAssignableFrom(value.GetType()))
+                {
+                    //value = Convert.ChangeType(value, typeof(TValue));
+                    //³¢ÊÔ implicit ×ª»»
+                    return SetValue(target, (TValue)(dynamic)value);
+                }
+            }
             return SetValue(target, (TValue)value);
         }
 
