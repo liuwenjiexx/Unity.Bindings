@@ -198,7 +198,7 @@ namespace Yanmonet.Bindings
                     }
                     else if (!isIndexer)
                     {
-                        var property = targetType.GetProperty(memberName);
+                        var property = targetType.GetProperty(memberName, BindingFlags.Public| BindingFlags.NonPublic| BindingFlags.Instance);
 
                         if (property != null)
                         {
@@ -208,7 +208,7 @@ namespace Yanmonet.Bindings
                         }
                         else
                         {
-                            var field = targetType.GetField(memberName);
+                            var field = targetType.GetField(memberName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
                             if (field != null)
                             {
                                 accessor = field.GetAccessor();

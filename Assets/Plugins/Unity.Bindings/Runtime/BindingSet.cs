@@ -142,6 +142,7 @@ namespace YMFramework
             }
         }
 
+
         public void Unbind()
         {
             foreach (var binding in bindings)
@@ -162,6 +163,7 @@ namespace YMFramework
                 }
             }
         }
+
 
 
         public void Update()
@@ -244,7 +246,7 @@ namespace YMFramework
         /// <summary>
         /// 绑定属性路径
         /// </summary> 
-        private BindingBase Bind(object target, IAccessor targetAccessor, string targetPropertyName, string path, BindingMode mode = BindingMode.OneWay)
+        private BindingBase Bind(object target, IAccessor targetAccessor, string targetPropertyName, string path, BindingMode mode = BindingMode.OneWay, IValueConverter converter = null)
         {
             if (target == null) throw new ArgumentNullException(nameof(target));
             if (targetAccessor == null) throw new ArgumentNullException(nameof(targetAccessor));
@@ -253,16 +255,17 @@ namespace YMFramework
             Binding binding = new Binding(target, targetAccessor, Source, path);
             binding.Mode = mode;
             binding.TargetPropertyName = targetPropertyName;
+            binding.Converter = converter;
             bindings.Add(binding);
 
             return binding;
         }
 
-        public BindingBase Bind(object target, IAccessor targetAccessor, string path, BindingMode mode = BindingMode.OneWay)
+        public BindingBase Bind(object target, IAccessor targetAccessor, string path, BindingMode mode = BindingMode.OneWay, IValueConverter converter = null)
         {
-            return Bind(target, targetAccessor, (string)null, path, mode);
+            return Bind(target, targetAccessor, (string)null, path, mode, converter);
         }
-        public BindingBase Bind(object target, string targetPath, string path, BindingMode mode = BindingMode.OneWay)
+        public BindingBase Bind(object target, string targetPath, string path, BindingMode mode = BindingMode.OneWay, IValueConverter converter = null)
         {
             if (target == null) throw new ArgumentNullException(nameof(target));
             if (targetPath == null) throw new ArgumentNullException(nameof(targetPath));
@@ -270,6 +273,7 @@ namespace YMFramework
 
             Binding binding = new Binding(target, targetPath, Source, path);
             binding.Mode = mode;
+            binding.Converter = converter;
             bindings.Add(binding);
             return binding;
         }
@@ -277,10 +281,10 @@ namespace YMFramework
         /// <summary>
         /// 绑定属性路径
         /// </summary>
-        public BindingBase Bind<TTarget, TValue>(TTarget target, Expression<Func<TTarget, TValue>> targetPropertySelector, string path, BindingMode mode = BindingMode.OneWay)
+        public BindingBase Bind<TTarget, TValue>(TTarget target, Expression<Func<TTarget, TValue>> targetPropertySelector, string path, BindingMode mode = BindingMode.OneWay, IValueConverter converter = null)
         {
             var targetAccessor = Accessor.Member(targetPropertySelector);
-            return Bind(target, targetAccessor, targetAccessor.MemberInfo.Name, path, mode);
+            return Bind(target, targetAccessor, targetAccessor.MemberInfo.Name, path, mode, converter);
         }
 
 
@@ -382,6 +386,11 @@ namespace YMFramework
 
         #endregion
 
+        public void Bind(VisualElement root)
+        {
+            CreateBinding(root);
+            Bind();
+        }
 
         public void CreateBinding(VisualElement root)
         {
@@ -415,5 +424,6 @@ namespace YMFramework
             });
             BuildBinding();
         }
+
     }
 }
