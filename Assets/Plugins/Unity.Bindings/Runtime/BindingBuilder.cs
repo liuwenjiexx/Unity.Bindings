@@ -15,6 +15,10 @@ namespace YMFramework
         private TTarget target;
         private TSource source;
 
+        private IValueConverter converter;
+        private object converterParameter;
+
+
         public BindingBuilder(TTarget target, TSource source)
         {
             this.target = target;
@@ -161,6 +165,13 @@ namespace YMFramework
             return this;
         }
 
+        public BindingBuilder<TTarget, TSource> Converter(IValueConverter converter, object converterParameter)
+        {
+            this.converter = converter;
+            this.converterParameter = converterParameter;
+            return this;
+        }
+
         public BindingBase Build()
         {
             var targetAccessor = this.TargetAccessor;
@@ -225,6 +236,9 @@ namespace YMFramework
                 bindingBase.SourceNotifyCallback = SourceNotifyCallback;
             if (TargetNotifyValueChangedEnabled.HasValue)
                 bindingBase.TargetNotifyValueChangedEnabled = TargetNotifyValueChangedEnabled.Value;
+
+            bindingBase.Converter = converter;
+            bindingBase.ConverterParameter = converterParameter;
 
             if (targetAccessor != null && targetAccessor is INotifyValueChangedAccessor)
             {

@@ -46,7 +46,7 @@ namespace Yanmonet.Bindings
 
         public IAccessor TargetAccessor => targetAccessor;
         /// <summary>
-        /// °ó¶¨ÊôÐÔÃû³Æ£¬¼àÌýÊôÐÔÖµ¸Ä±äÊÂ¼þ
+        /// ç»‘å®šå±žæ€§åç§°ï¼Œç›‘å¬å±žæ€§å€¼æ”¹å˜äº‹ä»¶
         /// </summary>
         public string TargetPropertyName { get; set; }
 
@@ -58,7 +58,7 @@ namespace Yanmonet.Bindings
             set => source = value;
         }
         /// <summary>
-        /// °ó¶¨ÊôÐÔÃû³Æ£¬¼àÌýÊôÐÔÖµ¸Ä±äÊÂ¼þ
+        /// ç»‘å®šå±žæ€§åç§°ï¼Œç›‘å¬å±žæ€§å€¼æ”¹å˜äº‹ä»¶
         /// </summary>
         public string PropertyName { get; set; }
 

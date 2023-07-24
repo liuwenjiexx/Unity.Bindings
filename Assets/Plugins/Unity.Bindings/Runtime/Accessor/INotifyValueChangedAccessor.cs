@@ -60,7 +60,7 @@ namespace Yanmonet.Bindings
                 if (!typeof(TValue).IsAssignableFrom(value.GetType()))
                 {
                     //value = Convert.ChangeType(value, typeof(TValue));
-                    //³¢ÊÔ implicit ×ª»»
+                    //å°è¯• implicit è½¬æ¢
                     return SetValue(target, (TValue)(dynamic)value);
                 }
             }

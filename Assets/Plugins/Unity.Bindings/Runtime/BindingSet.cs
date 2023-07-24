@@ -244,7 +244,7 @@ namespace YMFramework
         #region Binding Path
 
         /// <summary>
-        /// °ó¶¨ÊôÐÔÂ·¾¶
+        /// ç»‘å®šå±žæ€§è·¯å¾„
         /// </summary> 
         private BindingBase Bind(object target, IAccessor targetAccessor, string targetPropertyName, string path, BindingMode mode = BindingMode.OneWay, IValueConverter converter = null)
         {
@@ -279,7 +279,7 @@ namespace YMFramework
         }
 
         /// <summary>
-        /// °ó¶¨ÊôÐÔÂ·¾¶
+        /// ç»‘å®šå±žæ€§è·¯å¾„
         /// </summary>
         public BindingBase Bind<TTarget, TValue>(TTarget target, Expression<Func<TTarget, TValue>> targetPropertySelector, string path, BindingMode mode = BindingMode.OneWay, IValueConverter converter = null)
         {
@@ -293,7 +293,7 @@ namespace YMFramework
         #region Binding Property
 
         /// <summary>
-        /// °ó¶¨ÊôÐÔ
+        /// ç»‘å®šå±žæ€§
         /// </summary>
         private BindingBase Bind(object target, IAccessor targetAccessor, string targetPropertyName, IAccessor accessor, string propertyName, BindingMode mode = BindingMode.OneWay)
         {
@@ -340,7 +340,7 @@ namespace YMFramework
         #region Target INotifyValueChanged
 
         /// <summary>
-        /// <paramref name="target"/> °ó¶¨µ½ <see cref="INotifyValueChanged{T}.value"/> ÊôÐÔ
+        /// <paramref name="target"/> ç»‘å®šåˆ° <see cref="INotifyValueChanged{T}.value"/> å±žæ€§
         /// </summary>
         public BindingBase Bind<TValue>(INotifyValueChanged<TValue> target, string path, BindingMode mode = BindingMode.TwoWay)
         {
@@ -357,7 +357,7 @@ namespace YMFramework
         }
 
         /// <summary>
-        /// <paramref name="target"/> °ó¶¨µ½ <see cref="INotifyValueChanged{T}.value"/> ÊôÐÔ
+        /// <paramref name="target"/> ç»‘å®šåˆ° <see cref="INotifyValueChanged{T}.value"/> å±žæ€§
         /// </summary>
         private BindingBase Bind<TValue>(INotifyValueChanged<TValue> target, IAccessor<TValue> accessor, string propertyName, BindingMode mode = BindingMode.TwoWay)
         {
@@ -374,7 +374,7 @@ namespace YMFramework
         }
 
         /// <summary>
-        /// <paramref name="target"/> °ó¶¨µ½ <see cref="INotifyValueChanged{T}.value"/> ÊôÐÔ
+        /// <paramref name="target"/> ç»‘å®šåˆ° <see cref="INotifyValueChanged{T}.value"/> å±žæ€§
         /// </summary>
         public BindingBase Bind<TValue>(INotifyValueChanged<TValue> target, Expression<Func<TSource, TValue>> propertySelector, BindingMode mode = BindingMode.TwoWay)
         {

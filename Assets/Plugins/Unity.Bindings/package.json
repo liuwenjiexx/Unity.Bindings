@@ -10,5 +10,8 @@
     "data"
   ],
   "category": "Data",
-  "description": "Data binding"
+  "description": "Data binding",
+  "author": {
+    "name": "Yanmonet"
+  }
 }
