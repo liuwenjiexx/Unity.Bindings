@@ -5,9 +5,8 @@ using System.Linq.Expressions;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Yanmonet.Bindings;
 
-namespace YMFramework
+namespace Unity.Bindings
 {
     public class BindingSet
     {

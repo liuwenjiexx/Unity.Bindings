@@ -7,9 +7,8 @@ using System.Linq.Expressions;
 using System.Linq;
 using System.Reflection;
 using System.ComponentModel;
-using Yanmonet.Bindings;
 
-namespace YMFramework
+namespace Unity.Bindings
 {
     public static class Extensions
     {

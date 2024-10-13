@@ -2,10 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using YMFramework;
 
 
-namespace Yanmonet.Bindings
+namespace Unity.Bindings
 {
     class ArrayAccessor : IAccessor
     {

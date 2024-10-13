@@ -4,4 +4,4 @@ using System.Runtime.CompilerServices;
 using UnityEngine;
 
 
-[assembly: InternalsVisibleTo("Yanmonet.Binding.EditorTests")]
+[assembly: InternalsVisibleTo("Binding.EditorTests")]

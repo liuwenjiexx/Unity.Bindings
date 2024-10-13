@@ -6,7 +6,7 @@ using System.Reflection;
 using UnityEngine.UIElements;
 
 
-namespace Yanmonet.Bindings
+namespace Unity.Bindings
 {
     public static class BindingUtility
     {

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
 
-namespace Yanmonet.Bindings
+namespace Unity.Bindings
 {
     public class BindingPropertyChangedEventArgs : EventArgs
     {

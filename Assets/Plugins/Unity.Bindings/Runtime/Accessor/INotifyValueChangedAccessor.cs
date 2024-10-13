@@ -3,9 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
-using YMFramework;
+using Unity.Bindings;
 
-namespace Yanmonet.Bindings
+namespace Unity.Bindings
 {
 
     interface INotifyValueChangedAccessor : IAccessor { }

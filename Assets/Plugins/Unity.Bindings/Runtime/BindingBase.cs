@@ -5,9 +5,8 @@ using System.ComponentModel;
 using System.Linq.Expressions;
 using System.Reflection;
 using UnityEngine.UIElements;
-using YMFramework;
 
-namespace Yanmonet.Bindings
+namespace Unity.Bindings
 {
     public abstract class BindingBase : IBinding
     {

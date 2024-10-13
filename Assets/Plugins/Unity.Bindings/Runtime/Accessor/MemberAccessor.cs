@@ -1,9 +1,9 @@
 using System;
 using System.Linq.Expressions;
 using System.Reflection;
-using YMFramework;
+using Unity.Bindings;
 
-namespace Yanmonet.Bindings
+namespace Unity.Bindings
 {
 
     public class MemberAccessor<TTarget, TValue> : Accessor<TTarget, TValue>, IMemberAccessor<TValue>

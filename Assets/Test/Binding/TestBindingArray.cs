@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Yanmonet.Bindings;
+using Unity.Bindings;
 
 public class TestBindingArray : EditorWindow
 {

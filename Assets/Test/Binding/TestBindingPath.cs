@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Yanmonet.Bindings;
+using Unity.Bindings;
 
 public class TestBindingPath : EditorWindow
 {

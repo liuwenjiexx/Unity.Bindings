@@ -2,9 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using YMFramework;
+using Unity.Bindings;
 
-namespace Yanmonet.Bindings
+namespace Unity.Bindings
 {
     class ThisAccessor : IAccessor
     {

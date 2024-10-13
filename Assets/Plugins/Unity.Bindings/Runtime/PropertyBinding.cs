@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System;
 using System.ComponentModel;
 using System.Reflection;
-using YMFramework;
 
-namespace Yanmonet.Bindings
+namespace Unity.Bindings
 {
     class PropertyBinding : BindingBase
     {

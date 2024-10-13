@@ -4,9 +4,8 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using UnityEngine;
-using Yanmonet.Bindings;
 
-namespace YMFramework
+namespace Unity.Bindings
 {
 
     public class Accessor : IAccessor

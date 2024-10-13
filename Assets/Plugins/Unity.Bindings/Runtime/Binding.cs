@@ -4,9 +4,8 @@ using System;
 using System.ComponentModel;
 using System.Reflection;
 using System.Linq;
-using YMFramework;
 
-namespace Yanmonet.Bindings
+namespace Unity.Bindings
 {
 
     class Binding : BindingBase

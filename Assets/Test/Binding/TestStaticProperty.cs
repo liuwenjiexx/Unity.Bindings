@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Yanmonet.Bindings;
+using Unity.Bindings;
 
 public class TestStaticProperty : EditorWindow
 {

@@ -1,8 +1,8 @@
 using NUnit.Framework;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Bindings;
 using UnityEngine;
-using Yanmonet.Bindings;
 //namespace Yanmonet.Bindings.Tests
 //{
 public class TestPropertyBinder

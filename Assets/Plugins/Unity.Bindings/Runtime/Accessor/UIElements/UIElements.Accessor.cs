@@ -4,7 +4,7 @@ using System.Reflection;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Yanmonet.Bindings
+namespace Unity.Bindings
 {
     class ButtonEnabledSelf : MemberAccessor<Button, bool>
     {

@@ -2,9 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
-using YMFramework;
 
-namespace Yanmonet.Bindings
+namespace Unity.Bindings
 {
     public interface IMemberAccessor<TValue> : IAccessor<TValue>
     {

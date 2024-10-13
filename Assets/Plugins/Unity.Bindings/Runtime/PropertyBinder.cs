@@ -5,9 +5,8 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Reflection;
 using UnityEngine;
-using YMFramework;
 
-namespace Yanmonet.Bindings
+namespace Unity.Bindings
 {
 
     internal class PropertyBinder : IDisposable
