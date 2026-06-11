@@ -2,8 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using Bindings;
 using UnityEngine;
-using Unity.Bindings;
+
 
 [Serializable]
 public class TestData : INotifyPropertyChanged

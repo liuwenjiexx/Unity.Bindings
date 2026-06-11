@@ -39,6 +39,10 @@ namespace Unity.Bindings
 
         public event BindingPropertyChangedEventHandler TargetPropertyChanged;
 
+        public IValueConverter Converter { get; set; }
+
+        public object ConverterParameter { get; set; }
+
         [Obsolete("Use 'To'")]
         public BindingBuilder<TTarget, object> Build<TTarget>(TTarget target)
         {
@@ -412,7 +416,9 @@ namespace Unity.Bindings
                         var method = typeof(Extensions).GetMethod(nameof(Extensions.GetTargetAccessorWithINotifyValueChanged), BindingFlags.NonPublic | BindingFlags.Static);
                         var targetAccessor = (IAccessor)method.MakeGenericMethod(valueType).Invoke(null, new object[] { target });
 
-                        Target(target).To(targetAccessor).From(target.bindingPath);
+                        var builder = Target(target).To(targetAccessor).From(target.bindingPath);
+                        if (Converter != null)
+                            builder.Converter(Converter, ConverterParameter);
                         //var binding = new Binding(target, targetAccessor, source, target.bindingPath);
                         //binding.TargetNotifyValueChangedEnabled = true;
                         //binding.Bind();

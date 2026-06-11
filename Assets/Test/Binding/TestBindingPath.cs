@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Unity.Bindings;
+using Bindings;
 
 public class TestBindingPath : EditorWindow
 {

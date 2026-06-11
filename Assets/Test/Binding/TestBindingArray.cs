@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Unity.Bindings;
+using Bindings;
 
 public class TestBindingArray : EditorWindow
 {

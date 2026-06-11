@@ -85,7 +85,7 @@ namespace Unity.Bindings
         {
             var member = BindingUtility.GetMember(targetPropertySelector);
             targetPropertyName = member.Name;
-            TargetAccessor = Unity.Bindings.Accessor.Member(member);
+            TargetAccessor = Bindings.Accessor.Member(member);
             return this;
         }
 
@@ -114,14 +114,14 @@ namespace Unity.Bindings
         {
             var member = BindingUtility.GetMember(propertySelector);
             SourcePropertyName = member.Name;
-            Accessor = Unity.Bindings.Accessor.Member(member);
+            Accessor = Bindings.Accessor.Member(member);
             return From(Accessor);
         }
         public BindingBuilder<TTarget, TSource> From<TValue>(Expression<Func<TValue>> propertySelector)
         {
             var member = BindingUtility.GetMember(propertySelector);
             SourcePropertyName = member.Name;
-            Accessor = Unity.Bindings.Accessor.Member(member);
+            Accessor = Bindings.Accessor.Member(member);
             return From(Accessor);
         }
 

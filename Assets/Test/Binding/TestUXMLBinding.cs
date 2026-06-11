@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Unity.Bindings;
+using Bindings;
 
 public class TestUXMLBinding : EditorWindow
 {
@@ -15,7 +15,7 @@ public class TestUXMLBinding : EditorWindow
     public TestData2 value2 = new TestData2();
       
     TextField fldBindingPath;
-
+     
     [MenuItem("Test/Uxml Binding")]
     public static void ShowWindow()
     {

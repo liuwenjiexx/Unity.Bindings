@@ -1,7 +1,6 @@
 using System;
 using System.Linq.Expressions;
 using System.Reflection;
-using Unity.Bindings;
 
 namespace Unity.Bindings
 {
